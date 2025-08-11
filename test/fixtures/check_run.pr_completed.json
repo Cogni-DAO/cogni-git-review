@@ -1,13 +1,12 @@
 {
   "name": "Cogni Git Review",
-  "head_branch": "hiimbex-patch-46",
-  "head_sha": "50e5628cda538bcbb6f3fec3edebe4bb5afb3891",
+  "head_sha": "abc123def456",
   "status": "completed",
   "started_at": "2018-10-05T17:35:21.594Z",
   "conclusion": "success",
   "completed_at": "2018-10-05T17:35:53.683Z",
   "output": {
     "title": "Cogni Git Review",
-    "summary": "Code review completed successfully!"
+    "summary": "Pull request #42 reviewed and approved by Git Cogni v1.0"
   }
 }

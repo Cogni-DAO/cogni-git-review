@@ -33,6 +33,20 @@ const checkRunSuccess = JSON.parse(
   ),
 );
 
+const pullRequestPayload = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, "fixtures/pull_request.opened.json"),
+    "utf-8",
+  ),
+);
+
+const checkRunPRCompleted = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, "fixtures/check_run.pr_completed.json"),
+    "utf-8",
+  ),
+);
+
 describe("My Probot app", () => {
   let probot;
 
@@ -71,6 +85,58 @@ describe("My Probot app", () => {
 
     // Receive a webhook event
     await probot.receive({ name: "check_suite", payload: checkSuitePayload });
+
+    assert.deepStrictEqual(mock.pendingMocks(), []);
+  });
+
+  test("creates check run on pull request opened", async () => {
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/2/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          checks: "write",
+          pull_requests: "read",
+        },
+      })
+
+      .post("/repos/hiimbex/testing-things/check-runs", (body) => {
+        body.started_at = "2018-10-05T17:35:21.594Z";
+        body.completed_at = "2018-10-05T17:35:53.683Z";
+        assert.deepStrictEqual(body, checkRunPRCompleted);
+        return true;
+      })
+      .reply(200, { id: 123 });
+
+    // Receive a pull request webhook event
+    await probot.receive({ name: "pull_request", payload: pullRequestPayload });
+
+    assert.deepStrictEqual(mock.pendingMocks(), []);
+  });
+
+  test("creates check run on pull request synchronize", async () => {
+    const syncPayload = { ...pullRequestPayload, action: "synchronize" };
+    
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/2/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          checks: "write",
+          pull_requests: "read",
+        },
+      })
+
+      .post("/repos/hiimbex/testing-things/check-runs", (body) => {
+        body.started_at = "2018-10-05T17:35:21.594Z";
+        body.completed_at = "2018-10-05T17:35:53.683Z";
+        assert.deepStrictEqual(body, checkRunPRCompleted);
+        return true;
+      })
+      .reply(200, { id: 456 });
+
+    // Receive a pull request synchronize event
+    await probot.receive({ name: "pull_request", payload: syncPayload });
 
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
