@@ -23,6 +23,14 @@ This bot is incredibly new, immature, and is in its infancy. beware.
 - **Permissions**: `checks: write`, `pull_requests: read`, `metadata: read`
 - **Local Dev**: Uses smee.io proxy for webhook forwarding
 
+
+**Important Note from app.yml:**
+```yaml
+# NOTE: changing this file will not update your GitHub App settings.
+# You must visit github.com/settings/apps/your-app-name to edit them.
+```
+**Human Intervention Required**: for any feature that requires a change in permission. Human must update app permissions, and then installations must accept the new permissions.
+
 ## Development Workflow
 
 ### Setup
