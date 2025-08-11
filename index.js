@@ -17,7 +17,7 @@ export default (app) => {
     // Probot API note: context.repo() => {username: 'hiimbex', repo: 'testing-things'}
     return context.octokit.checks.create(
       context.repo({
-        name: "My app!",
+        name: "Git Cogni",
         head_branch: headBranch,
         head_sha: headSha,
         status: "completed",
@@ -25,7 +25,7 @@ export default (app) => {
         conclusion: "success",
         completed_at: new Date(),
         output: {
-          title: "Probot check!",
+          title: "Git Cogni v1 Review",
           summary: "The check has passed!",
         },
       }),
