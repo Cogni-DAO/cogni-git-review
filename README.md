@@ -2,7 +2,22 @@
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that CogniDAO&#x27;s primary code management bot, built as a github app. 
 
-## Setup
+## Installation
+
+1. **Install the GitHub App** on your repository
+2. **Set up branch protection**:
+   ```bash
+   # Copy the Makefile from this repo, then:
+   make setup-branch-protection OWNER=yourorg REPO=yourrepo
+   ```
+   
+   Or manually: Settings → Branches → Add rule requiring `Cogni Git PR Review` check
+
+3. **Test the setup** by opening a PR to verify the required check appears
+
+See [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md) for detailed setup options and troubleshooting.
+
+## Development Setup
 
 ```sh
 # Install dependencies
