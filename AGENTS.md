@@ -37,6 +37,8 @@ npm start  # Starts on localhost:3000 with smee proxy
 
 https://probot.github.io/docs/testing/?utm_source=chatgpt.com
 
+**Debugging webhook delivery**: Check smee.io URL directly: https://smee.io/LhGHiP1UNnaXgLGi
+
 ```bash
 npm test  # Runs Node.js native tests with nock mocks
 ```
