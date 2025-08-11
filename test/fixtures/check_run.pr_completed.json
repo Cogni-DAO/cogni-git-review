@@ -1,12 +1,12 @@
 {
-  "name": "Cogni Git Review",
+  "name": "Cogni Git PR Review",
   "head_sha": "abc123def456",
   "status": "completed",
   "started_at": "2018-10-05T17:35:21.594Z",
   "conclusion": "success",
   "completed_at": "2018-10-05T17:35:53.683Z",
   "output": {
-    "title": "Cogni Git Review",
-    "summary": "Pull request #42 reviewed and approved by Git Cogni v1.0"
+    "title": "Cogni Git PR Review",
+    "summary": "PR #42 MOCK reviewed and approved by Git Cogni v1.0"
   }
 }

@@ -31,7 +31,7 @@ export default (app) => {
         completed_at: new Date(),
         output: {
           title: CHECK_NAME,
-          summary: "Code review completed successfully!",
+          summary: "MOCK Code review completed successfully!",
         },
       }),
     );
@@ -41,6 +41,7 @@ export default (app) => {
     const startTime = new Date();
     const { head_sha: headSha } = context.payload.check_run;
 
+    // TODO - no repeat logic. Directly call the handlechecksuite again
     return context.octokit.checks.create(
       context.repo({
         name: CHECK_NAME,
@@ -51,7 +52,7 @@ export default (app) => {
         completed_at: new Date(),
         output: {
           title: CHECK_NAME,
-          summary: "Code review re-run completed successfully!",
+          summary: "MOCK Code review re-run completed successfully!",
         },
       }),
     );

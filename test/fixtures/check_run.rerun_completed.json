@@ -1,12 +1,12 @@
 {
-  "name": "Cogni Git Review",
+  "name": "Cogni Git Commit Check",
   "head_sha": "rerequested123sha",
   "status": "completed",
   "started_at": "2018-10-05T17:35:21.594Z",
   "conclusion": "success",
   "completed_at": "2018-10-05T17:35:53.683Z",
   "output": {
-    "title": "Cogni Git Review",
-    "summary": "Code review re-run completed successfully!"
+    "title": "Cogni Git Commit Check",
+    "summary": "MOCK Code review re-run completed successfully!"
   }
 }
