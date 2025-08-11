@@ -1,23 +1,33 @@
 // Checks API example
 // See: https://developer.github.com/v3/checks/ to learn more
 
+const CHECK_NAME = "Cogni Git Commit Check";
+// const CHECK_DESCRIPTION = "Mock Code review completed successfully!";
+const PR_REVIEW_NAME = "Cogni Git PR Review";
+// const PR_REVIEW_DESCRIPTION = "Mock PR review completed successfully!";
+
 /**
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
  */
 export default (app) => {
-  app.on(["check_suite.requested", "check_run.rerequested"], check);
+  // Debug: Log ALL webhook events
+  app.onAny((context) => {
+    console.log(`🔍 EVENT: ${context.name}.${context.payload.action || 'no-action'}`);
+  });
 
-  async function check(context) {
+  app.on("check_suite.requested", handleCheckSuite);
+  app.on("check_run.rerequested", handleCheckRerun);
+  app.on(["pull_request.opened", "pull_request.synchronize"], handlePullRequest);
+
+  async function handleCheckSuite(context) {
     const startTime = new Date();
-
-    // Do stuff
     const { head_branch: headBranch, head_sha: headSha } =
       context.payload.check_suite;
-    // Probot API note: context.repo() => {username: 'hiimbex', repo: 'testing-things'}
+
     return context.octokit.checks.create(
       context.repo({
-        name: "Git Cogni",
+        name: CHECK_NAME,
         head_branch: headBranch,
         head_sha: headSha,
         status: "completed",
@@ -25,8 +35,50 @@ export default (app) => {
         conclusion: "success",
         completed_at: new Date(),
         output: {
-          title: "Git Cogni v1 Review",
-          summary: "The check has passed!",
+          title: CHECK_NAME,
+          summary: "MOCK Code review completed successfully!",
+        },
+      }),
+    );
+  }
+
+  async function handleCheckRerun(context) {
+    const startTime = new Date();
+    const { head_sha: headSha } = context.payload.check_run;
+
+    // TODO - no repeat logic. Directly call the handlechecksuite again
+    return context.octokit.checks.create(
+      context.repo({
+        name: CHECK_NAME,
+        head_sha: headSha,
+        status: "completed",
+        started_at: startTime,
+        conclusion: "success",
+        completed_at: new Date(),
+        output: {
+          title: CHECK_NAME,
+          summary: "MOCK Code review re-run completed successfully!",
+        },
+      }),
+    );
+  }
+
+  async function handlePullRequest(context) {
+    const startTime = new Date();
+    const { pull_request } = context.payload;
+
+    // Mock: Create and immediately complete check run
+    return context.octokit.checks.create(
+      context.repo({
+        name: PR_REVIEW_NAME,
+        head_sha: pull_request.head.sha,
+        status: "completed",
+        started_at: startTime,
+        conclusion: "success",
+        completed_at: new Date(),
+        output: {
+          title: PR_REVIEW_NAME,
+          summary: `PR #${pull_request.number} MOCK reviewed and approved by Git Cogni v1.0`,
         },
       }),
     );

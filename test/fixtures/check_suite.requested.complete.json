@@ -1,0 +1,98 @@
+{
+  "action": "requested",
+  "check_suite": {
+    "id": 5678901234,
+    "node_id": "CS_kwDOOvE123FABC",
+    "head_branch": "feat/integration-testing",
+    "head_sha": "abc123def456789012345678901234567890abcd",
+    "status": "queued",
+    "conclusion": null,
+    "url": "https://api.github.com/repos/derekg1729/cogni-git-review/check-suites/5678901234",
+    "before": "def456789012345678901234567890abcdef1234",
+    "after": "abc123def456789012345678901234567890abcd",
+    "pull_requests": [
+      {
+        "id": 1234567890,
+        "number": 1,
+        "head": {
+          "ref": "feat/integration-testing",
+          "sha": "abc123def456789012345678901234567890abcd"
+        },
+        "base": {
+          "ref": "main",
+          "sha": "def456789012345678901234567890abcdef1234"
+        }
+      }
+    ],
+    "app": {
+      "id": 123456,
+      "slug": "cogni-git-review",
+      "node_id": "MDM6QXBwMTIzNDU2",
+      "owner": {
+        "login": "derekg1729",
+        "id": 123456,
+        "type": "User"
+      },
+      "name": "cogni-git-review",
+      "description": "CogniDAO's primary code management bot",
+      "external_url": "https://github.com/derekg1729/cogni-git-review",
+      "html_url": "https://github.com/apps/cogni-git-review",
+      "created_at": "2024-01-10T15:00:00Z",
+      "updated_at": "2024-01-10T15:00:00Z",
+      "permissions": {
+        "checks": "write",
+        "metadata": "read",
+        "pull_requests": "read"
+      },
+      "events": [
+        "check_run",
+        "check_suite",
+        "pull_request"
+      ]
+    },
+    "created_at": "2024-01-15T10:34:00Z",
+    "updated_at": "2024-01-15T10:34:00Z",
+    "latest_check_runs_count": 0,
+    "check_runs_url": "https://api.github.com/repos/derekg1729/cogni-git-review/check-suites/5678901234/check-runs",
+    "head_commit": {
+      "id": "abc123def456789012345678901234567890abcd",
+      "tree_id": "1d785b00b8f8163d656ffedddcb773a7077592f4",
+      "message": "Add integration testing workflow",
+      "timestamp": "2024-01-15T10:33:00Z",
+      "author": {
+        "name": "derekg1729",
+        "email": "derek@example.com"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com"
+      }
+    }
+  },
+  "repository": {
+    "id": 987654321,
+    "node_id": "R_kgDOOvE123",
+    "name": "cogni-git-review",
+    "full_name": "derekg1729/cogni-git-review",
+    "owner": {
+      "login": "derekg1729",
+      "id": 123456,
+      "type": "User"
+    },
+    "private": true,
+    "html_url": "https://github.com/derekg1729/cogni-git-review",
+    "description": "CogniDAO's primary code management bot, built as a github app.",
+    "created_at": "2024-01-10T15:20:00Z",
+    "updated_at": "2024-01-15T10:34:00Z",
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "derekg1729",
+    "id": 123456,
+    "type": "User"
+  },
+  "installation": {
+    "id": 12345678,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uMTIzNDU2Nzg="
+  }
+}

@@ -1,13 +1,12 @@
 {
   "name": "Cogni Git Commit Check",
-  "head_branch": "hiimbex-patch-46",
-  "head_sha": "50e5628cda538bcbb6f3fec3edebe4bb5afb3891",
+  "head_sha": "rerequested123sha",
   "status": "completed",
   "started_at": "2018-10-05T17:35:21.594Z",
   "conclusion": "success",
   "completed_at": "2018-10-05T17:35:53.683Z",
   "output": {
     "title": "Cogni Git Commit Check",
-    "summary": "MOCK Code review completed successfully!"
+    "summary": "MOCK Code review re-run completed successfully!"
   }
 }
