@@ -18,6 +18,41 @@ This bot is incredibly new, immature, and is in its infancy. beware.
 - Status progression: `in_progress` → `completed` 
 - Handles re-runs via `check_run.rerequested`
 
+### GitHub Webhook Events
+
+#### **check_suite** Events:
+- **`check_suite.requested`** - GitHub says "please run checks on this commit"
+  - **Triggers**: New commit pushed, PR opened/updated 
+  - **Bot creates**: "Cogni Git Commit Check"
+  - **Handler**: `handleCheckSuite`
+
+- **`check_suite.rerequested`** - User clicked "Re-run all checks"
+  - **Not implemented** in current bot
+
+- **`check_suite.completed`** - All checks in suite finished
+  - **Not implemented** in current bot
+
+#### **check_run** Events:
+- **`check_run.created`** - A check run was just created (usually ignore)
+
+- **`check_run.rerequested`** - User clicked "Re-run" on ONE specific check
+  - **Bot creates**: "Cogni Git Commit Check" (re-run)
+  - **Handler**: `handleCheckRerun`
+
+- **`check_run.requested_action`** - User clicked a button in check output
+  - **Not applicable** to current simple bot
+
+#### **pull_request** Events:
+- **`pull_request.opened`** - New PR created
+- **`pull_request.synchronize`** - New commits pushed to PR branch
+  - **Bot creates**: "Cogni Git PR Review"  
+  - **Handler**: `handlePullRequest`
+
+#### **Expected Event Flow**:
+1. **Commit pushed** → `check_suite.requested` → "Cogni Git Commit Check" ✅
+2. **PR opened** → `pull_request.opened` → "Cogni Git PR Review" ✅  
+3. **PR updated** → `pull_request.synchronize` → "Cogni Git PR Review" ✅
+
 ### Configuration
 - **Webhooks**: Configured in `app.yml` 
 - **Permissions**: `checks: write`, `pull_requests: read`, `metadata: read`

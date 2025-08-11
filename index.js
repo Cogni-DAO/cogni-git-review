@@ -11,6 +11,11 @@ const PR_REVIEW_NAME = "Cogni Git PR Review";
  * @param {import('probot').Probot} app
  */
 export default (app) => {
+  // Debug: Log ALL webhook events
+  app.onAny((context) => {
+    console.log(`🔍 EVENT: ${context.name}.${context.payload.action || 'no-action'}`);
+  });
+
   app.on("check_suite.requested", handleCheckSuite);
   app.on("check_run.rerequested", handleCheckRerun);
   app.on(["pull_request.opened", "pull_request.synchronize"], handlePullRequest);
