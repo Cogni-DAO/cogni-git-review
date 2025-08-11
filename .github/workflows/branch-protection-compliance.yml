@@ -1,0 +1,65 @@
+name: Branch protection compliance
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC to catch drift
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  administration: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'schedule' ||
+      (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.base.ref == github.event.repository.default_branch)
+    steps:
+      - name: Verify branch protection (strict + required check)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+          CHECK_NAME: Cogni Git PR Review
+        run: |
+          set -euo pipefail
+
+          # Query protection (404 means not configured)
+          if ! json=$(gh api -H "Accept: application/vnd.github+json" \
+                "repos/$OWNER/$REPO/branches/$BRANCH/protection" 2>/tmp/gh_err); then
+            if grep -q "404" /tmp/gh_err; then
+              echo "❌ No branch protection configured for $OWNER/$REPO:$BRANCH"
+              exit 1
+            else
+              echo "❌ Failed to fetch branch protection:"
+              cat /tmp/gh_err
+              exit 1
+            fi
+          fi
+
+          strict=$(jq -r '.required_status_checks.strict // false' <<<"$json")
+          has_check=$(jq -r --arg c "$CHECK_NAME" '
+              ((.required_status_checks.checks // []) | map(.context) ) +
+              ( .required_status_checks.contexts // [] )
+              | index($c) | type
+          ' <<<"$json")
+
+          if [[ "$strict" != "true" || "$has_check" == "null" ]]; then
+            echo "❌ Branch protection non-compliant for $OWNER/$REPO:$BRANCH"
+            printf "strict=%s\n" "$strict"
+            printf "required_status_checks=%s\n" "$(jq -c '.required_status_checks' <<<"$json")"
+            exit 1
+          fi
+
+          echo "✅ Branch protection compliant: strict + '$CHECK_NAME' present"
+          echo "ℹ️ Current contexts:"
+          jq -r '
+            ( (.required_status_checks.checks // []) | map(.context) ) +
+            ( .required_status_checks.contexts // [] )
+            | unique | .[]
+          ' <<<"$json"
