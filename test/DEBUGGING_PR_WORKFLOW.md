@@ -1,5 +1,9 @@
 # PR Workflow Testing - Debugging Report
 
+This is the most basic v0 testing workflow, manually initiated. v0.1 will need a proper automated integration test.
+
+AND - this is highlighting how the current PR workflow is broken.
+
 ## Objective
 Test the Probot GitHub App's ability to:
 1. Create checks on PR creation
@@ -124,7 +128,37 @@ GitHub App webhook configuration is **branch-restricted**, not receiving events 
 3. **Verify repository selection** - may be limited to specific branches
 4. **Re-configure app** to receive events from ALL branches
 
-## Status  
-**UNBLOCKED**: Issue identified - GitHub App webhook scope is too narrow.
+## RESOLUTION: Server Restart Fixed Issue
 
-**Action Required**: Expand GitHub App webhook configuration to all branches.
+### What Happened
+After extensive debugging, **restarting the local server (`npm start`) magically fixed the webhook delivery issue**.
+
+### Evidence of Fix
+```
+DEBUG (Cogni Git Review): GitHub request: POST .../check-runs - 201
+    head_branch: "feat/v0-pr-review"    # ✅ NOW WORKING
+    head_sha: "c875b2c5aafba376fa9b4cfd08ccd716fa0a35be"
+    status: "completed"
+    conclusion: "success"
+```
+
+### Root Cause: Unknown
+- **Symptom**: Webhooks stopped being delivered to local server
+- **GitHub was sending** webhooks to smee.io correctly
+- **Smee.io was receiving** them correctly  
+- **Local server wasn't processing** forwarded webhooks
+- **Simple restart resolved** the connection issue
+
+### Debugging Lesson
+**If webhooks stop working**: Try restarting the local development server first before deep debugging.
+
+**Possible causes** (unconfirmed):
+- Smee.io connection timeout/disconnect
+- Local network connectivity issue
+- Node.js process state corruption
+- WebSocket connection dropped
+
+## Status  
+**RESOLVED**: Webhook delivery restored via server restart.
+
+**Next**: Continue with PR workflow testing and branch protection setup.
