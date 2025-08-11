@@ -2,7 +2,7 @@
   "name": "cogni-git-review",
   "version": "1.0.0",
   "private": true,
-  "description": "CogniDAO's primary code management bot, built as a github app. ",
+  "description": "CogniDAO's primary code management bot, built as a github app.",
   "author": "derekg1729",
   "license": "ISC",
   "homepage": "https://github.com//",
