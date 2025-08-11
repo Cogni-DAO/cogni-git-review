@@ -1,7 +1,10 @@
 // Checks API example
 // See: https://developer.github.com/v3/checks/ to learn more
 
-const CHECK_NAME = "Cogni Git Review";
+const CHECK_NAME = "Cogni Git Commit Check";
+// const CHECK_DESCRIPTION = "Mock Code review completed successfully!";
+const PR_REVIEW_NAME = "Cogni Git PR Review";
+// const PR_REVIEW_DESCRIPTION = "Mock PR review completed successfully!";
 
 /**
  * This is the main entrypoint to your Probot app
@@ -16,7 +19,7 @@ export default (app) => {
     const startTime = new Date();
     const { head_branch: headBranch, head_sha: headSha } =
       context.payload.check_suite;
-    
+
     return context.octokit.checks.create(
       context.repo({
         name: CHECK_NAME,
@@ -37,7 +40,7 @@ export default (app) => {
   async function handleCheckRerun(context) {
     const startTime = new Date();
     const { head_sha: headSha } = context.payload.check_run;
-    
+
     return context.octokit.checks.create(
       context.repo({
         name: CHECK_NAME,
@@ -57,19 +60,19 @@ export default (app) => {
   async function handlePullRequest(context) {
     const startTime = new Date();
     const { pull_request } = context.payload;
-    
+
     // Mock: Create and immediately complete check run
     return context.octokit.checks.create(
       context.repo({
-        name: CHECK_NAME,
+        name: PR_REVIEW_NAME,
         head_sha: pull_request.head.sha,
         status: "completed",
         started_at: startTime,
         conclusion: "success",
         completed_at: new Date(),
         output: {
-          title: CHECK_NAME,
-          summary: `Pull request #${pull_request.number} reviewed and approved by Git Cogni v1.0`,
+          title: PR_REVIEW_NAME,
+          summary: `PR #${pull_request.number} MOCK reviewed and approved by Git Cogni v1.0`,
         },
       }),
     );
