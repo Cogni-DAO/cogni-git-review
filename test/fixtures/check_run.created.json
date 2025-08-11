@@ -1,5 +1,5 @@
 {
-  "name": "My app!",
+  "name": "Git Cogni",
   "head_branch": "hiimbex-patch-46",
   "head_sha": "50e5628cda538bcbb6f3fec3edebe4bb5afb3891",
   "status": "completed",
@@ -7,7 +7,7 @@
   "conclusion": "success",
   "completed_at": "2018-10-05T17:35:53.683Z",
   "output": {
-    "title": "Probot check!",
+    "title": "Git Cogni v1 Review",
     "summary": "The check has passed!"
   }
 }
