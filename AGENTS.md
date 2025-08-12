@@ -90,6 +90,8 @@ npm test  # Runs Node.js native tests with nock mocks
 
 ### Files Structure
 - `index.js` - Main bot logic
+- `src/spec-loader.js` - Loads and parses `.cogni/repo-spec.yaml` with graceful fallbacks
+- `.cogni/repo-spec.yaml` - Repository specification file
 - `app.yml` - GitHub App manifest (permissions/events)
 - `test/` - Test fixtures and specs
 - `test/fixtures/` - Mock webhook payloads and certs

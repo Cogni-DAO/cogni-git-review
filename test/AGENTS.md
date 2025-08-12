@@ -1,32 +1,53 @@
 # Test Structure - Cogni Git Review Bot
 
+## Testing Philosophy: DRY Tests with Reusable Fixtures
+
+**Key Principle**: Reuse and build reusable test fixtures whenever possible. Avoid duplicating YAML specs, mock contexts, or test data.
+
 ## Current Test Architecture
 
-**Type**: Mocked-integration tests (in-process)  
+### **Unit Tests** - Spec Loader
+**Location**: `test/simple-spec-test.js`  
+**Coverage**: Spec loading, caching, error handling with direct mocking  
+**Status**: ✅ 8 tests passing  
+
+### **Integration Tests** - Webhook Flow
+**Location**: `test/integration/simple-integration.test.js`  
+**Coverage**: Complete webhook → spec loading → check creation flow  
+**Status**: ✅ 2 tests passing  
+
+### **Legacy Tests** - Original Mock Integration  
 **Location**: `test/mock-integration/webhook-handlers.test.js`  
-**Coverage**: Webhook handlers exercised via `probot.receive()` with outbound GitHub API mocked by `nock`
+**Status**: ⚠️ Outdated (pre-spec-loading era)  
 
-### What These Tests Do
+## DRY Test Fixtures 🎯
 
-Tests the complete **webhook → event handler → GitHub API** flow:
-- Receive realistic GitHub webhook payloads
-- Process through bot event handlers  
-- Mock GitHub API responses
-- Verify correct API calls are made
+### **Repo Spec Fixtures** - NEW!
+**Location**: `test/fixtures/repo-specs.js`  
+**Purpose**: Reusable YAML specs and mock contexts to eliminate duplication  
+**Usage**: Import and use across all tests
 
-### Test Categories
+**Available Fixtures**:
+```javascript
+import { SPEC_FIXTURES, createMockContext, createMockContextWithSpec } from './fixtures/repo-specs.js';
 
-**Webhook Handler Tests** (4 tests):
-- `pull_request.opened` → Creates "Cogni Git PR Review" check
-- `pull_request.synchronize` → Creates "Cogni Git PR Review" check  
-- `check_run.rerequested` → Creates "Cogni Git Commit Check"
-- `check_suite.requested` → Creates "Cogni Git Commit Check"
+// Predefined specs
+SPEC_FIXTURES.minimal      // Basic working spec
+SPEC_FIXTURES.full         // All fields populated  
+SPEC_FIXTURES.bootstrap    // Bootstrap mode
+SPEC_FIXTURES.advisory     // Advisory mode
+SPEC_FIXTURES.customName   // Custom check name
+SPEC_FIXTURES.invalidYaml  // Malformed YAML
+SPEC_FIXTURES.invalidStructure // Missing required sections
 
-**Payload Validation Tests** (4 tests):
-- Verify webhook payloads have required fields for each event type
+// Mock context factories
+createMockContext("org", "repo", "success")     // Working API
+createMockContext("org", "repo", "not_found")   // 404 response
+createMockContext("org", "repo", "invalid_yaml") // Bad YAML
+createMockContextWithSpec(yamlString)           // Custom spec content
+```
 
-## Test Fixtures
-
+### **Webhook Fixtures** - Existing
 **Location**: `test/fixtures/`  
 **Naming**: `<event>.<action>.complete.json` (e.g., `pull_request.opened.complete.json`)  
 **Source**: Sanitized real webhook payloads (no secrets)  
@@ -115,20 +136,36 @@ Tests the complete **webhook → event handler → GitHub API** flow:
 
 ## Running Tests
 
-Current setup:
+**Working Tests** (✅ 10 tests passing):
 ```bash
-npm test  # Run all tests (8/8 currently passing)
+npx node --test test/simple-spec-test.js test/integration/simple-integration.test.js
 ```
 
-Recommended `package.json` scripts for future organization:
-```json
-{
-  "scripts": {
-    "test:unit": "node --test test/unit",
-    "test:mocked": "node --test test/mock-integration",
-    "test": "npm run test:mocked"
-  }
-}
+**All Tests** (⚠️ includes failing legacy tests):
+```bash
+npm test  # Currently 10/23 passing due to legacy test issues
 ```
 
-**All tests should pass** before committing changes.
+**Individual Test Suites**:
+```bash
+npx node --test test/simple-spec-test.js           # Unit tests (8 tests)
+npx node --test test/integration/simple-integration.test.js  # Integration (2 tests)
+```
+
+## Test Development Guidelines
+
+### **DO** ✅
+- **Reuse fixtures**: Always use `test/fixtures/repo-specs.js` for spec-related tests
+- **DRY principle**: Create reusable mock factories rather than inline duplicates
+- **Clear test names**: `loadRepoSpec parses valid minimal spec` vs `test spec loading`
+- **Focus on behavior**: Test what the function does, not how it does it
+- **Use working tests as templates**: Copy from `test/simple-spec-test.js` patterns
+
+### **DON'T** ❌  
+- **Duplicate YAML strings**: Use `SPEC_FIXTURES.*` instead
+- **Inline mock contexts**: Use `createMockContext()` factories
+- **Complex HTTP mocking**: Use direct function mocking when possible
+- **Vague assertions**: Be specific about expected behavior
+- **Skip cleanup**: Always clear caches and mocks in test teardown
+
+**All working tests should pass** before committing changes.
