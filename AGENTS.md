@@ -11,6 +11,8 @@ This bot is incredibly new, immature, and is in its infancy. beware.
 - **Main Entry**: `index.js`
 - **Events**: `check_suite`, `check_run`, `pull_request`
 
+**Architecture Specification**: cogni memory block id: 8e79bc85-3da9-4d17-b0ed-70937551a4ba
+
 ## Key Components
 
 ### Bot Functionality
