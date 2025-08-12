@@ -1,10 +1,11 @@
 // Checks API example
 // See: https://developer.github.com/v3/checks/ to learn more
 
+import { loadRepoSpec } from './src/spec-loader.js';
+
 const CHECK_NAME = "Cogni Git Commit Check";
-// const CHECK_DESCRIPTION = "Mock Code review completed successfully!";
 const PR_REVIEW_NAME = "Cogni Git PR Review";
-// const PR_REVIEW_DESCRIPTION = "Mock PR review completed successfully!";
+const SPEC_PATH = '.cogni/repo-spec.yaml';
 
 /**
  * This is the main entrypoint to your Probot app
@@ -67,18 +68,38 @@ export default (app) => {
     const startTime = new Date();
     const { pull_request } = context.payload;
 
-    // Mock: Create and immediately complete check run
+    // NEW: Load repository spec
+    const { spec, source, error } = await loadRepoSpec(context, pull_request.head.sha);
+    console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
+    
+    // Determine check behavior based on spec
+    const checkName = spec.gates.check_presentation?.name || PR_REVIEW_NAME;
+    let conclusion = "success";
+    let summary = `PR #${pull_request.number} reviewed by Cogni Git Review`;
+    
+    // Handle missing/invalid spec cases
+    if (source === 'default' && spec.gates.on_missing_spec === 'neutral_with_annotation') {
+      conclusion = "neutral";
+      summary = error 
+        ? `Spec validation failed: ${error}. Using default configuration.`
+        : `No .cogni/repo-spec.yaml found. Using default configuration.`;
+    }
+
+    // For now, keep the existing mock behavior but with spec-aware messaging
     return context.octokit.checks.create(
       context.repo({
-        name: PR_REVIEW_NAME,
+        name: checkName,
         head_sha: pull_request.head.sha,
         status: "completed",
         started_at: startTime,
-        conclusion: "success",
+        conclusion,
         completed_at: new Date(),
         output: {
-          title: PR_REVIEW_NAME,
-          summary: `PR #${pull_request.number} MOCK reviewed and approved by Git Cogni v1.0`,
+          title: checkName,
+          summary,
+          text: source === 'file' 
+            ? `✅ Repository spec loaded successfully from ${SPEC_PATH}\n\nMode: ${spec.gates.spec_mode}\nCurrent implementation: MOCK (local gates coming soon)`
+            : `ℹ️ No repository spec found at ${SPEC_PATH}\n\nFalling back to default configuration.\n\nTo configure this repository, add a .cogni/repo-spec.yaml file.`
         },
       }),
     );

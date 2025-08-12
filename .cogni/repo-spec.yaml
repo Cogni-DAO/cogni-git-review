@@ -1,0 +1,21 @@
+intent:
+  name: cogni-git-review
+  mission: Basic GitHub code review bot with essential hygiene checks
+  ownership:
+    maintainers: ['@Cogni-DAO/core']
+    maturity: alpha
+
+gates:
+  spec_mode: bootstrap
+  on_missing_spec: neutral_with_annotation
+  deny_paths: 
+    - '**/*.exe'
+    - '**/*.dll' 
+    - '**/.env'
+    - '.env'
+    - 'secrets/**'
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500
+  check_presentation:
+    name: 'Cogni Git PR Review'
