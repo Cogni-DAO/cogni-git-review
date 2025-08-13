@@ -11,7 +11,7 @@ const PR_REVIEW_NAME = "Cogni Git PR Review";
  * @param {import('probot').Probot} app
  */
 export default (app) => {
-  if (process.env.LOG_ALL_EVENTS) {
+  if (process.env.LOG_ALL_EVENTS === '1') {
     app.onAny((context) => {
       console.log(`🔍 EVENT: ${context.name}.${context.payload.action || 'no-action'}`);
     });
@@ -21,11 +21,14 @@ export default (app) => {
   app.on(["pull_request.opened", "pull_request.synchronize"], handlePullRequest);
 
   async function createCheckOnSha(context, sha, conclusion, summary, text) {
+    const started_at = new Date();
     return context.octokit.checks.create(context.repo({
       name: PR_REVIEW_NAME,
       head_sha: sha,
       status: "completed",
+      started_at,
       conclusion,
+      completed_at: new Date(),
       output: { title: PR_REVIEW_NAME, summary, text }
     }));
   }
@@ -101,26 +104,37 @@ export default (app) => {
       return;
     }
 
-    // Find associated PR(s) for this commit SHA
-    const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
-      context.repo({ commit_sha: headSha })
-    );
+    try {
+      // Find associated PR(s) for this commit SHA
+      const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+        context.repo({ commit_sha: headSha })
+      );
 
-    const pull_request =
-      assoc.find(pr => pr.state === 'open') || assoc[0];
+      const pull_request =
+        assoc.find(pr => pr.state === 'open') || assoc[0];
 
-    if (!pull_request) {
-      // Surface a clear failure right on that SHA so users see why rerun did nothing
+      if (!pull_request) {
+        // Surface a clear failure right on that SHA so users see why rerun did nothing
+        return createCheckOnSha(
+          context,
+          headSha,
+          'failure',
+          'No associated PR found',
+          'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
+        );
+      }
+
+      return evaluateAndCreateCheck(context, pull_request);
+    } catch (error) {
+      console.error(`🔄 PR lookup failed during rerun for ${headSha}:`, error);
       return createCheckOnSha(
         context,
         headSha,
-        'failure',
-        'No associated PR found',
-        'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
+        'neutral',
+        'Spec could not be loaded (transient error)',
+        'GitHub API/network issue during rerun. Re-run the check or try again.'
       );
     }
-
-    return evaluateAndCreateCheck(context, pull_request);
   }
 
   // For more information on building apps:
