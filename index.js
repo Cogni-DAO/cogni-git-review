@@ -68,41 +68,53 @@ export default (app) => {
     const startTime = new Date();
     const { pull_request } = context.payload;
 
-    // NEW: Load repository spec
-    const { spec, source, error } = await loadRepoSpec(context, pull_request.head.sha);
-    console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
-    
-    // Determine check behavior based on spec
-    const checkName = spec.gates.check_presentation?.name || PR_REVIEW_NAME;
-    let conclusion = "success";
-    let summary = `PR #${pull_request.number} reviewed by Cogni Git Review`;
-    
-    // Handle missing/invalid spec cases
-    if (source === 'default' && spec.gates.on_missing_spec === 'neutral_with_annotation') {
-      conclusion = "neutral";
-      summary = error 
-        ? `Spec validation failed: ${error}. Using default configuration.`
-        : `No .cogni/repo-spec.yaml found. Using default configuration.`;
+    try {
+      // Load repository spec (fail fast - throws on error)
+      const { spec, source } = await loadRepoSpec(context, pull_request.head.sha);
+      console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
+      
+      // Valid spec loaded - proceed with normal check
+      const checkName = spec.gates.check_presentation?.name || PR_REVIEW_NAME;
+      
+      return context.octokit.checks.create(
+        context.repo({
+          name: checkName,
+          head_sha: pull_request.head.sha,
+          status: "completed",
+          started_at: startTime,
+          conclusion: "success", // For now, always success when spec is valid
+          completed_at: new Date(),
+          output: {
+            title: checkName,
+            summary: `PR #${pull_request.number} reviewed by Cogni Git Review`,
+            text: `✅ Repository spec loaded successfully from ${SPEC_PATH}\n\nMode: ${spec.gates.spec_mode}\nSchema: ${spec.schema_version || 'legacy'}\nCurrent implementation: MOCK (local gates coming soon)`
+          },
+        }),
+      );
+    } catch (error) {
+      // Spec loading failed - create neutral check with error details
+      console.log(`📄 Spec loading failed for PR #${pull_request.number}: ${error.message}`);
+      
+      return context.octokit.checks.create(
+        context.repo({
+          name: PR_REVIEW_NAME, // Use default name when no spec
+          head_sha: pull_request.head.sha,
+          status: "completed",
+          started_at: startTime,
+          conclusion: "neutral",
+          completed_at: new Date(),
+          output: {
+            title: PR_REVIEW_NAME,
+            summary: error.message.includes('Not Found') 
+              ? `No .cogni/repo-spec.yaml found`
+              : `Invalid .cogni/repo-spec.yaml`,
+            text: error.message.includes('Not Found')
+              ? `No repository spec file found. Add .cogni/repo-spec.yaml to configure this check.`
+              : `Repository spec validation failed: ${error.message}. Fix the spec file to enable enforcement.`
+          },
+        }),
+      );
     }
-
-    // For now, keep the existing mock behavior but with spec-aware messaging
-    return context.octokit.checks.create(
-      context.repo({
-        name: checkName,
-        head_sha: pull_request.head.sha,
-        status: "completed",
-        started_at: startTime,
-        conclusion,
-        completed_at: new Date(),
-        output: {
-          title: checkName,
-          summary,
-          text: source === 'file' 
-            ? `✅ Repository spec loaded successfully from ${SPEC_PATH}\n\nMode: ${spec.gates.spec_mode}\nCurrent implementation: MOCK (local gates coming soon)`
-            : `ℹ️ No repository spec found at ${SPEC_PATH}\n\nFalling back to default configuration.\n\nTo configure this repository, add a .cogni/repo-spec.yaml file.`
-        },
-      }),
-    );
   }
 
   // For more information on building apps:

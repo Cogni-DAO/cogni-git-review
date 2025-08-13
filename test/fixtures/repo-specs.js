@@ -1,87 +1,99 @@
 // Test fixtures for repository specifications
 
 export const SPEC_FIXTURES = {
-  // Valid minimal spec - just the essentials
-  minimal: `intent:
+  // Valid minimal spec - super-MVP format
+  minimal: `schema_version: '0.2.1'
+
+intent:
   name: minimal-project
-  mission: Basic project configuration
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Basic project functionality
+  non_goals:
+    - Complex features
 
 gates:
   spec_mode: enforced
+  on_missing_spec: neutral_with_annotation
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500
   check_presentation:
     name: 'Cogni Git PR Review'`,
 
-  // Valid full spec - all fields populated
-  full: `intent:
+  // Valid full spec - super-MVP format with all optional fields
+  full: `schema_version: '0.2.1'
+
+intent:
   name: full-project
-  mission: Comprehensive project with all configuration options
   goals:
     - Primary goal of the project
     - Secondary goal
   non_goals:
     - What this project does not do
-  ownership:
-    maintainers: ['@test-org/maintainers', '@test-org/admins']
-    maturity: beta
 
 gates:
   spec_mode: enforced
   on_missing_spec: neutral_with_annotation
-  deny_paths: 
-    - '**/*.exe'
-    - '**/*.dll'
-    - 'secrets/**'
-    - '.env'
   review_limits:
     max_changed_files: 50
     max_total_diff_kb: 200
-  required_files:
-    - 'README.md'
-    - 'LICENSE'
-  commit_policy:
-    conventional_commits: true
-    signed_off_by: false
   check_presentation:
     name: 'Full Project Check'`,
 
   // Bootstrap mode spec - for gradual rollout
-  bootstrap: `intent:
+  bootstrap: `schema_version: '0.2.1'
+
+intent:
   name: bootstrap-project
-  mission: Project in bootstrap mode for safe rollout
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Project in bootstrap mode for safe rollout
+  non_goals:
+    - Heavy validation during initial rollout
 
 gates:
   spec_mode: bootstrap
   on_missing_spec: neutral_with_annotation
-  deny_paths: ['**/*.exe', 'secrets/**']
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500
   check_presentation:
     name: 'Bootstrap Check'`,
 
   // Advisory mode spec - for testing
-  advisory: `intent:
+  advisory: `schema_version: '0.2.1'
+
+intent:
   name: advisory-project
-  mission: Project in advisory mode for evaluation
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Project in advisory mode for evaluation
+  non_goals:
+    - Blocking enforcement during testing
 
 gates:
   spec_mode: advisory
-  deny_paths: ['**/*.exe']
+  on_missing_spec: neutral_with_annotation
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500
   check_presentation:
     name: 'Advisory Check'`,
 
   // Custom check name spec
-  customName: `intent:
+  customName: `schema_version: '0.2.1'
+
+intent:
   name: custom-check-project
-  mission: Project with custom check name
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Project with custom check name
+  non_goals:
+    - Default naming conventions
 
 gates:
   spec_mode: enforced
+  on_missing_spec: neutral_with_annotation
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500
   check_presentation:
     name: 'Custom Repository Check'`,
 
@@ -101,13 +113,22 @@ random_field: value`,
   empty: ``,
 
   // Only intent, missing gates
-  missingGates: `intent:
+  missingGates: `schema_version: '0.2.1'
+
+intent:
   name: incomplete-project
-  mission: Missing gates section`,
+  goals:
+    - Missing gates section`,
 
   // Only gates, missing intent
-  missingIntent: `gates:
+  missingIntent: `schema_version: '0.2.1'
+
+gates:
   spec_mode: enforced
+  on_missing_spec: neutral_with_annotation
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500
   check_presentation:
     name: 'Check Name'`
 };
@@ -115,19 +136,16 @@ random_field: value`,
 // Expected parsed results for valid specs
 export const EXPECTED_SPECS = {
   minimal: {
+    schema_version: '0.2.1',
     intent: {
       name: 'minimal-project',
-      mission: 'Basic project configuration',
-      ownership: {
-        maintainers: ['@test-org/maintainers'],
-        maturity: 'alpha' // Should be merged from defaults
-      }
+      goals: ['Basic project functionality'],
+      non_goals: ['Complex features']
     },
     gates: {
       spec_mode: 'enforced',
-      on_missing_spec: 'neutral_with_annotation', // From defaults
-      deny_paths: ['**/*.exe', '**/*.dll', '**/.env', '.env', 'secrets/**'], // From defaults
-      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 }, // From defaults
+      on_missing_spec: 'neutral_with_annotation',
+      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
       check_presentation: {
         name: 'Cogni Git PR Review'
       }
@@ -135,12 +153,16 @@ export const EXPECTED_SPECS = {
   },
 
   customName: {
+    schema_version: '0.2.1',
     intent: {
       name: 'custom-check-project',
-      mission: 'Project with custom check name'
+      goals: ['Project with custom check name'],
+      non_goals: ['Default naming conventions']
     },
     gates: {
       spec_mode: 'enforced',
+      on_missing_spec: 'neutral_with_annotation',
+      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
       check_presentation: {
         name: 'Custom Repository Check'
       }

@@ -3,22 +3,6 @@ import yaml from 'js-yaml';
 // Spec file constants
 const SPEC_PATH = '.cogni/repo-spec.yaml';
 
-// Default spec used when file is missing or invalid
-const DEFAULT_SPEC = {
-  intent: {
-    name: 'unknown-repository',
-    mission: 'Repository without cogni spec configuration',
-    ownership: { maintainers: [], maturity: 'alpha' }
-  },
-  gates: {
-    spec_mode: 'bootstrap',
-    on_missing_spec: 'neutral_with_annotation',
-    deny_paths: ['**/*.exe', '**/*.dll', '**/.env', '.env', 'secrets/**'],
-    review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
-    check_presentation: { name: 'Cogni Git PR Review' }
-  }
-};
-
 // Simple cache for specs by SHA (prevent repeated API calls)
 const specCache = new Map();
 
@@ -30,9 +14,11 @@ const specCache = new Map();
  */
 export async function loadRepoSpec(context, sha) {
   const cacheKey = `${context.repo().owner}:${context.repo().repo}:${sha}`;
+  console.log(`🔍 Cache key: ${cacheKey}, Cache has: ${specCache.has(cacheKey)}, Cache size: ${specCache.size}`);
   
   // Check cache first
   if (specCache.has(cacheKey)) {
+    console.log(`✅ Cache hit for ${cacheKey}`);
     return specCache.get(cacheKey);
   }
   
@@ -58,44 +44,26 @@ export async function loadRepoSpec(context, sha) {
       throw new Error('Invalid spec structure: missing intent or gates sections');
     }
     
-    // Merge with defaults to ensure all required fields exist
-    const mergedSpec = {
-      intent: { ...DEFAULT_SPEC.intent, ...spec.intent },
-      gates: { ...DEFAULT_SPEC.gates, ...spec.gates }
-    };
-    
-    const result = { spec: mergedSpec, source: 'file' };
+    // Return the spec as-is (no defaults merging) - fail fast
+    const result = { spec, source: 'file' };
     specCache.set(cacheKey, result);
     return result;
     
   } catch (error) {
     console.log(`📄 Spec loading failed for ${cacheKey}: ${error.message}`);
     
-    // Return default spec with error info
-    const result = {
-      spec: DEFAULT_SPEC,
-      source: 'default',
-      error: error.message
-    };
-    
-    specCache.set(cacheKey, result);
-    return result;
+    // True fail-fast - throw exception immediately
+    throw new Error(`Failed to load repository spec: ${error.message}`);
   }
-}
-
-/**
- * Get the default spec (useful for testing)
- * @returns {object} The default specification
- */
-export function getDefaultSpec() {
-  return structuredClone(DEFAULT_SPEC);
 }
 
 /**
  * Clear the spec cache (useful for testing)
  */
 export function clearSpecCache() {
+  console.log(`🧹 Clearing cache (was size: ${specCache.size})`);
   specCache.clear();
+  console.log(`🧹 Cache cleared (now size: ${specCache.size})`);
 }
 
 /**

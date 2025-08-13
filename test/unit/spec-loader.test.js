@@ -1,16 +1,24 @@
 import nock from "nock";
-import { loadRepoSpec, getDefaultSpec, clearSpecCache, getSpecCacheStats } from "../../src/spec-loader.js";
+import { loadRepoSpec, clearSpecCache, getSpecCacheStats } from "../../src/spec-loader.js";
+import { SPEC_FIXTURES } from "../fixtures/repo-specs.js";
 import { describe, beforeEach, afterEach, test } from "node:test";
 import assert from "node:assert";
 
-// Mock context object for testing  
+// Mock context object using same pattern as integration tests
 const createMockContext = (owner = "test-owner", repo = "test-repo") => ({
-  repo: () => ({ owner, repo }),
+  repo: (params = {}) => ({ owner, repo, ...params }),
   octokit: {
     repos: {
       getContent: async (params) => {
-        // This will be intercepted by nock, but we need the function to exist
-        throw new Error("Should be mocked by nock");
+        // Make actual HTTP call that nock can intercept
+        const url = `https://api.github.com/repos/${params.owner}/${params.repo}/contents/${encodeURIComponent(params.path)}?ref=${params.ref}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          const error = new Error(response.statusText);
+          error.status = response.status;
+          throw error;
+        }
+        return { data: await response.json() };
       }
     }
   }
@@ -31,82 +39,55 @@ describe("Spec Loader Unit Tests", () => {
   test("loads valid spec file successfully", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "abc123";
-    
-    const validSpec = `intent:
-  name: test-project
-  mission: Test project for spec loading
-  ownership:
-    maintainers: ['@test-org/maintainers']
-    maturity: beta
-
-gates:
-  spec_mode: enforced
-  deny_paths: ['**/*.exe', 'secrets/**']
-  review_limits:
-    max_changed_files: 50
-    max_total_diff_kb: 200
-  check_presentation:
-    name: 'Custom Check Name'`;
 
     const mock = nock("https://api.github.com")
       .get("/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: sha })
       .reply(200, {
         type: "file",
-        content: Buffer.from(validSpec).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.full).toString('base64'),
         encoding: "base64"
       });
 
     const result = await loadRepoSpec(context, sha);
 
     assert.strictEqual(result.source, "file");
-    assert.strictEqual(result.spec.intent.name, "test-project");
-    assert.strictEqual(result.spec.intent.maturity, "beta");
+    assert.strictEqual(result.spec.schema_version, "0.2.1");
+    assert.strictEqual(result.spec.intent.name, "full-project");
+    assert.deepStrictEqual(result.spec.intent.goals, ["Primary goal of the project", "Secondary goal"]);
     assert.strictEqual(result.spec.gates.spec_mode, "enforced");
-    assert.strictEqual(result.spec.gates.check_presentation.name, "Custom Check Name");
-    assert.deepStrictEqual(result.spec.gates.deny_paths, ['**/*.exe', 'secrets/**']);
+    assert.strictEqual(result.spec.gates.check_presentation.name, "Full Project Check");
+    assert.deepStrictEqual(result.spec.gates.review_limits, { max_changed_files: 50, max_total_diff_kb: 200 });
     assert.strictEqual(result.error, undefined);
     
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("merges spec with defaults for missing fields", async () => {
+  test("loads minimal valid spec without merging defaults", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "def456";
-    
-    // Minimal spec missing many fields
-    const minimalSpec = `intent:
-  name: minimal-project
-  
-gates:
-  spec_mode: advisory`;
 
     const mock = nock("https://api.github.com")
       .get("/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: sha })
       .reply(200, {
         type: "file",
-        content: Buffer.from(minimalSpec).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
         encoding: "base64"
       });
 
     const result = await loadRepoSpec(context, sha);
-    const defaultSpec = getDefaultSpec();
 
     assert.strictEqual(result.source, "file");
     assert.strictEqual(result.spec.intent.name, "minimal-project");
-    assert.strictEqual(result.spec.gates.spec_mode, "advisory");
-    
-    // Should have defaults merged in
-    assert.strictEqual(result.spec.intent.mission, defaultSpec.intent.mission);
-    assert.deepStrictEqual(result.spec.gates.deny_paths, defaultSpec.gates.deny_paths);
-    assert.deepStrictEqual(result.spec.gates.review_limits, defaultSpec.gates.review_limits);
-    assert.strictEqual(result.spec.gates.on_missing_spec, defaultSpec.gates.on_missing_spec);
+    assert.strictEqual(result.spec.gates.spec_mode, "enforced");
+    assert.deepStrictEqual(result.spec.intent.goals, ["Basic project functionality"]);
+    assert.strictEqual(result.error, undefined);
     
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("handles missing spec file with default fallback", async () => {
+  test("handles missing spec file by throwing exception", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "missing123";
     
@@ -115,72 +96,60 @@ gates:
       .query({ ref: sha })
       .reply(404, { message: "Not Found" });
 
-    const result = await loadRepoSpec(context, sha);
-    const defaultSpec = getDefaultSpec();
-
-    assert.strictEqual(result.source, "default");
-    assert.deepStrictEqual(result.spec, defaultSpec);
-    assert(result.error.includes("404"));
+    // Should throw exception instead of returning error object
+    await assert.rejects(
+      () => loadRepoSpec(context, sha),
+      /Failed to load repository spec/
+    );
     
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("handles invalid YAML with default fallback", async () => {
+  test("handles invalid YAML by throwing exception", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "invalid123";
-    
-    const invalidYaml = `intent:
-  name: test
-  invalid: [unclosed array
-gates:
-  mode: invalid`;
 
     const mock = nock("https://api.github.com")
       .get("/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: sha })
       .reply(200, {
         type: "file",
-        content: Buffer.from(invalidYaml).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.invalidYaml).toString('base64'),
         encoding: "base64"
       });
 
-    const result = await loadRepoSpec(context, sha);
-    const defaultSpec = getDefaultSpec();
-
-    assert.strictEqual(result.source, "default");
-    assert.deepStrictEqual(result.spec, defaultSpec);
-    assert(result.error && result.error.length > 0);
+    // Should throw exception for invalid YAML
+    await assert.rejects(
+      () => loadRepoSpec(context, sha),
+      /Failed to load repository spec/
+    );
     
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("handles spec with missing required sections", async () => {
+  test("handles spec with missing required sections by throwing exception", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "incomplete123";
-    
-    const incompleteSpec = `name: test-project
-description: Missing required sections`;
 
     const mock = nock("https://api.github.com")
       .get("/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: sha })
       .reply(200, {
         type: "file",
-        content: Buffer.from(incompleteSpec).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.invalidStructure).toString('base64'),
         encoding: "base64"
       });
 
-    const result = await loadRepoSpec(context, sha);
-    const defaultSpec = getDefaultSpec();
-
-    assert.strictEqual(result.source, "default");
-    assert.deepStrictEqual(result.spec, defaultSpec);
-    assert.strictEqual(result.error, "Invalid spec structure: missing intent or gates sections");
+    // Should throw exception for missing required sections
+    await assert.rejects(
+      () => loadRepoSpec(context, sha),
+      /Failed to load repository spec.*Invalid spec structure/
+    );
     
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("handles directory instead of file", async () => {
+  test("handles directory instead of file by throwing exception", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "directory123";
     
@@ -192,12 +161,11 @@ description: Missing required sections`;
         name: "repo-spec.yaml"
       });
 
-    const result = await loadRepoSpec(context, sha);
-    const defaultSpec = getDefaultSpec();
-
-    assert.strictEqual(result.source, "default");
-    assert.deepStrictEqual(result.spec, defaultSpec);
-    assert.strictEqual(result.error, "Spec path is not a file");
+    // Should throw exception when path is directory
+    await assert.rejects(
+      () => loadRepoSpec(context, sha),
+      /Failed to load repository spec.*Spec path is not a file/
+    );
     
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
@@ -205,11 +173,6 @@ description: Missing required sections`;
   test("caches specs by SHA to prevent duplicate API calls", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "cached123";
-    
-    const validSpec = `intent:
-  name: cached-test
-gates:
-  spec_mode: bootstrap`;
 
     // Mock should only be called once
     const mock = nock("https://api.github.com")
@@ -217,19 +180,19 @@ gates:
       .query({ ref: sha })
       .reply(200, {
         type: "file",
-        content: Buffer.from(validSpec).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.bootstrap).toString('base64'),
         encoding: "base64"
       });
 
     // First call - hits API
     const result1 = await loadRepoSpec(context, sha);
     assert.strictEqual(result1.source, "file");
-    assert.strictEqual(result1.spec.intent.name, "cached-test");
+    assert.strictEqual(result1.spec.intent.name, "bootstrap-project");
 
-    // Second call - should use cache
+    // Second call - should use cache (no additional API call)
     const result2 = await loadRepoSpec(context, sha);
     assert.strictEqual(result2.source, "file");
-    assert.strictEqual(result2.spec.intent.name, "cached-test");
+    assert.strictEqual(result2.spec.intent.name, "bootstrap-project");
 
     // Verify cache stats
     const cacheStats = getSpecCacheStats();
@@ -244,16 +207,13 @@ gates:
     const context2 = createMockContext("org2", "repo2");
     const sha1 = "sha1";
     const sha2 = "sha2";
-    
-    const spec1 = `intent:\n  name: project1\ngates:\n  spec_mode: enforced`;
-    const spec2 = `intent:\n  name: project2\ngates:\n  spec_mode: advisory`;
 
     const mock1 = nock("https://api.github.com")
       .get("/repos/org1/repo1/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: sha1 })
       .reply(200, {
         type: "file",
-        content: Buffer.from(spec1).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.full).toString('base64'),
         encoding: "base64"
       });
 
@@ -262,17 +222,17 @@ gates:
       .query({ ref: sha2 })
       .reply(200, {
         type: "file",
-        content: Buffer.from(spec2).toString('base64'),
+        content: Buffer.from(SPEC_FIXTURES.advisory).toString('base64'),
         encoding: "base64"
       });
 
     const result1 = await loadRepoSpec(context1, sha1);
     const result2 = await loadRepoSpec(context2, sha2);
 
-    assert.strictEqual(result1.spec.intent.name, "project1");
+    assert.strictEqual(result1.spec.intent.name, "full-project");
     assert.strictEqual(result1.spec.gates.spec_mode, "enforced");
     
-    assert.strictEqual(result2.spec.intent.name, "project2");
+    assert.strictEqual(result2.spec.intent.name, "advisory-project");
     assert.strictEqual(result2.spec.gates.spec_mode, "advisory");
 
     // Verify both are cached
@@ -283,19 +243,6 @@ gates:
     assert.deepStrictEqual(mock2.pendingMocks(), []);
   });
 
-  test("getDefaultSpec returns a clean copy", () => {
-    const default1 = getDefaultSpec();
-    const default2 = getDefaultSpec();
-    
-    // Should be equal but not the same object
-    assert.deepStrictEqual(default1, default2);
-    assert.notStrictEqual(default1, default2);
-    
-    // Modifying one shouldn't affect the other
-    default1.intent.name = "modified";
-    assert.notStrictEqual(default1.intent.name, default2.intent.name);
-  });
-
   test("clearSpecCache removes all cached entries", async () => {
     const context = createMockContext("test-org", "test-repo");
     const sha = "cache-clear-test";
@@ -303,7 +250,11 @@ gates:
     const mock = nock("https://api.github.com")
       .get("/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: sha })
-      .reply(404);
+      .reply(200, {
+        type: "file",
+        content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
+        encoding: "base64"
+      });
 
     // Load something to populate cache
     await loadRepoSpec(context, sha);

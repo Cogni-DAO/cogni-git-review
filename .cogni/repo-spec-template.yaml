@@ -1,44 +1,22 @@
 # Cogni Git Review Repository Specification Template
 # Copy this file to .cogni/repo-spec.yaml and customize for your repository
 
+schema_version: '0.2.1'
+
 intent:
   name: my-project
-  mission: Brief description of what this repository does
   goals:
     - Primary goal of the project
-    - Secondary goal
   non_goals:
-    - What this project explicitly does not do
-  ownership:
-    maintainers: ['@my-org/maintainers']
-    maturity: alpha  # alpha|beta|stable
+    - Explicitly out-of-scope items
 
 gates:
-  # Operational mode: how strict should enforcement be?
-  spec_mode: enforced  # enforced|advisory|bootstrap
-  
-  # What to do if this spec file is missing from other repos
-  on_missing_spec: neutral_with_annotation  # neutral_with_annotation|fail
-  
-  # File patterns to block (glob patterns)
-  deny_paths:
-    - '**/*.exe'      # Block executable files
-    - '**/*.dll'      # Block dynamic libraries  
-    - '**/.env'       # Block environment files
-    - '.env'          # Block root env file
-    - 'secrets/**'    # Block secrets directory
-    
-  # Limits on PR size to prevent overwhelming reviews
+  spec_mode: enforced                      # enforced|advisory|bootstrap
+  on_missing_spec: neutral_with_annotation # graceful on missing/invalid spec
+
   review_limits:
-    max_changed_files: 100      # Maximum files that can be changed in one PR
-    max_total_diff_kb: 500      # Maximum total diff size in KB
-    
-  # Required files for repository hygiene (optional)
-  # required_files:
-  #   - 'README.md'
-  #   - 'LICENSE'
-  #   - 'CODE_OF_CONDUCT.md'
-    
-  # Check run configuration
+    max_changed_files: 30
+    max_total_diff_kb: 100
+
   check_presentation:
-    name: 'Cogni Git PR Review'  # Name shown in GitHub UI (keep consistent)
+    name: 'Cogni Git PR Review'            # must match required status check
