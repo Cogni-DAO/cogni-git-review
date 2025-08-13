@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { clearSpecCache } from "../../src/spec-loader.js";
+import { SPEC_FIXTURES } from "../fixtures/repo-specs.js";
 
 import { describe, beforeEach, afterEach, test } from "node:test";
 import assert from "node:assert";
@@ -49,23 +50,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
 
   test("pull_request.opened with valid spec creates check with spec-based name", async () => {
     const customCheckName = "Custom Repository Check";
-    const validSpec = `schema_version: '0.2.1'
-
-intent:
-  name: custom-project
-  goals:
-    - Project with custom check name
-  non_goals:
-    - Default naming conventions
-
-gates:
-  spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
-  review_limits:
-    max_changed_files: 30
-    max_total_diff_kb: 100
-  check_presentation:
-    name: '${customCheckName}'`;
+    const validSpec = SPEC_FIXTURES.customName;
 
     const mocks = nock("https://api.github.com")
       // Mock auth token
@@ -94,9 +79,9 @@ gates:
         assert.strictEqual(body.status, "completed");
         assert.strictEqual(body.conclusion, "success");
         assert.strictEqual(body.output.title, customCheckName);
-        assert(body.output.summary.includes("PR #1"));
-        assert(body.output.text.includes("Repository spec loaded successfully"));
-        assert(body.output.text.includes("Mode: enforced"));
+        assert.strictEqual(body.output.summary, "Review limits OK");
+        assert(body.output.text.includes("files="));
+        assert(body.output.text.includes("All review limits satisfied"));
         return true;
       })
       .reply(200, { 
@@ -198,15 +183,8 @@ gates:
     assert.deepStrictEqual(mocks.pendingMocks(), []);
   });
 
-  test("pull_request.opened with bootstrap mode spec creates success check", async () => {
-    const bootstrapSpec = `intent:
-  name: bootstrap-project
-  mission: Project in bootstrap mode
-  
-gates:
-  spec_mode: bootstrap
-  check_presentation:
-    name: 'Bootstrap Test Check'`;
+  test("pull_request.opened with minimal spec creates success check", async () => {
+    const minimalSpec = SPEC_FIXTURES.minimal;
 
     const mocks = nock("https://api.github.com")
       // Mock auth token
@@ -224,19 +202,19 @@ gates:
       .query({ ref: "abc123def456789012345678901234567890abcd" })
       .reply(200, {
         type: "file",
-        content: Buffer.from(bootstrapSpec).toString('base64'),
+        content: Buffer.from(minimalSpec).toString('base64'),
         encoding: "base64"
       })
       // Mock check run creation
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check uses bootstrap mode
-        assert.strictEqual(body.name, "Bootstrap Test Check");
+        // Verify the check uses minimal spec (has review_limits but PR data passes)
+        assert.strictEqual(body.name, "Cogni Git PR Review");
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "success"); // Bootstrap mode still shows success for spec loading
-        assert.strictEqual(body.output.title, "Bootstrap Test Check");
-        assert(body.output.text.includes("Repository spec loaded successfully"));
-        assert(body.output.text.includes("Mode: bootstrap"));
+        assert.strictEqual(body.conclusion, "success"); // PR data passes limits
+        assert.strictEqual(body.output.title, "Cogni Git PR Review");
+        assert.strictEqual(body.output.summary, "Review limits OK");
+        assert(body.output.text.includes("All review limits satisfied"));
         return true;
       })
       .reply(200, { 

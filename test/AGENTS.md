@@ -27,24 +27,30 @@
 **Purpose**: Reusable YAML specs and mock contexts to eliminate duplication  
 **Usage**: Import and use across all tests
 
+### **CRITICAL: Always Use Fixtures - No Inline YAML**
+
+**❌ WRONG:**
+```javascript
+const badSpec = `schema_version: '0.2.1'...`;
+```
+
+**✅ RIGHT:**  
+```javascript
+const spec = SPEC_FIXTURES.minimal;
+```
+
 **Available Fixtures**:
 ```javascript
-import { SPEC_FIXTURES, createMockContext, createMockContextWithSpec } from './fixtures/repo-specs.js';
+import { SPEC_FIXTURES, createMockContext } from './fixtures/repo-specs.js';
 
-// Predefined specs
-SPEC_FIXTURES.minimal      // Basic working spec
-SPEC_FIXTURES.full         // All fields populated  
-SPEC_FIXTURES.bootstrap    // Bootstrap mode
-SPEC_FIXTURES.advisory     // Advisory mode
-SPEC_FIXTURES.customName   // Custom check name
-SPEC_FIXTURES.invalidYaml  // Malformed YAML
-SPEC_FIXTURES.invalidStructure // Missing required sections
+SPEC_FIXTURES.minimal           // Basic working spec
+SPEC_FIXTURES.customName        // Custom check name
+SPEC_FIXTURES.behaviorTest30_100 // 30 files, 100KB limits
+SPEC_FIXTURES.invalidYaml       // Malformed YAML
+SPEC_FIXTURES.invalidStructure  // Missing sections
 
-// Mock context factories
-createMockContext("org", "repo", "success")     // Working API
-createMockContext("org", "repo", "not_found")   // 404 response
-createMockContext("org", "repo", "invalid_yaml") // Bad YAML
-createMockContextWithSpec(yamlString)           // Custom spec content
+createMockContext("org", "repo", "success")   // Working API
+createMockContext("org", "repo", "not_found") // 404 response
 ```
 
 ### **Webhook Fixtures** - Existing
@@ -136,14 +142,9 @@ createMockContextWithSpec(yamlString)           // Custom spec content
 
 ## Running Tests
 
-**Working Tests** (✅ 10 tests passing):
+**All Tests**:
 ```bash
-npx node --test test/simple-spec-test.js test/integration/simple-integration.test.js
-```
-
-**All Tests** (⚠️ includes failing legacy tests):
-```bash
-npm test  # Currently 10/23 passing due to legacy test issues
+npm test  # All tests passing: 29/30 (1 skipped)
 ```
 
 **Individual Test Suites**:

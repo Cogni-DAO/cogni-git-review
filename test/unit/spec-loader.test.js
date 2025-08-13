@@ -55,7 +55,6 @@ describe("Spec Loader Unit Tests", () => {
     assert.strictEqual(result.spec.schema_version, "0.2.1");
     assert.strictEqual(result.spec.intent.name, "full-project");
     assert.deepStrictEqual(result.spec.intent.goals, ["Primary goal of the project", "Secondary goal"]);
-    assert.strictEqual(result.spec.gates.spec_mode, "enforced");
     assert.strictEqual(result.spec.gates.check_presentation.name, "Full Project Check");
     assert.deepStrictEqual(result.spec.gates.review_limits, { max_changed_files: 50, max_total_diff_kb: 200 });
     assert.strictEqual(result.error, undefined);
@@ -80,7 +79,6 @@ describe("Spec Loader Unit Tests", () => {
 
     assert.strictEqual(result.source, "file");
     assert.strictEqual(result.spec.intent.name, "minimal-project");
-    assert.strictEqual(result.spec.gates.spec_mode, "enforced");
     assert.deepStrictEqual(result.spec.intent.goals, ["Basic project functionality"]);
     assert.strictEqual(result.error, undefined);
     
@@ -230,10 +228,8 @@ describe("Spec Loader Unit Tests", () => {
     const result2 = await loadRepoSpec(context2, sha2);
 
     assert.strictEqual(result1.spec.intent.name, "full-project");
-    assert.strictEqual(result1.spec.gates.spec_mode, "enforced");
     
     assert.strictEqual(result2.spec.intent.name, "advisory-project");
-    assert.strictEqual(result2.spec.gates.spec_mode, "advisory");
 
     // Verify both are cached
     const cacheStats = getSpecCacheStats();

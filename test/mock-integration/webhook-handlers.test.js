@@ -4,6 +4,7 @@ import { Probot, ProbotOctokit } from "probot";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { SPEC_FIXTURES } from "../fixtures/repo-specs.js";
 
 import { describe, beforeEach, afterEach, test } from "node:test";
 import assert from "node:assert";
@@ -63,14 +64,13 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
         },
       })
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check run creation matches our expected structure
+        // Verify the check run creation matches our expected structure (no spec = neutral)
         assert.strictEqual(body.name, "Cogni Git PR Review");
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "success");
+        assert.strictEqual(body.conclusion, "neutral");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert(body.output.summary.includes("PR #1"));
-        assert(body.output.summary.includes("MOCK reviewed and approved by Git Cogni v1.0"));
+        assert(body.output.summary.includes("Invalid .cogni/repo-spec.yaml"));
         return true;
       })
       .reply(200, { 
@@ -97,14 +97,13 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
         },
       })
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check run for synchronize event
+        // Verify the check run for synchronize event (no spec = neutral)
         assert.strictEqual(body.name, "Cogni Git PR Review");
         assert.strictEqual(body.head_sha, "def456789012345678901234567890abcdef1235");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "success");
+        assert.strictEqual(body.conclusion, "neutral");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert(body.output.summary.includes("PR #1"));
-        assert(body.output.summary.includes("MOCK reviewed and approved by Git Cogni v1.0"));
+        assert(body.output.summary.includes("Invalid .cogni/repo-spec.yaml"));
         return true;
       })
       .reply(200, { 
@@ -115,6 +114,47 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
 
     // Receive the complete PR synchronize webhook event
     await probot.receive({ name: "pull_request", payload: prSynchronizeComplete });
+
+    assert.deepStrictEqual(mock.pendingMocks(), []);
+  });
+
+  test("pull_request.opened with spec creates success check", async () => {
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/12345678/access_tokens")
+      .reply(200, {
+        token: "ghs_test_token",
+        permissions: {
+          checks: "write",
+          pull_requests: "read",
+          metadata: "read",
+        },
+      })
+      // Mock spec loading
+      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
+      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .reply(200, {
+        type: "file",
+        content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
+        encoding: "base64"
+      })
+      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
+        // Verify successful check with spec
+        assert.strictEqual(body.name, "Cogni Git PR Review");
+        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
+        assert.strictEqual(body.status, "completed");
+        assert.strictEqual(body.conclusion, "success");
+        assert.strictEqual(body.output.title, "Cogni Git PR Review");
+        assert.strictEqual(body.output.summary, "Review limits OK");
+        return true;
+      })
+      .reply(200, { 
+        id: 9999999997, 
+        status: "completed", 
+        conclusion: "success" 
+      });
+
+    // Receive the complete PR opened webhook event
+    await probot.receive({ name: "pull_request", payload: prOpenedComplete });
 
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });

@@ -12,7 +12,6 @@ intent:
     - Complex features
 
 gates:
-  spec_mode: enforced
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -31,7 +30,6 @@ intent:
     - What this project does not do
 
 gates:
-  spec_mode: enforced
   review_limits:
     max_changed_files: 50
     max_total_diff_kb: 200
@@ -49,7 +47,6 @@ intent:
     - Heavy validation during initial rollout
 
 gates:
-  spec_mode: bootstrap
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -67,7 +64,6 @@ intent:
     - Blocking enforcement during testing
 
 gates:
-  spec_mode: advisory
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -85,7 +81,6 @@ intent:
     - Default naming conventions
 
 gates:
-  spec_mode: enforced
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -119,7 +114,6 @@ intent:
   missingIntent: `schema_version: '0.2.1'
 
 gates:
-  spec_mode: enforced
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -172,8 +166,6 @@ export const EXPECTED_SPECS = {
       non_goals: ['Complex features']
     },
     gates: {
-      spec_mode: 'enforced',
-      on_missing_spec: 'neutral_with_annotation',
       review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
       check_presentation: {
         name: 'Cogni Git PR Review'
@@ -189,8 +181,6 @@ export const EXPECTED_SPECS = {
       non_goals: ['Default naming conventions']
     },
     gates: {
-      spec_mode: 'enforced',
-      on_missing_spec: 'neutral_with_annotation',
       review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
       check_presentation: {
         name: 'Custom Repository Check'

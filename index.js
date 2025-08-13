@@ -2,7 +2,7 @@
 // See: https://developer.github.com/v3/checks/ to learn more
 
 import { loadRepoSpec } from './src/spec-loader.js';
-import { evaluateLocalGates } from './src/cogni-evaluated-gates.js';
+import { runAllGates } from './src/gates/index.js';
 
 const CHECK_NAME = "Cogni Git Commit Check";
 const PR_REVIEW_NAME = "Cogni Git PR Review";
@@ -77,8 +77,8 @@ export default (app) => {
       // Valid spec loaded - evaluate local gates
       const checkName = spec.gates.check_presentation?.name || PR_REVIEW_NAME;
       
-      // Evaluate PR against review limits
-      const results = await evaluateLocalGates(context, pull_request, spec.gates.review_limits);
+      // Run all gate evaluations
+      const results = await runAllGates(context, pull_request, spec);
       
       // Map evaluation results to check conclusion
       let conclusion = 'success';
