@@ -30,9 +30,6 @@ const checkRunRerequestedComplete = JSON.parse(
   fs.readFileSync(path.join(fixturesPath, "check_run.rerequested.complete.json"), "utf-8"),
 );
 
-const checkSuiteRequestedComplete = JSON.parse(
-  fs.readFileSync(path.join(fixturesPath, "check_suite.requested.complete.json"), "utf-8"),
-);
 
 describe("GitHub Webhook Handler Mock-Integration Tests", () => {
   let probot;
@@ -63,14 +60,18 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
           metadata: "read",
         },
       })
+      // Mock missing spec file
+      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
+      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .reply(404, { message: "Not Found" })
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check run creation matches our expected structure (no spec = neutral)
+        // Verify the check run creation matches our expected structure (no spec = failure)
         assert.strictEqual(body.name, "Cogni Git PR Review");
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "neutral");
+        assert.strictEqual(body.conclusion, "failure");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert(body.output.summary.includes("Invalid .cogni/repo-spec.yaml"));
+        assert(body.output.summary.includes("No .cogni/repo-spec.yaml found"));
         return true;
       })
       .reply(200, { 
@@ -96,14 +97,18 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
           metadata: "read",
         },
       })
+      // Mock missing spec file
+      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
+      .query({ ref: "def456789012345678901234567890abcdef1235" })
+      .reply(404, { message: "Not Found" })
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check run for synchronize event (no spec = neutral)
+        // Verify the check run for synchronize event (no spec = failure)
         assert.strictEqual(body.name, "Cogni Git PR Review");
         assert.strictEqual(body.head_sha, "def456789012345678901234567890abcdef1235");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "neutral");
+        assert.strictEqual(body.conclusion, "failure");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert(body.output.summary.includes("Invalid .cogni/repo-spec.yaml"));
+        assert(body.output.summary.includes("No .cogni/repo-spec.yaml found"));
         return true;
       })
       .reply(200, { 
@@ -159,24 +164,37 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("check_run.rerequested webhook creates Cogni Git Commit Check", async () => {
+  test("check_run.rerequested webhook creates Cogni Git PR Review", async () => {
     const mock = nock("https://api.github.com")
       .post("/app/installations/12345678/access_tokens") 
       .reply(200, {
         token: "ghs_test_token",
         permissions: {
           checks: "write",
+          pull_requests: "read",
           metadata: "read",
         },
       })
+      // Mock API call to find PRs associated with commit
+      .get("/repos/derekg1729/cogni-git-review/commits/abc123def456789012345678901234567890abcd/pulls")
+      .reply(200, [
+        {
+          number: 1,
+          state: "open",
+          head: { sha: "abc123def456789012345678901234567890abcd" },
+          changed_files: 2,
+          additions: 10,
+          deletions: 5
+        }
+      ])
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
         // Verify the check run rerun matches our expected structure
-        assert.strictEqual(body.name, "Cogni Git Commit Check");
+        assert.strictEqual(body.name, "Cogni Git PR Review");
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
         assert.strictEqual(body.conclusion, "success");
-        assert.strictEqual(body.output.title, "Cogni Git Commit Check");
-        assert.strictEqual(body.output.summary, "MOCK Code review re-run completed successfully!");
+        assert.strictEqual(body.output.title, "Cogni Git PR Review");
+        assert.strictEqual(body.output.summary, "Review limits OK");
         return true;
       })
       .reply(200, { 
@@ -191,38 +209,6 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
-  test("check_suite.requested webhook creates Cogni Git Commit Check", async () => {
-    const mock = nock("https://api.github.com")
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: {
-          checks: "write",
-          metadata: "read",
-        },
-      })
-      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check run creation matches our expected structure
-        assert.strictEqual(body.name, "Cogni Git Commit Check");
-        assert.strictEqual(body.head_branch, "feat/integration-testing");
-        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
-        assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "success");
-        assert.strictEqual(body.output.title, "Cogni Git Commit Check");
-        assert.strictEqual(body.output.summary, "MOCK Code review completed successfully!");
-        return true;
-      })
-      .reply(200, { 
-        id: 9999999994, 
-        status: "completed", 
-        conclusion: "success" 
-      });
-
-    // Receive the complete check_suite requested webhook event
-    await probot.receive({ name: "check_suite", payload: checkSuiteRequestedComplete });
-
-    assert.deepStrictEqual(mock.pendingMocks(), []);
-  });
 
   test("validates webhook payload structure - PR opened", async () => {
     // Test that the complete payload has all required fields for our handlers
@@ -261,16 +247,6 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
     assert(typeof checkRunRerequestedComplete.installation.id === "number");
   });
 
-  test("validates webhook payload structure - check_suite requested", async () => {
-    // Test that the complete payload has all required fields for our handlers
-    assert(checkSuiteRequestedComplete.action === "requested");
-    assert(typeof checkSuiteRequestedComplete.check_suite === "object");
-    assert(typeof checkSuiteRequestedComplete.check_suite.head_branch === "string");
-    assert(typeof checkSuiteRequestedComplete.check_suite.head_sha === "string");
-    assert(typeof checkSuiteRequestedComplete.repository === "object");
-    assert(typeof checkSuiteRequestedComplete.installation === "object");
-    assert(typeof checkSuiteRequestedComplete.installation.id === "number");
-  });
 
   // Note: Duplicate webhook delivery testing is complex with nock mocking
   // In production, webhook redelivery should be tested manually using GitHub App delivery logs

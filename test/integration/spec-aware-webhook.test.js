@@ -48,55 +48,8 @@ describe("Spec-Aware Webhook Integration Tests", () => {
     clearSpecCache();
   });
 
-  test("pull_request.opened with valid spec creates check with spec-based name", async () => {
-    const customCheckName = "Custom Repository Check";
-    const validSpec = SPEC_FIXTURES.customName;
 
-    const mocks = nock("https://api.github.com")
-      // Mock auth token
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: {
-          checks: "write",
-          pull_requests: "read",
-          metadata: "read",
-        },
-      })
-      // Mock spec file fetch
-      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
-      .reply(200, {
-        type: "file",
-        content: Buffer.from(validSpec).toString('base64'),
-        encoding: "base64"
-      })
-      // Mock check run creation
-      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check uses the spec-defined name
-        assert.strictEqual(body.name, customCheckName);
-        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
-        assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "success");
-        assert.strictEqual(body.output.title, customCheckName);
-        assert.strictEqual(body.output.summary, "Review limits OK");
-        assert(body.output.text.includes("files="));
-        assert(body.output.text.includes("All review limits satisfied"));
-        return true;
-      })
-      .reply(200, { 
-        id: 9999999999, 
-        status: "completed", 
-        conclusion: "success" 
-      });
-
-    // Receive the complete PR opened webhook event
-    await probot.receive({ name: "pull_request", payload: prOpenedComplete });
-
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
-  });
-
-  test("pull_request.opened with missing spec creates neutral check with setup instructions", async () => {
+  test("pull_request.opened with missing spec creates failure check with setup instructions", async () => {
     const mocks = nock("https://api.github.com")
       // Mock auth token
       .post("/app/installations/12345678/access_tokens")
@@ -114,21 +67,20 @@ describe("Spec-Aware Webhook Integration Tests", () => {
       .reply(404, { message: "Not Found" })
       // Mock check run creation
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check is neutral with helpful message
+        // Verify the check is failure with helpful message
         assert.strictEqual(body.name, "Cogni Git PR Review"); // Default name
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "neutral");
+        assert.strictEqual(body.conclusion, "failure");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
         assert(body.output.summary.includes("No .cogni/repo-spec.yaml found"));
-        assert(body.output.text.includes("No repository spec file found"));
-        assert(body.output.text.includes("Add .cogni/repo-spec.yaml"));
+        assert(body.output.text.includes("Add `.cogni/repo-spec.yaml`"));
         return true;
       })
       .reply(200, { 
         id: 9999999998, 
         status: "completed", 
-        conclusion: "neutral" 
+        conclusion: "failure" 
       });
 
     // Receive the complete PR opened webhook event
@@ -137,7 +89,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
     assert.deepStrictEqual(mocks.pendingMocks(), []);
   });
 
-  test("pull_request.opened with invalid spec creates neutral check with validation error", async () => {
+  test("pull_request.opened with invalid spec creates failure check with validation error", async () => {
     const invalidSpec = `invalid yaml [unclosed`;
 
     const mocks = nock("https://api.github.com")
@@ -161,11 +113,11 @@ describe("Spec-Aware Webhook Integration Tests", () => {
       })
       // Mock check run creation
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Verify the check is neutral with validation error
+        // Verify the check is failure with validation error
         assert.strictEqual(body.name, "Cogni Git PR Review"); // Default name
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "neutral");
+        assert.strictEqual(body.conclusion, "failure");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
         assert(body.output.summary.includes("Invalid .cogni/repo-spec.yaml"));
         assert(body.output.text.includes("Repository spec validation failed"));
@@ -174,7 +126,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
       .reply(200, { 
         id: 9999999997, 
         status: "completed", 
-        conclusion: "neutral" 
+        conclusion: "failure" 
       });
 
     // Receive the complete PR opened webhook event

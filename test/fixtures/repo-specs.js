@@ -14,9 +14,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 100
-    max_total_diff_kb: 500
-  check_presentation:
-    name: 'Cogni Git PR Review'`,
+    max_total_diff_kb: 500`,
 
   // Valid full spec - super-MVP format with all optional fields
   full: `schema_version: '0.2.1'
@@ -32,9 +30,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 50
-    max_total_diff_kb: 200
-  check_presentation:
-    name: 'Full Project Check'`,
+    max_total_diff_kb: 200`,
 
   // Bootstrap mode spec - for gradual rollout
   bootstrap: `schema_version: '0.2.1'
@@ -49,9 +45,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 100
-    max_total_diff_kb: 500
-  check_presentation:
-    name: 'Bootstrap Check'`,
+    max_total_diff_kb: 500`,
 
   // Advisory mode spec - for testing
   advisory: `schema_version: '0.2.1'
@@ -66,9 +60,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 100
-    max_total_diff_kb: 500
-  check_presentation:
-    name: 'Advisory Check'`,
+    max_total_diff_kb: 500`,
 
   // Custom check name spec
   customName: `schema_version: '0.2.1'
@@ -83,9 +75,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 100
-    max_total_diff_kb: 500
-  check_presentation:
-    name: 'Custom Repository Check'`,
+    max_total_diff_kb: 500`,
 
   // Invalid YAML - malformed syntax
   invalidYaml: `intent:
@@ -116,9 +106,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 100
-    max_total_diff_kb: 500
-  check_presentation:
-    name: 'Check Name'`,
+    max_total_diff_kb: 500`,
 
   // Behavior contract test fixtures
   behaviorTest30_100: `schema_version: '0.2.1'
@@ -133,10 +121,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 30
-    max_total_diff_kb: 100
-  
-  check_presentation:
-    name: 'Cogni Git PR Review'`,
+    max_total_diff_kb: 100`,
 
   behaviorTest10_50: `schema_version: '0.2.1'
 
@@ -150,10 +135,7 @@ intent:
 gates:
   review_limits:
     max_changed_files: 10
-    max_total_diff_kb: 50
-  
-  check_presentation:
-    name: 'Cogni Git PR Review'`
+    max_total_diff_kb: 50`
 };
 
 // Expected parsed results for valid specs
@@ -166,10 +148,7 @@ export const EXPECTED_SPECS = {
       non_goals: ['Complex features']
     },
     gates: {
-      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
-      check_presentation: {
-        name: 'Cogni Git PR Review'
-      }
+      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 }
     }
   },
 
@@ -181,10 +160,7 @@ export const EXPECTED_SPECS = {
       non_goals: ['Default naming conventions']
     },
     gates: {
-      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 },
-      check_presentation: {
-        name: 'Custom Repository Check'
-      }
+      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 }
     }
   }
 };

@@ -13,14 +13,14 @@
     "started_at": "2024-01-15T10:35:00Z",
     "completed_at": "2024-01-15T10:35:30Z",
     "output": {
-      "title": "Cogni Git Commit Check",
+      "title": "Cogni Git PR Review",
       "summary": "MOCK Code review completed successfully!",
       "text": null,
       "annotations": [],
       "annotations_count": 0,
       "annotations_url": "https://api.github.com/repos/derekg1729/cogni-git-review/check-runs/9876543210/annotations"
     },
-    "name": "Cogni Git Commit Check",
+    "name": "Cogni Git PR Review",
     "check_suite": {
       "id": 5678901234,
       "node_id": "CS_kwDOOvE123FABC",

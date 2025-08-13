@@ -73,7 +73,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
     clearSpecCache();
   });
 
-  it('missing_spec_neutral: No .cogni/repo-spec.yaml → conclusion=neutral', async () => {
+  it('missing_spec_failure: No .cogni/repo-spec.yaml → conclusion=failure', async () => {
     // Follow AGENTS.md pattern: auth + 404 + check creation validation
     const mocks = nock("https://api.github.com")
       .post("/app/installations/12345678/access_tokens")
@@ -85,8 +85,8 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
       .query({ ref: "abc123def456789012345678901234567890abcd" })
       .reply(404, { message: 'Not Found' })
       .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract
-        assert.strictEqual(body.conclusion, "neutral");
+        // Verify behavior contract: missing spec now blocks merges
+        assert.strictEqual(body.conclusion, "failure");
         assert.strictEqual(body.name, "Cogni Git PR Review");
         assert(body.output.summary.includes("No .cogni/repo-spec.yaml found"));
         return true;
