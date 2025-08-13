@@ -10,9 +10,6 @@ intent:
     - Secrets retention or external tool integration
 
 gates:
-  spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
-
   review_limits:
     max_changed_files: 30
     max_total_diff_kb: 100

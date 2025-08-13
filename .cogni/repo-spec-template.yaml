@@ -11,9 +11,6 @@ intent:
     - Explicitly out-of-scope items
 
 gates:
-  spec_mode: enforced                      # enforced|advisory|bootstrap
-  on_missing_spec: neutral_with_annotation # graceful on missing/invalid spec
-
   review_limits:
     max_changed_files: 30
     max_total_diff_kb: 100

@@ -13,7 +13,6 @@ intent:
 
 gates:
   spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -33,7 +32,6 @@ intent:
 
 gates:
   spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
   review_limits:
     max_changed_files: 50
     max_total_diff_kb: 200
@@ -52,7 +50,6 @@ intent:
 
 gates:
   spec_mode: bootstrap
-  on_missing_spec: neutral_with_annotation
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -71,7 +68,6 @@ intent:
 
 gates:
   spec_mode: advisory
-  on_missing_spec: neutral_with_annotation
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -90,7 +86,6 @@ intent:
 
 gates:
   spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
@@ -125,12 +120,46 @@ intent:
 
 gates:
   spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
   review_limits:
     max_changed_files: 100
     max_total_diff_kb: 500
   check_presentation:
-    name: 'Check Name'`
+    name: 'Check Name'`,
+
+  // Behavior contract test fixtures
+  behaviorTest30_100: `schema_version: '0.2.1'
+
+intent:
+  name: behavior-test-project
+  goals:
+    - Test behavior contract
+  non_goals:
+    - Complex features
+
+gates:
+  review_limits:
+    max_changed_files: 30
+    max_total_diff_kb: 100
+  
+  check_presentation:
+    name: 'Cogni Git PR Review'`,
+
+  behaviorTest10_50: `schema_version: '0.2.1'
+
+intent:
+  name: behavior-test-project
+  goals:
+    - Test behavior contract with lower limits
+  non_goals:
+    - Complex features
+
+gates:
+  review_limits:
+    max_changed_files: 10
+    max_total_diff_kb: 50
+  
+  check_presentation:
+    name: 'Cogni Git PR Review'`
 };
 
 // Expected parsed results for valid specs

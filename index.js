@@ -2,6 +2,7 @@
 // See: https://developer.github.com/v3/checks/ to learn more
 
 import { loadRepoSpec } from './src/spec-loader.js';
+import { evaluateLocalGates } from './src/cogni-evaluated-gates.js';
 
 const CHECK_NAME = "Cogni Git Commit Check";
 const PR_REVIEW_NAME = "Cogni Git PR Review";
@@ -73,8 +74,19 @@ export default (app) => {
       const { spec, source } = await loadRepoSpec(context, pull_request.head.sha);
       console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
       
-      // Valid spec loaded - proceed with normal check
+      // Valid spec loaded - evaluate local gates
       const checkName = spec.gates.check_presentation?.name || PR_REVIEW_NAME;
+      
+      // Evaluate PR against review limits
+      const results = await evaluateLocalGates(context, pull_request, spec.gates.review_limits);
+      
+      // Map evaluation results to check conclusion
+      let conclusion = 'success';
+      if (results.oversize) {
+        conclusion = 'neutral';
+      } else if (results.violations.length) {
+        conclusion = 'failure';
+      }
       
       return context.octokit.checks.create(
         context.repo({
@@ -82,12 +94,16 @@ export default (app) => {
           head_sha: pull_request.head.sha,
           status: "completed",
           started_at: startTime,
-          conclusion: "success", // For now, always success when spec is valid
+          conclusion,
           completed_at: new Date(),
           output: {
             title: checkName,
-            summary: `PR #${pull_request.number} reviewed by Cogni Git Review`,
-            text: `✅ Repository spec loaded successfully from ${SPEC_PATH}\n\nMode: ${spec.gates.spec_mode}\nSchema: ${spec.schema_version || 'legacy'}\nCurrent implementation: MOCK (local gates coming soon)`
+            summary: results.violations.length ? 
+              `Limit breaches: ${results.violations.length}` : 'Review limits OK',
+            text: `files=${results.stats.changed_files} | diff_kb=${results.stats.total_diff_kb}\n\n` +
+              (results.violations.length ? 
+                `Violations:\n${results.violations.map(v => `• ${v.rule}: ${v.actual} > ${v.limit}`).join('\n')}` :
+                '✅ All review limits satisfied')
           },
         }),
       );
