@@ -32,7 +32,9 @@ export async function loadRepoSpec(context, sha) {
     );
     
     if (response.data.type !== 'file') {
-      throw new Error('Spec path is not a file');
+      const err = new Error('Spec path is not a file');
+      err.code = 'SPEC_INVALID';
+      throw err;
     }
     
     // Decode and parse YAML
@@ -41,7 +43,9 @@ export async function loadRepoSpec(context, sha) {
     
     // Basic validation - ensure required structure exists
     if (!spec || !spec.intent || !spec.gates) {
-      throw new Error('Invalid spec structure: missing intent or gates sections');
+      const err = new Error('Invalid spec structure: missing intent or gates sections');
+      err.code = 'SPEC_INVALID';
+      throw err;
     }
     
     // Return the spec as-is (no defaults merging) - fail fast
@@ -52,8 +56,24 @@ export async function loadRepoSpec(context, sha) {
   } catch (error) {
     console.log(`📄 Spec loading failed for ${cacheKey}: ${error.message}`);
     
-    // True fail-fast - throw exception immediately
-    throw new Error(`Failed to load repository spec: ${error.message}`);
+    // Add typed error codes for better error classification
+    const wrappedError = new Error(`Failed to load repository spec: ${error.message}`);
+    
+    // Preserve original error properties
+    if (error.status === 404) {
+      wrappedError.code = 'SPEC_MISSING';
+      wrappedError.status = 404;
+    } else if (error.code === 'SPEC_INVALID') {
+      wrappedError.code = 'SPEC_INVALID';
+    } else if (error.name === 'YAMLException' || /yaml/i.test(error.message)) {
+      wrappedError.code = 'SPEC_INVALID';
+    } else {
+      // Network errors, API errors, etc - these are transient
+      wrappedError.code = 'SPEC_TRANSIENT';
+      if (error.status) wrappedError.status = error.status;
+    }
+    
+    throw wrappedError;
   }
 }
 

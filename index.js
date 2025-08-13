@@ -67,8 +67,8 @@ export default (app) => {
     } catch (error) {
       console.error(`📄 Spec load failed for PR #${pull_request.number}:`, error);
 
-      const isMissing = error?.status === 404 || /not\s*found/i.test(error?.message || '');
-      const isInvalid = !isMissing && /yaml|schema|ajv|parse|validation|invalid spec structure/i.test(error?.message || '');
+      const isMissing = error?.code === 'SPEC_MISSING';
+      const isInvalid = error?.code === 'SPEC_INVALID';
 
       const conclusion = (isMissing || isInvalid) ? 'failure' : 'neutral';
       const summary = isMissing
