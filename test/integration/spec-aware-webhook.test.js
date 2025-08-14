@@ -165,8 +165,8 @@ describe("Spec-Aware Webhook Integration Tests", () => {
         assert.strictEqual(body.status, "completed");
         assert.strictEqual(body.conclusion, "success"); // PR data passes limits
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert.strictEqual(body.output.summary, "Review limits OK");
-        assert(body.output.text.includes("All review limits satisfied"));
+        assert.strictEqual(body.output.summary, "All gates passed");
+        assert(body.output.text.includes("**Passed:** review_limits"));
         return true;
       })
       .reply(200, { 

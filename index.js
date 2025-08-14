@@ -39,11 +39,13 @@ export default (app) => {
       const { spec, source } = await loadRepoSpec(context, pull_request.head.sha);
       console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
 
-      const results = await runAllGates(context, pull_request, spec);
-
-      const conclusion = results.oversize
-        ? 'neutral'
-        : (results.violations.length ? 'failure' : 'success');
+      const runResult = await runAllGates(context, pull_request, spec);
+      
+      // Map tri-state to GitHub check conclusions
+      const conclusion = mapStatusToConclusion(runResult.overall_status);
+      
+      // Generate summary and text from gate results
+      const { summary, text } = formatGateResults(runResult);
 
       return context.octokit.checks.create(context.repo({
         name: PR_REVIEW_NAME,
@@ -54,14 +56,8 @@ export default (app) => {
         completed_at: new Date(),
         output: {
           title: PR_REVIEW_NAME,
-          summary: results.violations.length
-            ? `Limit breaches: ${results.violations.length}`
-            : 'Review limits OK',
-          text:
-            `files=${results.stats.changed_files} | diff_kb=${results.stats.total_diff_kb}\n\n` +
-            (results.violations.length
-              ? `Violations:\n${results.violations.map(v => `• ${v.rule}: ${v.actual} > ${v.limit}`).join('\n')}`
-              : '✅ All review limits satisfied')
+          summary,
+          text
         }
       }));
     } catch (error) {
@@ -90,6 +86,87 @@ export default (app) => {
         output: { title: PR_REVIEW_NAME, summary, text }
       }));
     }
+  }
+
+  /**
+   * Map tri-state status to GitHub check conclusion
+   */
+  function mapStatusToConclusion(status) {
+    switch (status) {
+      case 'pass': return 'success';
+      case 'fail': return 'failure';
+      case 'neutral': return 'neutral';
+      default: return 'neutral';
+    }
+  }
+
+  /**
+   * Format gate results into summary and text for GitHub check
+   */
+  function formatGateResults(runResult) {
+    const { overall_status, gates, early_exit, duration_ms } = runResult;
+    
+    const failedGates = gates.filter(g => g.status === 'fail');
+    const neutralGates = gates.filter(g => g.status === 'neutral');
+    const passedGates = gates.filter(g => g.status === 'pass');
+    
+    // Summary
+    let summary;
+    if (failedGates.length > 0) {
+      summary = `Gate failures: ${failedGates.length}`;
+    } else if (neutralGates.length > 0) {
+      const reasons = [...new Set(neutralGates.map(g => g.neutral_reason).filter(Boolean))];
+      summary = `Gates neutral: ${reasons.join(', ')}`;
+    } else {
+      summary = 'All gates passed';
+    }
+    
+    if (early_exit) {
+      summary += ' (early exit)';
+    }
+    
+    // Text - detailed breakdown
+    let text = `Gates: ${gates.length} total | Duration: ${duration_ms}ms\n\n`;
+    
+    // Show gate status breakdown
+    text += `✅ Passed: ${passedGates.length} | ❌ Failed: ${failedGates.length} | ⚠️ Neutral: ${neutralGates.length}\n\n`;
+    
+    // Show failed gates first
+    if (failedGates.length > 0) {
+      text += '**Failures:**\n';
+      failedGates.forEach(gate => {
+        text += `• **${gate.id}**: ${gate.violations.length} violation(s)\n`;
+        gate.violations.slice(0, 3).forEach(v => { // Limit violations shown
+          text += `  - ${v.code}: ${v.message}\n`;
+        });
+        if (gate.violations.length > 3) {
+          text += `  - ...and ${gate.violations.length - 3} more\n`;
+        }
+      });
+      text += '\n';
+    }
+    
+    // Show neutral gates
+    if (neutralGates.length > 0) {
+      text += '**Neutral:**\n';
+      neutralGates.forEach(gate => {
+        text += `• **${gate.id}**: ${gate.neutral_reason || 'reason unknown'}\n`;
+      });
+      text += '\n';
+    }
+    
+    // Show passed gates summary
+    if (passedGates.length > 0) {
+      text += `**Passed:** ${passedGates.map(g => g.id).join(', ')}\n\n`;
+    }
+    
+    // Add stats from review limits if available
+    const reviewGate = gates.find(g => g.id === 'review_limits');
+    if (reviewGate?.stats) {
+      text += `**Stats:** files=${reviewGate.stats.changed_files || 0} | diff_kb=${reviewGate.stats.total_diff_kb || 0}`;
+    }
+    
+    return { summary, text };
   }
 
   async function handlePullRequest(context) {

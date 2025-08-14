@@ -120,12 +120,13 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         encoding: "base64"
       })
       .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract
+        // Verify behavior contract - new tri-state format
         assert.strictEqual(body.conclusion, "success");
-        assert.strictEqual(body.output.summary, "Review limits OK");
+        assert.strictEqual(body.output.summary, "All gates passed");
+        assert(body.output.text.includes("Gates: 3 total"));
+        assert(body.output.text.includes("✅ Passed: 3"));
         assert(body.output.text.includes("files=5"));
         assert(body.output.text.includes("diff_kb=20"));
-        assert(body.output.text.includes("✅ All review limits satisfied"));
         return true;
       })
       .reply(200, { id: 1 });
@@ -160,11 +161,13 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         encoding: "base64"
       })
       .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract
+        // Verify behavior contract - new tri-state format
         assert.strictEqual(body.conclusion, "failure");
-        assert.strictEqual(body.output.summary, "Limit breaches: 1");
-        assert(body.output.text.includes("files=45"));
+        assert.strictEqual(body.output.summary, "Gate failures: 1");
+        assert(body.output.text.includes("Gates: 3 total"));
+        assert(body.output.text.includes("❌ Failed: 1"));
         assert(body.output.text.includes("max_changed_files: 45 > 30"));
+        assert(body.output.text.includes("files=45"));
         return true;
       })
       .reply(200, { id: 1 });
@@ -199,9 +202,11 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         encoding: "base64"
       })
       .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract
+        // Verify behavior contract - new tri-state format
         assert.strictEqual(body.conclusion, "failure");
-        assert.strictEqual(body.output.summary, "Limit breaches: 1");  
+        assert.strictEqual(body.output.summary, "Gate failures: 1");  
+        assert(body.output.text.includes("Gates: 3 total"));
+        assert(body.output.text.includes("❌ Failed: 1"));
         assert(body.output.text.includes("files=10"));
         assert(body.output.text.includes("diff_kb=150"));
         assert(body.output.text.includes("max_total_diff_kb: 150 > 100"));

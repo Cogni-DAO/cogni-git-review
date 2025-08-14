@@ -6,19 +6,20 @@
 
 ## Current Test Architecture
 
-### **Unit Tests** - Spec Loader
-**Location**: `test/simple-spec-test.js`  
-**Coverage**: Spec loading, caching, error handling with direct mocking  
-**Status**: ✅ 8 tests passing  
+### **Unit Tests** - Spec Loader & Gates
+**Location**: `test/unit/*.test.js`  
+**Coverage**: Spec loading, caching, error handling + individual gate logic  
+**Status**: ✅ 15 tests passing (9 spec loader + 6 gate stubs)  
 
 ### **Integration Tests** - Webhook Flow
-**Location**: `test/integration/simple-integration.test.js`  
-**Coverage**: Complete webhook → spec loading → check creation flow  
-**Status**: ✅ 2 tests passing  
+**Location**: `test/integration/*.test.js`  
+**Coverage**: Complete webhook → spec loading → gate evaluation → check creation  
+**Status**: ✅ 9 tests passing (4 behavior + 2 simple + 3 spec-aware)  
 
-### **Legacy Tests** - Original Mock Integration  
+### **Mock Integration Tests** - Basic Webhook Mechanics
 **Location**: `test/mock-integration/webhook-handlers.test.js`  
-**Status**: ⚠️ Outdated (pre-spec-loading era)  
+**Coverage**: Basic webhook-to-check flows with hardcoded expectations  
+**Status**: ✅ 9 tests passing  
 
 ## DRY Test Fixtures 🎯
 
@@ -144,13 +145,25 @@ createMockContext("org", "repo", "not_found") // 404 response
 
 **All Tests**:
 ```bash
-npm test  # All tests passing: 29/30 (1 skipped)
+npm test  # All tests: 41 total, 40 pass, 1 skip
 ```
 
 **Individual Test Suites**:
 ```bash
-npx node --test test/simple-spec-test.js           # Unit tests (8 tests)
-npx node --test test/integration/simple-integration.test.js  # Integration (2 tests)
+# Unit Tests
+npx node --test test/unit/goal-declaration-stub.test.js      # Gate stub (6 tests)
+npx node --test test/unit/forbidden-scopes-stub.test.js     # Gate stub (6 tests)  
+
+# Integration Tests  
+npx node --test test/integration/cogni-evaluated-gates-behavior.test.js  # Behavior (4 tests)
+npx node --test test/integration/simple-integration.test.js             # Basic flow (2 tests)
+npx node --test test/integration/spec-aware-webhook.test.js             # Spec scenarios (4 tests)
+
+# Mock Integration
+npx node --test test/mock-integration/webhook-handlers.test.js           # Basic webhooks (9 tests)
+
+# Spec Loader Unit Tests  
+npx node --test  # Spec loader tests are in main suite (9 tests)
 ```
 
 ## Test Development Guidelines

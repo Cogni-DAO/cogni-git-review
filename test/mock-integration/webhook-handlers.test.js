@@ -149,7 +149,7 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
         assert.strictEqual(body.status, "completed");
         assert.strictEqual(body.conclusion, "success");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert.strictEqual(body.output.summary, "Review limits OK");
+        assert.strictEqual(body.output.summary, "All gates passed");
         return true;
       })
       .reply(200, { 
@@ -194,7 +194,7 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
         assert.strictEqual(body.status, "completed");
         assert.strictEqual(body.conclusion, "success");
         assert.strictEqual(body.output.title, "Cogni Git PR Review");
-        assert.strictEqual(body.output.summary, "Review limits OK");
+        assert.strictEqual(body.output.summary, "All gates passed");
         return true;
       })
       .reply(200, { 
