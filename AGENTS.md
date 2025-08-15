@@ -96,6 +96,9 @@ npm test  # Runs Node.js native tests with nock mocks
 - `.cogni/repo-spec.yaml` - Repository specification  
 - `test/fixtures/repo-specs.js` - DRY test fixtures (see `test/AGENTS.md`)
 
+## Spec-Gate Alignment
+**Critical**: `.cogni/repo-spec-template.yaml` must match gates that parse `runCtx.spec.gates.*`  
+**Bug**: Template missing `goal_declaration` and `forbidden_scopes` configs (work item: `8985e45b`)
 
 ## Resources
 - [Probot Docs](https://probot.github.io/docs/)

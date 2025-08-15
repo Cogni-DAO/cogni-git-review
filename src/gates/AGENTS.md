@@ -42,6 +42,9 @@ All gates return `GateResult`:
 }
 ```
 
+## Template Synchronization
+Root orchestrator loads gates defined in repo-spec. Template must match available gate implementations.
+
 ## Adding Gates
 1. Create `src/gates/cogni/new-gate.js` with tri-state contract
 2. Import + call in `src/gates/cogni/index.js` 
