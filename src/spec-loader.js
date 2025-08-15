@@ -7,13 +7,19 @@ const SPEC_PATH = '.cogni/repo-spec.yaml';
 const specCache = new Map();
 
 /**
- * Load and parse repository spec with graceful fallback
- * @param {import('probot').Context} context - Probot context
- * @param {string} sha - Git SHA to load spec from
+ * Load and parse repository spec from default branch (SECURITY: prevents PR modification)
+ * @param {import('probot').Context} context - Probot context with repository info
  * @returns {Promise<{spec: object, source: string, error?: string}>}
  */
-export async function loadRepoSpec(context, sha) {
-  const cacheKey = `${context.repo().owner}:${context.repo().repo}:${sha}`;
+export async function loadRepoSpec(context) {
+  // SECURITY: Always use default branch to prevent PR rule modification
+  const defaultBranch = context.payload.repository.default_branch;
+  
+  if (!defaultBranch) {
+    throw new Error('Repository default branch not available in webhook payload');
+  }
+  
+  const cacheKey = `${context.repo().owner}:${context.repo().repo}:${defaultBranch}`;
   console.log(`🔍 Cache key: ${cacheKey}, Cache has: ${specCache.has(cacheKey)}, Cache size: ${specCache.size}`);
   
   // Check cache first
@@ -23,11 +29,11 @@ export async function loadRepoSpec(context, sha) {
   }
   
   try {
-    // Try to fetch the spec file
+    // Try to fetch the spec file from default branch
     const response = await context.octokit.repos.getContent(
       context.repo({
         path: SPEC_PATH,
-        ref: sha
+        ref: defaultBranch
       })
     );
     

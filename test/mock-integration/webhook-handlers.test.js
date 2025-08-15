@@ -62,7 +62,7 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
       })
       // Mock missing spec file
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(404, { message: "Not Found" })
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
         // Verify the check run creation matches our expected structure (no spec = failure)
@@ -99,7 +99,7 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
       })
       // Mock missing spec file
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "def456789012345678901234567890abcdef1235" })
+      .query({ ref: "main" })
       .reply(404, { message: "Not Found" })
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
         // Verify the check run for synchronize event (no spec = failure)
@@ -136,7 +136,7 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
       })
       // Mock spec loading
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),

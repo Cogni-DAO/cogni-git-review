@@ -60,7 +60,7 @@ describe("Simple Integration Tests", () => {
       })
       // Mock spec file fetch - return minimal spec
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
@@ -105,7 +105,7 @@ describe("Simple Integration Tests", () => {
       })
       // Mock spec file fetch - return 404
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(404, { message: "Not Found" })
       // Mock check run creation - should be failure (missing spec)
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {

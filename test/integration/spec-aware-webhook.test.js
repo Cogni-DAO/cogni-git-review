@@ -63,7 +63,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
       })
       // Mock spec file fetch - return 404
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(404, { message: "Not Found" })
       // Mock check run creation
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
@@ -105,7 +105,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
       })
       // Mock spec file fetch - return invalid YAML
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(invalidSpec).toString('base64'),
@@ -151,7 +151,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
       })
       // Mock spec file fetch
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(minimalSpec).toString('base64'),
@@ -204,7 +204,7 @@ gates:
       })
       // Mock spec file fetch - should only happen once due to caching
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .once() // Important: only once due to caching
       .reply(200, {
         type: "file",

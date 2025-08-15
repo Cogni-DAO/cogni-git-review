@@ -82,7 +82,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         permissions: { checks: "write", pull_requests: "read", metadata: "read" }
       })
       .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(404, { message: 'Not Found' })
       .post('/repos/test-org/test-repo/check-runs', (body) => {
         // Verify behavior contract: missing spec now blocks merges
@@ -113,7 +113,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         permissions: { checks: "write", pull_requests: "read", metadata: "read" }
       })
       .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(specYAML).toString('base64'),
@@ -154,7 +154,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         permissions: { checks: "write", pull_requests: "read", metadata: "read" }
       })
       .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(specYAML).toString('base64'),
@@ -195,7 +195,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         permissions: { checks: "write", pull_requests: "read", metadata: "read" }
       })
       .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(specYAML).toString('base64'),

@@ -36,7 +36,7 @@ export default (app) => {
   async function evaluateAndCreateCheck(context, pull_request) {
     const startTime = new Date();
     try {
-      const { spec, source } = await loadRepoSpec(context, pull_request.head.sha);
+      const { spec, source } = await loadRepoSpec(context);
       console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
 
       const runResult = await runAllGates(context, pull_request, spec);
