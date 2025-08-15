@@ -10,6 +10,9 @@ This bot is incredibly new, immature, and is in its infancy. beware.
 - **Language**: JavaScript (ES modules)
 - **Main Entry**: `index.js`
 - **Events**: `check_suite`, `check_run`, `pull_request`
+- **Gate System**: Two-level orchestrator for PR evaluation (see `src/gates/AGENTS.md`)
+
+**Architecture Specification**: cogni memory block id: 8e79bc85-3da9-4d17-b0ed-70937551a4ba
 
 ## Key Components
 
@@ -88,10 +91,14 @@ npm test  # Runs Node.js native tests with nock mocks
 
 ### Files Structure
 - `index.js` - Main bot logic
-- `app.yml` - GitHub App manifest (permissions/events)
-- `test/` - Test fixtures and specs
-- `test/fixtures/` - Mock webhook payloads and certs
+- `src/spec-loader.js` - Repository spec loading
+- `src/gates/` - Gate evaluation system (see `src/gates/AGENTS.md`)
+- `.cogni/repo-spec.yaml` - Repository specification  
+- `test/fixtures/repo-specs.js` - DRY test fixtures (see `test/AGENTS.md`)
 
+## Spec-Gate Alignment
+**Critical**: `.cogni/repo-spec-template.yaml` must match gates that parse `runCtx.spec.gates.*`  
+**Bug**: Template missing `goal_declaration` and `forbidden_scopes` configs (work item: `8985e45b`)
 
 ## Resources
 - [Probot Docs](https://probot.github.io/docs/)

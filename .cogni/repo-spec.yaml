@@ -1,0 +1,15 @@
+schema_version: '0.2.1'
+
+intent:
+  name: cogni-git-review
+  goals:
+    - Automated PR hygiene checks with essential file restrictions
+    - Single required check aggregating multiple validation signals
+  non_goals:
+    - Heavy in-process scanning or AI analysis
+    - Secrets retention or external tool integration
+
+gates:
+  review_limits:
+    max_changed_files: 40
+    max_total_diff_kb: 1500

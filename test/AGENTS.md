@@ -1,32 +1,60 @@
 # Test Structure - Cogni Git Review Bot
 
+## Testing Philosophy: DRY Tests with Reusable Fixtures
+
+**Key Principle**: Reuse and build reusable test fixtures whenever possible. Avoid duplicating YAML specs, mock contexts, or test data.
+
 ## Current Test Architecture
 
-**Type**: Mocked-integration tests (in-process)  
+### **Unit Tests** - Spec Loader & Gates
+**Location**: `test/unit/*.test.js`  
+**Coverage**: Spec loading, caching, error handling + individual gate logic  
+**Status**: ✅ 15 tests passing (9 spec loader + 6 gate stubs)  
+
+### **Integration Tests** - Webhook Flow
+**Location**: `test/integration/*.test.js`  
+**Coverage**: Complete webhook → spec loading → gate evaluation → check creation  
+**Status**: ✅ 9 tests passing (4 behavior + 2 simple + 3 spec-aware)  
+
+### **Mock Integration Tests** - Basic Webhook Mechanics
 **Location**: `test/mock-integration/webhook-handlers.test.js`  
-**Coverage**: Webhook handlers exercised via `probot.receive()` with outbound GitHub API mocked by `nock`
+**Coverage**: Basic webhook-to-check flows with hardcoded expectations  
+**Status**: ✅ 9 tests passing  
 
-### What These Tests Do
+## DRY Test Fixtures 🎯
 
-Tests the complete **webhook → event handler → GitHub API** flow:
-- Receive realistic GitHub webhook payloads
-- Process through bot event handlers  
-- Mock GitHub API responses
-- Verify correct API calls are made
+### **Repo Spec Fixtures** - NEW!
+**Location**: `test/fixtures/repo-specs.js`  
+**Purpose**: Reusable YAML specs and mock contexts to eliminate duplication  
+**Usage**: Import and use across all tests
 
-### Test Categories
+### **CRITICAL: Always Use Fixtures - No Inline YAML**
 
-**Webhook Handler Tests** (4 tests):
-- `pull_request.opened` → Creates "Cogni Git PR Review" check
-- `pull_request.synchronize` → Creates "Cogni Git PR Review" check  
-- `check_run.rerequested` → Creates "Cogni Git Commit Check"
-- `check_suite.requested` → Creates "Cogni Git Commit Check"
+**❌ WRONG:**
+```javascript
+const badSpec = `schema_version: '0.2.1'...`;
+```
 
-**Payload Validation Tests** (4 tests):
-- Verify webhook payloads have required fields for each event type
+**✅ RIGHT:**  
+```javascript
+const spec = SPEC_FIXTURES.minimal;
+```
 
-## Test Fixtures
+**Available Fixtures**:
+```javascript
+import { SPEC_FIXTURES, createMockContext } from './fixtures/repo-specs.js';
 
+SPEC_FIXTURES.minimal           // Basic working spec
+SPEC_FIXTURES.customName        // Custom check name
+SPEC_FIXTURES.behaviorTest30_100 // 30 files, 100KB limits
+SPEC_FIXTURES.invalidYaml       // Malformed YAML
+SPEC_FIXTURES.invalidStructure  // Missing sections
+
+createMockContext("org", "repo", "success")   // Working API
+createMockContext("org", "repo", "not_found") // 404 response
+```
+
+### **Webhook Fixtures** - Existing
 **Location**: `test/fixtures/`  
 **Naming**: `<event>.<action>.complete.json` (e.g., `pull_request.opened.complete.json`)  
 **Source**: Sanitized real webhook payloads (no secrets)  
@@ -115,20 +143,43 @@ Tests the complete **webhook → event handler → GitHub API** flow:
 
 ## Running Tests
 
-Current setup:
+**All Tests**:
 ```bash
-npm test  # Run all tests (8/8 currently passing)
+npm test  # All tests: 41 total, 40 pass, 1 skip
 ```
 
-Recommended `package.json` scripts for future organization:
-```json
-{
-  "scripts": {
-    "test:unit": "node --test test/unit",
-    "test:mocked": "node --test test/mock-integration",
-    "test": "npm run test:mocked"
-  }
-}
+**Individual Test Suites**:
+```bash
+# Unit Tests
+npx node --test test/unit/goal-declaration-stub.test.js      # Gate stub (6 tests)
+npx node --test test/unit/forbidden-scopes-stub.test.js     # Gate stub (6 tests)  
+
+# Integration Tests  
+npx node --test test/integration/cogni-evaluated-gates-behavior.test.js  # Behavior (4 tests)
+npx node --test test/integration/simple-integration.test.js             # Basic flow (2 tests)
+npx node --test test/integration/spec-aware-webhook.test.js             # Spec scenarios (4 tests)
+
+# Mock Integration
+npx node --test test/mock-integration/webhook-handlers.test.js           # Basic webhooks (9 tests)
+
+# Spec Loader Unit Tests  
+npx node --test  # Spec loader tests are in main suite (9 tests)
 ```
 
-**All tests should pass** before committing changes.
+## Test Development Guidelines
+
+### **DO** ✅
+- **Reuse fixtures**: Always use `test/fixtures/repo-specs.js` for spec-related tests
+- **DRY principle**: Create reusable mock factories rather than inline duplicates
+- **Clear test names**: `loadRepoSpec parses valid minimal spec` vs `test spec loading`
+- **Focus on behavior**: Test what the function does, not how it does it
+- **Use working tests as templates**: Copy from `test/simple-spec-test.js` patterns
+
+### **DON'T** ❌  
+- **Duplicate YAML strings**: Use `SPEC_FIXTURES.*` instead
+- **Inline mock contexts**: Use `createMockContext()` factories
+- **Complex HTTP mocking**: Use direct function mocking when possible
+- **Vague assertions**: Be specific about expected behavior
+- **Skip cleanup**: Always clear caches and mocks in test teardown
+
+**All working tests should pass** before committing changes.

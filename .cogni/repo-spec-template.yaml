@@ -1,0 +1,16 @@
+# Cogni Git Review Repository Specification Template
+# Copy this file to .cogni/repo-spec.yaml and customize for your repository
+
+schema_version: '0.2.1'
+
+intent:
+  name: my-project
+  goals:
+    - Clear, scoped goals of the project
+  non_goals:
+    - Explicitly out-of-scope items
+
+gates:
+  review_limits:
+    max_changed_files: 30
+    max_total_diff_kb: 100          # must match required status check
