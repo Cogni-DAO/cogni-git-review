@@ -6,14 +6,11 @@ schema_version: '0.2.1'
 intent:
   name: my-project
   goals:
-    - Primary goal of the project
+    - Clear, scoped goals of the project
   non_goals:
     - Explicitly out-of-scope items
 
 gates:
   review_limits:
     max_changed_files: 30
-    max_total_diff_kb: 100
-
-  check_presentation:
-    name: 'Cogni Git PR Review'            # must match required status check
+    max_total_diff_kb: 100          # must match required status check

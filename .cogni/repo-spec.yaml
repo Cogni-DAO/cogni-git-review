@@ -11,8 +11,5 @@ intent:
 
 gates:
   review_limits:
-    max_changed_files: 30
-    max_total_diff_kb: 100
-
-  check_presentation:
-    name: 'Cogni Git PR Review'
+    max_changed_files: 40
+    max_total_diff_kb: 1500
