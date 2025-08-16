@@ -59,7 +59,9 @@ describe("Spec Loader Unit Tests", () => {
     assert.strictEqual(result.spec.schema_version, "0.2.1");
     assert.strictEqual(result.spec.intent.name, "full-project");
     assert.deepStrictEqual(result.spec.intent.goals, ["Primary goal of the project", "Secondary goal"]);
-    assert.deepStrictEqual(result.spec.gates.review_limits, { max_changed_files: 50, max_total_diff_kb: 200 });
+    // New list-of-gates format
+    const reviewLimitsGate = result.spec.gates.find(g => g.id === 'review_limits');
+    assert.deepStrictEqual(reviewLimitsGate.with, { max_changed_files: 50, max_total_diff_kb: 200 });
     assert.strictEqual(result.error, undefined);
     
     assert.deepStrictEqual(mock.pendingMocks(), []);

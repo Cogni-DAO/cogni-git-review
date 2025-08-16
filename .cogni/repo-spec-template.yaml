@@ -1,7 +1,7 @@
 # Cogni Git Review Repository Specification Template
 # Copy this file to .cogni/repo-spec.yaml and customize for your repository
 
-schema_version: '0.2.1'
+schema_version: '0.1.2'
 
 intent:
   name: my-project
@@ -10,7 +10,17 @@ intent:
   non_goals:
     - Explicitly out-of-scope items
 
+check:
+  name: 'Cogni Git PR Review'   # status check title
+
+# Gates run in the order they appear below.
 gates:
-  review_limits:
-    max_changed_files: 30
-    max_total_diff_kb: 100          # must match required status check
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+
+  # Uncomment to enable advisory Cogni gates:
+  # - id: goal_declaration
+  #
+  # - id: forbidden_scopes

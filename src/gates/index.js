@@ -47,7 +47,8 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     // 1) Local precheck (review_limits) - check for early exit
     const reviewLimitsResult = await runCogniPrecheck(runCtx);
     
-    if (reviewLimitsResult.status === 'neutral' && reviewLimitsResult.neutral_reason === 'oversize_diff') {
+    // Check for early exit only if review_limits gate actually ran
+    if (reviewLimitsResult && reviewLimitsResult.status === 'neutral' && reviewLimitsResult.neutral_reason === 'oversize_diff') {
       clearTimeout(timeoutId);
       return { 
         overall_status: 'neutral', 
@@ -59,7 +60,7 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
 
     // 2) Remaining local gates (parallel)
     const otherLocalResults = await runOtherLocalGates(runCtx);
-    const localResults = [reviewLimitsResult, ...otherLocalResults];
+    const localResults = [reviewLimitsResult, ...otherLocalResults].filter(Boolean); // Remove nulls
     
     const hasFailLocal = localResults.some(r => r.status === 'fail');
     const hasNeutralLocal = localResults.some(r => r.status === 'neutral');

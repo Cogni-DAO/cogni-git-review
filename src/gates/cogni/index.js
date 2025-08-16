@@ -16,9 +16,18 @@ export async function runCogniPrecheck(runCtx) {
   const started = Date.now();
   
   try {
-    const limits = runCtx.spec?.gates?.review_limits;
+    // Find review_limits gate in the gates array
+    const gateConfigs = runCtx.spec?.gates || [];
+    const reviewLimitsGate = gateConfigs.find(g => g.id === 'review_limits');
     
-    // If no limits defined, return passing result
+    // If review_limits gate is not configured, return null (no gate to run)
+    if (!reviewLimitsGate) {
+      return null;
+    }
+    
+    const limits = reviewLimitsGate.with;
+    
+    // If no limits defined in the gate config, return passing result
     if (!limits) {
       return {
         id: 'review_limits',
@@ -64,18 +73,28 @@ export async function runCogniPrecheck(runCtx) {
 }
 
 /**
- * Run other local Cogni gates (goal declaration + forbidden scopes stubs)
+ * Run other local Cogni gates (dynamically discovered from spec)
  * @param {object} runCtx - Run context with timing, abort signal, etc.
  * @returns {Promise<GateResult[]>} Array of gate results
  */
 export async function runOtherLocalGates(runCtx) {
-  // Run remaining gates in parallel
-  const [goalResult, scopeResult] = await Promise.all([
-    runGoalDeclarationStub(runCtx),
-    runForbiddenScopesStub(runCtx)
-  ]);
+  const gateConfigs = runCtx.spec?.gates || [];
+  const tasks = [];
   
-  return [goalResult, scopeResult];
+  // Only run gates that are explicitly configured in the spec
+  for (const gateConfig of gateConfigs) {
+    if (gateConfig.id === 'goal_declaration') {
+      tasks.push(runGoalDeclarationStub(runCtx));
+    } else if (gateConfig.id === 'forbidden_scopes') {
+      tasks.push(runForbiddenScopesStub(runCtx));
+    }
+    // Skip review_limits as it's handled in precheck
+  }
+  
+  if (tasks.length === 0) return [];
+  
+  const results = await Promise.all(tasks);
+  return results;
 }
 
 /**
