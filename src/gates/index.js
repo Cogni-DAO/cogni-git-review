@@ -11,7 +11,7 @@ import { runConfiguredGates } from './run-configured.js';
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
  * @param {object} opts - Options { enableExternal: false, deadlineMs: 8000 }
- * @returns {Promise<{overall_status: string, gates: Array, early_exit: boolean, duration_ms: number}>}
+ * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
 export async function runAllGates(context, pr, spec, opts = { enableExternal: false, deadlineMs: 8000 }) {
   const started = Date.now();
@@ -31,6 +31,7 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     spec,
     octokit: context.octokit,
     logger: (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {})),
+    log: context.log,
     deadline_ms: opts.deadlineMs,
     annotation_budget: 50,
     idempotency_key: `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`,
@@ -47,12 +48,17 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     // 1) Run all configured local gates in spec order
     const localResults = await runConfiguredGates(runCtx);
     
+    // Detect partial execution (timeout/abort)
+    const expectedGateCount = spec.gates?.length || 0;
+    const isPartial = localResults.length < expectedGateCount;
+    const isAborted = runCtx.abort.aborted;
+    
     const hasFailLocal = localResults.some(r => r.status === 'fail');
     const hasNeutralLocal = localResults.some(r => r.status === 'neutral');
 
-    // 2) External gates (v2) - skip if local failure
+    // 2) External gates (v2) - skip if local failure or partial execution
     let externalResults = [];
-    if (!hasFailLocal && opts.enableExternal) {
+    if (!hasFailLocal && !isPartial && opts.enableExternal) {
       externalResults = await runExternalGates(runCtx);
     }
 
@@ -61,7 +67,10 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
-    const overall_status = hasFail ? 'fail' : (hasNeutral ? 'neutral' : 'pass');
+    // Partial execution (timeout) should result in neutral overall status
+    const overall_status = (isPartial && isAborted) ? 'neutral' 
+                         : hasFail ? 'fail' 
+                         : (hasNeutral ? 'neutral' : 'pass');
 
     clearTimeout(timeoutId);
     return { 

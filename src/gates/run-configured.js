@@ -6,7 +6,8 @@
 import { buildRegistry, resolveHandler } from './registry.js';
 
 // Build registry once at module load time for performance
-const registryPromise = buildRegistry();
+// Note: Logger will be passed when available in runConfiguredGates
+let registryPromise = null;
 
 /**
  * Run all configured gates from spec in order with dynamic resolution
@@ -14,26 +15,47 @@ const registryPromise = buildRegistry();
  * @returns {Promise<GateResult[]>} Array of gate execution results
  */
 export async function runConfiguredGates(runCtx) {
+  // Build registry with logger on first call
+  if (!registryPromise) {
+    registryPromise = buildRegistry(runCtx.log || console);
+  }
   const registry = await registryPromise;
   const gates = Array.isArray(runCtx.spec?.gates) ? runCtx.spec.gates : [];
   const results = [];
 
   for (const gate of gates) {
-    const handler = resolveHandler(registry, gate);
-    const result = await safeRunGate(handler, runCtx, gate);
-    
-    // Force ID normalization - always use spec gate ID
-    const finalResult = {
-      ...result,
-      id: gate.id  // ALWAYS use spec gate ID, ignore what gate returns
-    };
-    results.push(finalResult);
+    // Check for timeout before each gate - return partial results if aborted
+    if (runCtx.abort?.aborted) {
+      runCtx.logger?.('warn', 'Gate execution aborted due to timeout', { 
+        gate_id: gate.id, 
+        deadline_ms: runCtx.deadline_ms,
+        partial_results: results.length
+      });
+      return results;
+    }
 
-    // Check for early-exit condition (oversize diff)
-    // Note: Early-exit was removed but keeping for potential future use
-    if (result.status === 'neutral' && result.neutral_reason === 'oversize_diff') {
-      runCtx.logger?.('info', `Early exit triggered by gate ${gate.id}`, { reason: 'oversize_diff' });
-      break; // Stop processing remaining gates
+    const handler = resolveHandler(registry, gate);
+    
+    try {
+      const result = await safeRunGate(handler, runCtx, gate);
+      
+      // Force ID normalization - always use spec gate ID
+      const finalResult = {
+        ...result,
+        id: gate.id  // ALWAYS use spec gate ID, ignore what gate returns
+      };
+      results.push(finalResult);
+      
+    } catch (error) {
+      if (error.message === 'aborted') {
+        // Mid-gate abort - return partial results
+        runCtx.logger?.('warn', 'Gate execution aborted mid-gate', { 
+          gate_id: gate.id,
+          partial_results: results.length
+        });
+        return results;
+      }
+      // Non-abort errors are already normalized in safeRunGate; nothing to rethrow here.
     }
   }
 
@@ -58,8 +80,13 @@ async function safeRunGate(handler, ctx, gate) {
         neutral_reason: 'unimplemented_gate',
         violations: [],
         stats: {},
-        duration_ms: 0
+        duration_ms: Date.now() - startTime
       };
+    }
+
+    // Check for timeout before executing gate
+    if (ctx.abort?.aborted) {
+      throw new Error('aborted');
     }
 
     // Execute gate handler
@@ -75,6 +102,12 @@ async function safeRunGate(handler, ctx, gate) {
     };
 
   } catch (error) {
+    // Handle abort vs regular errors differently
+    if (error.message === 'aborted') {
+      // Re-throw abort to stop execution at launcher level
+      throw error;
+    }
+    
     // Gate crashed - log error and return neutral
     ctx.logger?.('error', `Gate ${gate.id} crashed`, { error: error.message });
     

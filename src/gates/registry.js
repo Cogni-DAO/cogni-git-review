@@ -5,13 +5,15 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 /**
  * Build registry of available gates by scanning gate directories
+ * @param {object} logger - Optional Probot-style logger
  * @returns {Promise<{cogni: Map<string, Function>, external: Map<string, Function>}>}
  */
-export async function buildRegistry() {
+export async function buildRegistry(logger) {
+  const log = logger || console;
   const registry = {
     cogni: new Map(),
     external: new Map()
@@ -45,16 +47,24 @@ export async function buildRegistry() {
           registry.external.set(module.runner, module.run);
         }
       } catch (error) {
-        // Skip files that can't be loaded - they might be invalid or have syntax errors
-        console.warn(`Failed to load gate file ${file}:`, error.message);
+        // Log gate loading failures via Probot logger
+        if (log.warn) {
+          log.warn(`Failed to load gate file ${file}`, { 
+            error: error.message, 
+            kind, 
+            file_path: path.join(dir, file)
+          });
+        } else {
+          console.warn(`Failed to load gate file ${file}:`, error.message);
+        }
       }
     }
   };
 
-  // Scan gate directories
-  const basePath = path.join(process.cwd(), 'src', 'gates');
-  await loadGatesFromDir(path.join(basePath, 'cogni'), 'cogni');
-  await loadGatesFromDir(path.join(basePath, 'external'), 'external');
+  // Scan gate directories using module-relative paths
+  const currentModuleDir = path.dirname(fileURLToPath(import.meta.url));
+  await loadGatesFromDir(path.join(currentModuleDir, 'cogni'), 'cogni');
+  await loadGatesFromDir(path.join(currentModuleDir, 'external'), 'external');
 
   return registry;
 }
