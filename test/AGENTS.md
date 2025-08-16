@@ -11,10 +11,10 @@
 **Coverage**: Spec loading, caching, error handling + individual gate logic  
 **Status**: ✅ 15 tests passing (9 spec loader + 6 gate stubs)  
 
-### **Integration Tests** - Webhook Flow
+### **Integration Tests** - Webhook Flow & Launcher Hardening
 **Location**: `test/integration/*.test.js`  
-**Coverage**: Complete webhook → spec loading → gate evaluation → check creation  
-**Status**: ✅ 9 tests passing (4 behavior + 2 simple + 3 spec-aware)  
+**Coverage**: Complete webhook → spec loading → gate evaluation → check creation + launcher robustness  
+**Status**: ✅ 21+ tests passing (4 behavior + 2 simple + 3 spec-aware + 12 hardened launcher)  
 
 ### **Mock Integration Tests** - Basic Webhook Mechanics
 **Location**: `test/mock-integration/webhook-handlers.test.js`  
@@ -27,6 +27,16 @@
 **Location**: `test/fixtures/repo-specs.js`  
 **Purpose**: Reusable YAML specs and mock contexts to eliminate duplication  
 **Usage**: Import and use across all tests
+
+### **Hardened Launcher Testing**
+**Location**: `test/integration/hardened-launcher.test.js` (12 tests)  
+**Coverage**: Timeout handling, unknown gates, partial results, ID normalization, duplicate gates  
+**Key scenarios**:
+- Timeout before/during gate execution → partial results
+- Unknown gate handling → neutral with unimplemented_gate reason
+- ID normalization → spec gate.id always wins over handler-provided ID
+- Malformed gate outputs → safely normalized
+- Duplicate gates → run in spec order as separate results
 
 ### **CRITICAL: Always Use Fixtures - No Inline YAML**
 
@@ -145,7 +155,7 @@ createMockContext("org", "repo", "not_found") // 404 response
 
 **All Tests**:
 ```bash
-npm test  # All tests: 41 total, 40 pass, 1 skip
+npm test  # All tests: 60 total, 59 pass, 1 skip
 ```
 
 **Individual Test Suites**:
@@ -158,6 +168,8 @@ npx node --test test/unit/forbidden-scopes-stub.test.js     # Gate stub (6 tests
 npx node --test test/integration/cogni-evaluated-gates-behavior.test.js  # Behavior (4 tests)
 npx node --test test/integration/simple-integration.test.js             # Basic flow (2 tests)
 npx node --test test/integration/spec-aware-webhook.test.js             # Spec scenarios (4 tests)
+npx node --test test/integration/hardened-launcher.test.js              # Launcher robustness (12 tests)
+npx node --test test/integration/spec-gate-consistency.test.js          # Gate consistency (4 tests)
 
 # Mock Integration
 npx node --test test/mock-integration/webhook-handlers.test.js           # Basic webhooks (9 tests)

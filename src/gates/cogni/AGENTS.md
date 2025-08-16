@@ -1,18 +1,38 @@
 # Cogni Gates Directory
 
-## What Goes Here
-Individual gate implementations that evaluate PR compliance according to CogniDAO's standards.
+## Current Gates
+Individual gate implementations that evaluate PR compliance. 
 
-## Gate Types
-- **Precheck gates**: Early validation (size limits, basic requirements)  
-- **Content gates**: Code quality and structure validation
-- **Policy gates**: Compliance with repository governance rules
+- **review_limits**: File count and diff size validation against configured limits
+- **goal_declaration**: Ensures repository spec declares project goals  
+- **forbidden_scopes**: Ensures repository spec declares non-goals/scope boundaries
 
-## Principles
-- Each gate is self-contained and testable
-- All gates follow the same tri-state contract (pass/fail/neutral)
-- Gates can trigger early exit to avoid unnecessary processing
-- Local orchestration happens in `index.js`
+## Implementing New Gates
+Follow these patterns from existing gates:
 
-## Template Alignment Requirement
-When adding new gates, update `.cogni/repo-spec-template.yaml` to include gate configuration options.
+### 1. Gate Module Structure
+```javascript
+// Export gate ID for registry discovery
+export const id = 'your_gate_name';
+
+// Main gate function - matching spec gate.id
+export async function evaluateYourGateName(context, pr, config) {
+  // Gate logic here
+  return {
+    violations: [...],  // Array of violation objects
+    stats: {...},      // Gate execution metadata  
+    oversize: boolean  // Optional: triggers neutral if true
+  };
+}
+```
+
+### 2. Implementation Principles
+- **Self-contained**: No dependencies on other gates
+- **Tri-state result**: violations determine pass/fail, oversize → neutral
+- **Safe execution**: Handle missing/malformed config gracefully
+- **Rich stats**: Include useful metadata for debugging
+
+### 3. Registry Auto-Discovery
+- Export `id` and gate function - registry finds it automatically
+- Function name should match: `evaluate + PascalCase(id)`
+- Update `.cogni/repo-spec-template.yaml` with configuration options
