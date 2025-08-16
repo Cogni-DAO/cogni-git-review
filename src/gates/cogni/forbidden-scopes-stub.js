@@ -56,7 +56,7 @@ export async function evaluateForbiddenScopes(context, pr, spec) {
  * @param {object} gate - Gate configuration from spec
  * @returns {Promise<object>} Normalized gate result
  */
-export async function run(ctx, gate) {
+export async function run(ctx, _gate) {
   // Use existing legacy evaluator
   const legacyResult = await evaluateForbiddenScopes(ctx, ctx.pr, ctx.spec);
 

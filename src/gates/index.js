@@ -54,7 +54,6 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     const isAborted = runCtx.abort.aborted;
     
     const hasFailLocal = localResults.some(r => r.status === 'fail');
-    const hasNeutralLocal = localResults.some(r => r.status === 'neutral');
 
     // 2) External gates (v2) - skip if local failure or partial execution
     let externalResults = [];

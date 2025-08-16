@@ -117,7 +117,7 @@ export default (app) => {
    * Format gate results into summary and text for GitHub check
    */
   function formatGateResults(runResult) {
-    const { overall_status, gates, early_exit, duration_ms } = runResult;
+    const { gates, early_exit, duration_ms } = runResult;
     
     const failedGates = gates.filter(g => g.status === 'fail');
     const neutralGates = gates.filter(g => g.status === 'neutral');
