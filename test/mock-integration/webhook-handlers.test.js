@@ -30,6 +30,10 @@ const checkRunRerequestedComplete = JSON.parse(
   fs.readFileSync(path.join(fixturesPath, "check_run.rerequested.complete.json"), "utf-8"),
 );
 
+const prReopenedComplete = JSON.parse(
+  fs.readFileSync(path.join(fixturesPath, "pull_request.reopened.complete.json"), "utf-8"),
+);
+
 
 describe("GitHub Webhook Handler Mock-Integration Tests", () => {
   let probot;
@@ -120,6 +124,46 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
     // Receive the complete PR synchronize webhook event
     await probot.receive({ name: "pull_request", payload: prSynchronizeComplete });
 
+    assert.deepStrictEqual(mock.pendingMocks(), []);
+  });
+
+  test("pull_request.reopened should create Cogni Git PR Review check", async () => {
+    // This test demonstrates the bug: reopened events should trigger PR review
+    // Currently this will fail because the handler doesn't listen for 'reopened' events
+    
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/12345678/access_tokens")
+      .reply(200, {
+        token: "ghs_test_token",
+        permissions: {
+          checks: "write",
+          pull_requests: "read", 
+          metadata: "read",
+        },
+      })
+      // Mock missing spec file (same as synchronize test)
+      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
+      .query({ ref: "main" })
+      .reply(404, { message: "Not Found" })
+      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
+        // Should create check run when PR is reopened
+        assert.strictEqual(body.name, "Cogni Git PR Review");
+        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
+        assert.strictEqual(body.status, "completed");
+        assert.strictEqual(body.conclusion, "failure"); // No spec = failure
+        assert.strictEqual(body.output.title, "Cogni Git PR Review");
+        assert.strictEqual(body.output.summary, "No .cogni/repo-spec.yaml found");
+        return true;
+      })
+      .reply(200, { 
+        id: 9999999996, 
+        status: "completed", 
+        conclusion: "failure" 
+      });
+
+    // This should trigger PR review when reopened (currently fails silently)
+    await probot.receive({ name: "pull_request", payload: prReopenedComplete });
+    
     assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
@@ -320,6 +364,54 @@ describe("GitHub Webhook Handler Mock-Integration Tests", () => {
     // Synchronize should have before/after fields
     assert(typeof prSynchronizeComplete.before === "string");
     assert(typeof prSynchronizeComplete.after === "string");
+  });
+
+  test("check_run.rerequested successfully triggers PR review and responds with success approval", async () => {
+    // This test exemplifies the expected behavior when rerun works correctly
+    // Currently this may fail due to the rerun bug we're investigating
+    
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/12345678/access_tokens") 
+      .reply(200, {
+        token: "ghs_test_token",
+        permissions: {
+          checks: "write",
+          pull_requests: "read",
+          metadata: "read",
+        },
+      })
+      // Mock successful PR association lookup
+      .get("/repos/derekg1729/cogni-git-review/commits/abc123def456789012345678901234567890abcd/pulls")
+      .reply(200, [
+        {
+          number: 1,
+          state: "open", 
+          head: { sha: "abc123def456789012345678901234567890abcd" },
+          changed_files: 2,
+          additions: 10,
+          deletions: 5
+        }
+      ])
+      // Should successfully re-evaluate gates and create new check
+      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
+        assert.strictEqual(body.name, "Cogni Git PR Review");
+        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
+        assert.strictEqual(body.status, "completed");
+        assert.strictEqual(body.conclusion, "success");
+        assert.strictEqual(body.output.title, "Cogni Git PR Review");
+        assert.strictEqual(body.output.summary, "All gates passed");
+        return true;
+      })
+      .reply(200, { 
+        id: 9999999997, 
+        status: "completed", 
+        conclusion: "success" 
+      });
+
+    // This should trigger a full PR review when rerun is requested
+    await probot.receive({ name: "check_run", payload: checkRunRerequestedComplete });
+
+    assert.deepStrictEqual(mock.pendingMocks(), []);
   });
 
   test("validates webhook payload structure - check_run rerequested", async () => {

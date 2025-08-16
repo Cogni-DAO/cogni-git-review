@@ -18,7 +18,7 @@ export default (app) => {
   }
 
   app.on("check_run.rerequested", handleCheckRerun);
-  app.on(["pull_request.opened", "pull_request.synchronize"], handlePullRequest);
+  app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], handlePullRequest);
 
   async function createCheckOnSha(context, sha, conclusion, summary, text) {
     const started_at = new Date();
