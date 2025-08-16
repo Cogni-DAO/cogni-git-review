@@ -18,6 +18,7 @@ import nock from "nock";
 import { Probot, ProbotOctokit } from "probot";
 import myProbotApp from "../../index.js";
 import fs from "fs";
+import { clearSpecCache } from "../../src/spec-loader.js";  // Cache clearing for tests
 ```
 
 ## Test Pattern
@@ -26,6 +27,7 @@ describe("Webhook Handler Tests", () => {
   let probot;
 
   beforeEach(() => {
+    clearSpecCache(); // Clean spec cache before each test
     nock.disableNetConnect();
     probot = new Probot({
       appId: 123456,
@@ -61,6 +63,7 @@ describe("Webhook Handler Tests", () => {
 - **Minimal mocking**: Only auth + check creation
 - **Body validation**: Validates exact check parameters
 - **Current behavior**: Tests what app currently does, not what it should do
+- **Cache management**: Uses `clearSpecCache()` to prevent test interference
 
 ## When to Use
 - Smoke testing webhook mechanics

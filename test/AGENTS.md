@@ -19,7 +19,7 @@
 ### **Mock Integration Tests** - Basic Webhook Mechanics
 **Location**: `test/mock-integration/webhook-handlers.test.js`  
 **Coverage**: Basic webhook-to-check flows with hardcoded expectations  
-**Status**: ✅ 9 tests passing  
+**Status**: ✅ 8 tests passing  
 
 ## DRY Test Fixtures 🎯
 
