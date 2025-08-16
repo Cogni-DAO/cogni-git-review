@@ -13,7 +13,9 @@
   ],
   "scripts": {
     "start": "probot run ./index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
@@ -21,6 +23,11 @@
     "probot": "^13.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-n": "^17.21.3",
+    "eslint-plugin-promise": "^7.2.1",
+    "globals": "^16.3.0",
     "nock": "^14.0.9",
     "smee-client": "^2.0.0"
   },
