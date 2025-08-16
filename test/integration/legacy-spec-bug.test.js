@@ -76,10 +76,11 @@ describe("Legacy Spec Bug Tests", () => {
         // TDD: Should report neutral when 0 gates run due to spec incompatibility
         assert.strictEqual(body.conclusion, "neutral", "Should report neutral when 0 gates run");
         
-        // Should indicate no gates or spec compatibility issues
-        assert(body.output.text.includes("Gates: 0 total") || 
-               body.output.text.includes("no gates") ||
-               body.output.text.includes("neutral"), "Should indicate 0 gates or compatibility issue");
+        // Should have correct summary for 0 gates case
+        assert.strictEqual(body.output.summary, "No gates configured", "Should say 'No gates configured' not 'All gates passed'");
+        
+        // Should indicate 0 gates in detailed text
+        assert(body.output.text.includes("Gates: 0 total"), "Should show Gates: 0 total");
         
         return true;
       })

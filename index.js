@@ -112,7 +112,9 @@ export default (app) => {
     
     // Summary
     let summary;
-    if (failedGates.length > 0) {
+    if (gates.length === 0) {
+      summary = 'No gates configured';
+    } else if (failedGates.length > 0) {
       summary = `Gate failures: ${failedGates.length}`;
     } else if (neutralGates.length > 0) {
       const reasons = [...new Set(neutralGates.map(g => g.neutral_reason).filter(Boolean))];
