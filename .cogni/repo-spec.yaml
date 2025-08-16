@@ -1,4 +1,4 @@
-schema_version: '0.2.1'
+schema_version: '0.1.2'
 
 intent:
   name: cogni-git-review
@@ -9,7 +9,11 @@ intent:
     - Heavy in-process scanning or AI analysis
     - Secrets retention or external tool integration
 
+# Gates run in the order they appear below.
 gates:
-  review_limits:
-    max_changed_files: 40
-    max_total_diff_kb: 1500
+  - id: review_limits
+    with:
+      max_changed_files: 40
+      max_total_diff_kb: 1500
+  - id: goal_declaration
+  - id: forbidden_scopes

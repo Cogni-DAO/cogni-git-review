@@ -1,7 +1,7 @@
 // Test fixtures for repository specifications
 
 export const SPEC_FIXTURES = {
-  // Valid minimal spec - super-MVP format
+  // Valid minimal spec - list-of-gates format
   minimal: `schema_version: '0.2.1'
 
 intent:
@@ -12,11 +12,12 @@ intent:
     - Complex features
 
 gates:
-  review_limits:
-    max_changed_files: 100
-    max_total_diff_kb: 500`,
+  - id: review_limits
+    with:
+      max_changed_files: 100
+      max_total_diff_kb: 500`,
 
-  // Valid full spec - super-MVP format with all optional fields
+  // Valid full spec with all gates enabled
   full: `schema_version: '0.2.1'
 
 intent:
@@ -28,9 +29,12 @@ intent:
     - What this project does not do
 
 gates:
-  review_limits:
-    max_changed_files: 50
-    max_total_diff_kb: 200`,
+  - id: review_limits
+    with:
+      max_changed_files: 50
+      max_total_diff_kb: 200
+  - id: goal_declaration
+  - id: forbidden_scopes`,
 
   // Bootstrap mode spec - for gradual rollout
   bootstrap: `schema_version: '0.2.1'
@@ -119,9 +123,12 @@ intent:
     - Complex features
 
 gates:
-  review_limits:
-    max_changed_files: 30
-    max_total_diff_kb: 100`,
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration
+  - id: forbidden_scopes`,
 
   behaviorTest10_50: `schema_version: '0.2.1'
 
@@ -133,9 +140,90 @@ intent:
     - Complex features
 
 gates:
+  - id: review_limits
+    with:
+      max_changed_files: 10
+      max_total_diff_kb: 50`,
+
+  // Gate consistency test fixtures - for testing "presence = enabled" semantics
+  gateConsistency1Gate: `schema_version: '0.2.1'
+
+intent:
+  name: single-gate-project
+  goals:
+    - Test single gate execution
+  non_goals:
+    - Multiple gates
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100`,
+
+  gateConsistency2Gates: `schema_version: '0.2.1'
+
+intent:
+  name: two-gate-project
+  goals:
+    - Test two gates execution
+  non_goals:
+    - Complete gate coverage
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration`,
+
+  gateConsistency3Gates: `schema_version: '0.2.1'
+
+intent:
+  name: all-gates-project
+  goals:
+    - Test all three gates execution
+  non_goals:
+    - Partial gate coverage
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration
+  - id: forbidden_scopes`,
+
+  gateConsistency2GatesNoLimits: `schema_version: '0.2.1'
+
+intent:
+  name: no-limits-project
+  goals:
+    - Test gates without review_limits
+  non_goals:
+    - File or size limits
+
+gates:
+  - id: goal_declaration
+  - id: forbidden_scopes`,
+
+  // Legacy spec format (from main branch) - v0.2.1 with object-style gates
+  // This should result in 0 gates running because dynamic registry can't discover gates
+  legacy: `schema_version: '0.2.1'
+
+intent:
+  name: cogni-git-review
+  goals:
+    - Automated PR hygiene checks with essential file restrictions
+    - Single required check aggregating multiple validation signals
+  non_goals:
+    - Heavy in-process scanning or AI analysis
+    - Secrets retention or external tool integration
+
+gates:
   review_limits:
-    max_changed_files: 10
-    max_total_diff_kb: 50`
+    max_changed_files: 40
+    max_total_diff_kb: 1500`
 };
 
 // Expected parsed results for valid specs
@@ -147,21 +235,29 @@ export const EXPECTED_SPECS = {
       goals: ['Basic project functionality'],
       non_goals: ['Complex features']
     },
-    gates: {
-      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 }
-    }
+    gates: [
+      {
+        id: 'review_limits',
+        with: { max_changed_files: 100, max_total_diff_kb: 500 }
+      }
+    ]
   },
 
-  customName: {
+  full: {
     schema_version: '0.2.1',
     intent: {
-      name: 'custom-check-project',
-      goals: ['Project with custom check name'],
-      non_goals: ['Default naming conventions']
+      name: 'full-project',
+      goals: ['Primary goal of the project', 'Secondary goal'],
+      non_goals: ['What this project does not do']
     },
-    gates: {
-      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 }
-    }
+    gates: [
+      {
+        id: 'review_limits',
+        with: { max_changed_files: 50, max_total_diff_kb: 200 }
+      },
+      { id: 'goal_declaration' },
+      { id: 'forbidden_scopes' }
+    ]
   }
 };
 

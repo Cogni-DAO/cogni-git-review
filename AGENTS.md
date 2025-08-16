@@ -1,105 +1,63 @@
 # AGENTS.md - Cogni Git Review Bot
 
 ## Project Overview
-**cogni-git-review** - CogniDAO's GitHub App built with Probot for automated code review and PR management.
+**cogni-git-review** - CogniDAO's GitHub App that automatically evaluates pull requests against repository-defined quality gates, providing fast feedback on code changes, with the goal of keeping the codebase clean, consistent, and aligned with the project's goals.
 
-This bot is incredibly new, immature, and is in its infancy. beware.
+## Core Function
+The bot reads `.cogni/repo-spec.yaml` from repositories and runs configured quality gates (file limits, goal compliance, scope validation) on every PR. Results appear as GitHub check runs with pass/fail/neutral status.
 
-## Current Architecture
-- **Framework**: Probot v13.4.7
-- **Language**: JavaScript (ES modules)
-- **Main Entry**: `index.js`
-- **Events**: `check_suite`, `check_run`, `pull_request`
-- **Gate System**: Two-level orchestrator for PR evaluation (see `src/gates/AGENTS.md`)
+## Architecture Overview
+- **Framework**: Probot v13.4.7 (JavaScript ES modules)
+- **Dynamic Gate System**: Registry-based discovery with timeout handling
+- **Events**: `pull_request`, `check_run`, `check_suite`
 
-**Architecture Specification**: cogni memory block id: 8e79bc85-3da9-4d17-b0ed-70937551a4ba
-
-## Key Components
-
-### Bot Functionality
-- Creates "Cogni Git Review" checks on PRs
-- Status progression: `in_progress` → `completed` 
-- Handles re-runs via `check_run.rerequested`
-
-### GitHub Webhook Events
-
-#### **check_suite** Events:
-- **`check_suite.requested`** - GitHub says "please run checks on this commit"
-  - **Triggers**: New commit pushed, PR opened/updated 
-  - **Bot creates**: "Cogni Git Commit Check"
-  - **Handler**: `handleCheckSuite`
-
-- **`check_suite.rerequested`** - User clicked "Re-run all checks"
-  - **Not implemented** in current bot
-
-- **`check_suite.completed`** - All checks in suite finished
-  - **Not implemented** in current bot
-
-#### **check_run** Events:
-- **`check_run.created`** - A check run was just created (usually ignore)
-
-- **`check_run.rerequested`** - User clicked "Re-run" on ONE specific check
-  - **Bot creates**: "Cogni Git Commit Check" (re-run)
-  - **Handler**: `handleCheckRerun`
-
-- **`check_run.requested_action`** - User clicked a button in check output
-  - **Not applicable** to current simple bot
-
-#### **pull_request** Events:
-- **`pull_request.opened`** - New PR created
-- **`pull_request.synchronize`** - New commits pushed to PR branch
-  - **Bot creates**: "Cogni Git PR Review"  
-  - **Handler**: `handlePullRequest`
-
-#### **Expected Event Flow**:
-1. **Commit pushed** → `check_suite.requested` → "Cogni Git Commit Check" ✅
-2. **PR opened** → `pull_request.opened` → "Cogni Git PR Review" ✅  
-3. **PR updated** → `pull_request.synchronize` → "Cogni Git PR Review" ✅
-
-### Configuration
-- **Webhooks**: Configured in `app.yml` 
-- **Permissions**: `checks: write`, `pull_requests: read`, `metadata: read`
-- **Local Dev**: Uses smee.io proxy for webhook forwarding
-
-
-**Important Note from app.yml:**
-```yaml
-# NOTE: changing this file will not update your GitHub App settings.
-# You must visit github.com/settings/apps/your-app-name to edit them.
+## Repository Structure
 ```
-**Human Intervention Required**: for any feature that requires a change in permission. Human must update app permissions, and then installations must accept the new permissions.
+├── index.js                    # Main bot webhook handlers
+├── src/
+│   ├── spec-loader.js         # Repository specification loading
+│   └── gates/                 # Gate evaluation system (→ AGENTS.md)
+│       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
+│       └── external/          # Future: third-party integrations (→ AGENTS.md)
+├── test/                      # Test suites and fixtures (→ AGENTS.md)
+│   ├── fixtures/              # Reusable test data (→ AGENTS.md)
+│   ├── integration/           # End-to-end tests (→ AGENTS.md)
+│   ├── mock-integration/      # Webhook handler tests (→ AGENTS.md)
+│   └── unit/                  # Isolated component tests (→ AGENTS.md)
+└── .cogni/
+    ├── repo-spec.yaml         # This repository's quality gates
+    └── repo-spec-template.yaml # Template for new repositories
+```
 
-## Development Workflow
+## Gate Configuration
+Quality gates are configured in each repository's `.cogni/repo-spec.yaml`:
+```yaml
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration
+  - id: forbidden_scopes
+```
+**Principle**: Only gates listed in the spec execute ("presence = enabled")
+
+## Key Features
+- **Dynamic gate discovery**: Gates auto-discovered from filesystem
+- **Timeout handling**: Partial results when execution times out
+- **Robust error handling**: Gate crashes become neutral results
+- **Comprehensive testing**: 60 tests covering edge cases and robustness
+
+## Development
 
 ### Setup
 ```bash
 npm install
-npm start  # Starts on localhost:3000 with smee proxy
+npm start  # Local development with webhook proxy
+npm test   # Run all 60 tests (59 pass, 1 skip)
 ```
 
-### Testing
-
-**Testing Implementation Guidelines**: cogni memory block id: 80320208-7d7c-4859-bbbf-07e96b3c92d4
-
-https://probot.github.io/docs/testing/?utm_source=chatgpt.com
-
-**Debugging webhook delivery**: Check smee.io URL directly: https://smee.io/LhGHiP1UNnaXgLGi
-
-```bash
-npm test  # Runs Node.js native tests with nock mocks
-```
-
-### Files Structure
-- `index.js` - Main bot logic
-- `src/spec-loader.js` - Repository spec loading
-- `src/gates/` - Gate evaluation system (see `src/gates/AGENTS.md`)
-- `.cogni/repo-spec.yaml` - Repository specification  
-- `test/fixtures/repo-specs.js` - DRY test fixtures (see `test/AGENTS.md`)
-
-## Spec-Gate Alignment
-**Critical**: `.cogni/repo-spec-template.yaml` must match gates that parse `runCtx.spec.gates.*`  
-**Bug**: Template missing `goal_declaration` and `forbidden_scopes` configs (work item: `8985e45b`)
-
-## Resources
-- [Probot Docs](https://probot.github.io/docs/)
+### Key Resources
+- [Probot Framework Docs](https://probot.github.io/docs/)
 - [GitHub Checks API](https://docs.github.com/en/rest/checks)
+- Architecture details in AGENTS.md files throughout the repository

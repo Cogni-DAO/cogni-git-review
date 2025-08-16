@@ -3,6 +3,9 @@
  * Part of Cogni Gate Evaluation system
  */
 
+// Gate registry contract exports
+export const id = 'review_limits';
+
 /**
  * Evaluate review limits for a PR against configured limits
  * @param {import('probot').Context} context - Probot context
@@ -55,4 +58,43 @@ export async function evaluateReviewLimits(context, pr, limits) {
       oversize: true
     };
   }
+}
+
+/**
+ * Registry-compatible run function for review_limits gate
+ * @param {object} ctx - Run context with octokit, pr, etc.
+ * @param {object} gate - Gate configuration from spec
+ * @returns {Promise<object>} Normalized gate result
+ */
+export async function run(ctx, gate) {
+  const limits = gate.with;
+
+  // If no limits defined in the gate config, return passing result
+  if (!limits) {
+    return {
+      status: 'pass',
+      violations: [],
+      stats: {
+        changed_files: ctx.pr.changed_files ?? 0,
+        total_diff_kb: 0,
+        limits_defined: false
+      }
+    };
+  }
+
+  // Use existing legacy evaluator
+  const legacyResult = await evaluateReviewLimits(ctx, ctx.pr, limits);
+
+  // Convert to normalized result shape
+  return {
+    status: legacyResult.oversize ? 'neutral' : (legacyResult.violations.length > 0 ? 'fail' : 'pass'),
+    neutral_reason: legacyResult.oversize ? 'oversize_diff' : undefined,
+    violations: legacyResult.violations.map(v => ({
+      code: v.rule,
+      message: `${v.rule}: ${v.actual} > ${v.limit}`,
+      path: null,
+      meta: { actual: v.actual, limit: v.limit }
+    })),
+    stats: legacyResult.stats
+  };
 }

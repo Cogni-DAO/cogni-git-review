@@ -3,7 +3,7 @@
  * Orchestrates all gate evaluations (Cogni local, External, AI advisory)
  */
 
-import { runCogniPrecheck, runOtherLocalGates } from './cogni/index.js';
+import { runConfiguredGates } from './run-configured.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
@@ -11,7 +11,7 @@ import { runCogniPrecheck, runOtherLocalGates } from './cogni/index.js';
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
  * @param {object} opts - Options { enableExternal: false, deadlineMs: 8000 }
- * @returns {Promise<{overall_status: string, gates: Array, early_exit: boolean, duration_ms: number}>}
+ * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
 export async function runAllGates(context, pr, spec, opts = { enableExternal: false, deadlineMs: 8000 }) {
   const started = Date.now();
@@ -31,6 +31,7 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     spec,
     octokit: context.octokit,
     logger: (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {})),
+    log: context.log,
     deadline_ms: opts.deadlineMs,
     annotation_budget: 50,
     idempotency_key: `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`,
@@ -44,44 +45,39 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
   }, opts.deadlineMs);
 
   try {
-    // 1) Local precheck (review_limits) - check for early exit
-    const reviewLimitsResult = await runCogniPrecheck(runCtx);
+    // 1) Run all configured local gates in spec order
+    const localResults = await runConfiguredGates(runCtx);
     
-    if (reviewLimitsResult.status === 'neutral' && reviewLimitsResult.neutral_reason === 'oversize_diff') {
-      clearTimeout(timeoutId);
-      return { 
-        overall_status: 'neutral', 
-        gates: [reviewLimitsResult], 
-        early_exit: true, 
-        duration_ms: Date.now() - started 
-      };
-    }
-
-    // 2) Remaining local gates (parallel)
-    const otherLocalResults = await runOtherLocalGates(runCtx);
-    const localResults = [reviewLimitsResult, ...otherLocalResults];
+    // Detect partial execution (timeout/abort)
+    const expectedGateCount = spec.gates?.length || 0;
+    const isPartial = localResults.length < expectedGateCount;
+    const isAborted = runCtx.abort.aborted;
     
     const hasFailLocal = localResults.some(r => r.status === 'fail');
     const hasNeutralLocal = localResults.some(r => r.status === 'neutral');
 
-    // 3) External gates (v2) - skip if local failure
+    // 2) External gates (v2) - skip if local failure or partial execution
     let externalResults = [];
-    if (!hasFailLocal && opts.enableExternal) {
+    if (!hasFailLocal && !isPartial && opts.enableExternal) {
       externalResults = await runExternalGates(runCtx);
     }
 
-    // 4) Aggregate all results
+    // 3) Aggregate all results
     const allGates = [...localResults, ...externalResults];
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
-    const overall_status = hasFail ? 'fail' : (hasNeutral ? 'neutral' : 'pass');
+    // Determine overall status
+    const hasNoGates = allGates.length === 0;
+    const overall_status = hasNoGates ? 'neutral'
+                         : (isPartial && isAborted) ? 'neutral' 
+                         : hasFail ? 'fail' 
+                         : (hasNeutral ? 'neutral' : 'pass');
 
     clearTimeout(timeoutId);
     return { 
       overall_status, 
       gates: allGates, 
-      early_exit: false, 
       duration_ms: Date.now() - started 
     };
 
@@ -100,7 +96,6 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
         stats: { error: error.message },
         duration_ms: Date.now() - started
       }],
-      early_exit: true,
       duration_ms: Date.now() - started
     };
   }
