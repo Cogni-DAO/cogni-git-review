@@ -10,9 +10,6 @@ intent:
   non_goals:
     - Explicitly out-of-scope items
 
-check:
-  name: 'Cogni Git PR Review'   # status check title
-
 # Gates run in the order they appear below.
 gates:
   - id: review_limits
@@ -20,7 +17,5 @@ gates:
       max_changed_files: 30
       max_total_diff_kb: 100
 
-  # Uncomment to enable advisory Cogni gates:
   # - id: goal_declaration
-  #
   # - id: forbidden_scopes

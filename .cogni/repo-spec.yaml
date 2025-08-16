@@ -1,4 +1,4 @@
-schema_version: '0.2.1'
+schema_version: '0.1.2'
 
 intent:
   name: cogni-git-review
@@ -8,9 +8,6 @@ intent:
   non_goals:
     - Heavy in-process scanning or AI analysis
     - Secrets retention or external tool integration
-
-check:
-  name: 'Cogni Git PR Review'   # status check title
 
 # Gates run in the order they appear below.
 gates:
