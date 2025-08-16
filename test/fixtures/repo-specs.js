@@ -205,7 +205,25 @@ intent:
 
 gates:
   - id: goal_declaration
-  - id: forbidden_scopes`
+  - id: forbidden_scopes`,
+
+  // Legacy spec format (from main branch) - v0.2.1 with object-style gates
+  // This should result in 0 gates running because dynamic registry can't discover gates
+  legacy: `schema_version: '0.2.1'
+
+intent:
+  name: cogni-git-review
+  goals:
+    - Automated PR hygiene checks with essential file restrictions
+    - Single required check aggregating multiple validation signals
+  non_goals:
+    - Heavy in-process scanning or AI analysis
+    - Secrets retention or external tool integration
+
+gates:
+  review_limits:
+    max_changed_files: 40
+    max_total_diff_kb: 1500`
 };
 
 // Expected parsed results for valid specs

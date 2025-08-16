@@ -67,8 +67,10 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
-    // Partial execution (timeout) should result in neutral overall status
-    const overall_status = (isPartial && isAborted) ? 'neutral' 
+    // Determine overall status
+    const hasNoGates = allGates.length === 0;
+    const overall_status = hasNoGates ? 'neutral'
+                         : (isPartial && isAborted) ? 'neutral' 
                          : hasFail ? 'fail' 
                          : (hasNeutral ? 'neutral' : 'pass');
 
