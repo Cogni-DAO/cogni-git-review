@@ -3,7 +3,7 @@
  * Orchestrates all gate evaluations (Cogni local, External, AI advisory)
  */
 
-import { runCogniPrecheck, runOtherLocalGates } from './cogni/index.js';
+import { runConfiguredGates } from './cogni/index.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
@@ -44,34 +44,19 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
   }, opts.deadlineMs);
 
   try {
-    // 1) Local precheck (review_limits) - check for early exit
-    const reviewLimitsResult = await runCogniPrecheck(runCtx);
-    
-    // Check for early exit only if review_limits gate actually ran
-    if (reviewLimitsResult && reviewLimitsResult.status === 'neutral' && reviewLimitsResult.neutral_reason === 'oversize_diff') {
-      clearTimeout(timeoutId);
-      return { 
-        overall_status: 'neutral', 
-        gates: [reviewLimitsResult], 
-        early_exit: true, 
-        duration_ms: Date.now() - started 
-      };
-    }
-
-    // 2) Remaining local gates (parallel)
-    const otherLocalResults = await runOtherLocalGates(runCtx);
-    const localResults = [reviewLimitsResult, ...otherLocalResults].filter(Boolean); // Remove nulls
+    // 1) Run all configured local gates in spec order
+    const localResults = await runConfiguredGates(runCtx);
     
     const hasFailLocal = localResults.some(r => r.status === 'fail');
     const hasNeutralLocal = localResults.some(r => r.status === 'neutral');
 
-    // 3) External gates (v2) - skip if local failure
+    // 2) External gates (v2) - skip if local failure
     let externalResults = [];
     if (!hasFailLocal && opts.enableExternal) {
       externalResults = await runExternalGates(runCtx);
     }
 
-    // 4) Aggregate all results
+    // 3) Aggregate all results
     const allGates = [...localResults, ...externalResults];
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
@@ -82,7 +67,6 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     return { 
       overall_status, 
       gates: allGates, 
-      early_exit: false, 
       duration_ms: Date.now() - started 
     };
 
@@ -101,7 +85,6 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
         stats: { error: error.message },
         duration_ms: Date.now() - started
       }],
-      early_exit: true,
       duration_ms: Date.now() - started
     };
   }

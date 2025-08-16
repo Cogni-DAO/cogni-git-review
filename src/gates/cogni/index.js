@@ -8,24 +8,43 @@ import { evaluateGoalDeclaration } from './goal-declaration-stub.js';
 import { evaluateForbiddenScopes } from './forbidden-scopes-stub.js';
 
 /**
- * Run Cogni precheck (review_limits only) - enables early exit
+ * Run all configured gates in spec order
  * @param {object} runCtx - Run context with timing, abort signal, etc.
- * @returns {Promise<GateResult>} Single gate result
+ * @returns {Promise<GateResult[]>} Gate execution results
  */
-export async function runCogniPrecheck(runCtx) {
+export async function runConfiguredGates(runCtx) {
+  const gateConfigs = runCtx.spec?.gates || [];
+  const results = [];
+  
+  // Process gates in the order they appear in the spec
+  for (const gateConfig of gateConfigs) {
+    let gateResult = null;
+    
+    // Dynamic gate execution based on ID
+    if (gateConfig.id === 'review_limits') {
+      gateResult = await runReviewLimitsGate(runCtx, gateConfig);
+    } else if (gateConfig.id === 'goal_declaration') {
+      gateResult = await runGoalDeclarationGate(runCtx, gateConfig);
+    } else if (gateConfig.id === 'forbidden_scopes') {
+      gateResult = await runForbiddenScopesGate(runCtx, gateConfig);
+    }
+    
+    if (gateResult) {
+      results.push(gateResult);
+    }
+  }
+  
+  return results;
+}
+
+/**
+ * Run review_limits gate with given configuration
+ */
+async function runReviewLimitsGate(runCtx, gateConfig) {
   const started = Date.now();
   
   try {
-    // Find review_limits gate in the gates array
-    const gateConfigs = runCtx.spec?.gates || [];
-    const reviewLimitsGate = gateConfigs.find(g => g.id === 'review_limits');
-    
-    // If review_limits gate is not configured, return null (no gate to run)
-    if (!reviewLimitsGate) {
-      return null;
-    }
-    
-    const limits = reviewLimitsGate.with;
+    const limits = gateConfig.with;
     
     // If no limits defined in the gate config, return passing result
     if (!limits) {
@@ -60,7 +79,7 @@ export async function runCogniPrecheck(runCtx) {
     };
     
   } catch (error) {
-    runCtx.logger('error', 'Review limits precheck failed', { error: error.message });
+    runCtx.logger('error', 'Review limits gate failed', { error: error.message });
     return {
       id: 'review_limits',
       status: 'neutral',
@@ -73,34 +92,9 @@ export async function runCogniPrecheck(runCtx) {
 }
 
 /**
- * Run other local Cogni gates (dynamically discovered from spec)
- * @param {object} runCtx - Run context with timing, abort signal, etc.
- * @returns {Promise<GateResult[]>} Array of gate results
+ * Run goal_declaration gate
  */
-export async function runOtherLocalGates(runCtx) {
-  const gateConfigs = runCtx.spec?.gates || [];
-  const tasks = [];
-  
-  // Only run gates that are explicitly configured in the spec
-  for (const gateConfig of gateConfigs) {
-    if (gateConfig.id === 'goal_declaration') {
-      tasks.push(runGoalDeclarationStub(runCtx));
-    } else if (gateConfig.id === 'forbidden_scopes') {
-      tasks.push(runForbiddenScopesStub(runCtx));
-    }
-    // Skip review_limits as it's handled in precheck
-  }
-  
-  if (tasks.length === 0) return [];
-  
-  const results = await Promise.all(tasks);
-  return results;
-}
-
-/**
- * Run goal declaration stub gate
- */
-async function runGoalDeclarationStub(runCtx) {
+async function runGoalDeclarationGate(runCtx, gateConfig) {
   const started = Date.now();
   
   try {
@@ -120,7 +114,7 @@ async function runGoalDeclarationStub(runCtx) {
     };
     
   } catch (error) {
-    runCtx.logger('error', 'Goal declaration stub failed', { error: error.message });
+    runCtx.logger('error', 'Goal declaration gate failed', { error: error.message });
     return {
       id: 'goal_declaration_stub',
       status: 'neutral',
@@ -133,9 +127,9 @@ async function runGoalDeclarationStub(runCtx) {
 }
 
 /**
- * Run forbidden scopes stub gate
+ * Run forbidden_scopes gate
  */
-async function runForbiddenScopesStub(runCtx) {
+async function runForbiddenScopesGate(runCtx, gateConfig) {
   const started = Date.now();
   
   try {
@@ -155,7 +149,7 @@ async function runForbiddenScopesStub(runCtx) {
     };
     
   } catch (error) {
-    runCtx.logger('error', 'Forbidden scopes stub failed', { error: error.message });
+    runCtx.logger('error', 'Forbidden scopes gate failed', { error: error.message });
     return {
       id: 'forbidden_scopes_stub',
       status: 'neutral',
@@ -166,3 +160,4 @@ async function runForbiddenScopesStub(runCtx) {
     };
   }
 }
+
