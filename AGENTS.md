@@ -9,7 +9,7 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and runs configured qual
 ## Architecture Overview
 - **Framework**: Probot v13.4.7 (JavaScript ES modules)
 - **Dynamic Gate System**: Registry-based discovery with timeout handling
-- **Events**: `pull_request`, `check_run`, `check_suite`
+- **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
 
 ## Repository Structure
 ```

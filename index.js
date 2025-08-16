@@ -17,8 +17,21 @@ export default (app) => {
     });
   }
 
-  app.on("check_run.rerequested", handleCheckRerun);
-  app.on(["pull_request.opened", "pull_request.synchronize"], handlePullRequest);
+  // Always log rerun events for debugging
+  app.on("check_run", (context) => {
+    if (context.payload.action === 'rerequested') {
+      console.log(`🔍 RERUN EVENT: check_run.rerequested received for check: "${context.payload.check_run?.name}"`);
+    }
+  });
+
+  app.on("check_suite", (context) => {
+    if (context.payload.action === 'rerequested') {
+      console.log(`🔍 RERUN EVENT: check_suite.rerequested received for suite: ${context.payload.check_suite?.id}`);
+    }
+  });
+
+  app.on("check_suite.rerequested", handleCheckRerun);
+  app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], handlePullRequest);
 
   async function createCheckOnSha(context, sha, conclusion, summary, text) {
     const started_at = new Date();
@@ -176,42 +189,44 @@ export default (app) => {
   }
 
   async function handleCheckRerun(context) {
-    const { head_sha: headSha, name: checkName } = context.payload.check_run;
+    const checkSuite = context.payload.check_suite;
+    const { head_sha: headSha } = checkSuite;
 
-    if (checkName !== PR_REVIEW_NAME) {
-      console.log(`🔄 Ignoring rerun for unrecognized check: ${checkName}`);
-      return;
+    console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
+
+    // Get PR number from check_suite.pull_requests, then fetch full PR data
+    const prRef = checkSuite.pull_requests?.find(pr => pr.state === 'open') || 
+                  checkSuite.pull_requests?.[0];
+
+    if (!prRef) {
+      console.log(`🔄 RERUN: No PRs found in check_suite.pull_requests`);
+      return createCheckOnSha(
+        context,
+        headSha,
+        'failure',
+        'No associated PR found',
+        'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
+      );
     }
 
+    console.log(`🔄 RERUN: Found PR #${prRef.number} in check_suite, fetching full PR data`);
+    
     try {
-      // Find associated PR(s) for this commit SHA
-      const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
-        context.repo({ commit_sha: headSha })
+      // Fetch full PR data with file/diff statistics
+      const { data: fullPR } = await context.octokit.pulls.get(
+        context.repo({ pull_number: prRef.number })
       );
-
-      const pull_request =
-        assoc.find(pr => pr.state === 'open') || assoc[0];
-
-      if (!pull_request) {
-        // Surface a clear failure right on that SHA so users see why rerun did nothing
-        return createCheckOnSha(
-          context,
-          headSha,
-          'failure',
-          'No associated PR found',
-          'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
-        );
-      }
-
-      return evaluateAndCreateCheck(context, pull_request);
+      
+      console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
+      return evaluateAndCreateCheck(context, fullPR);
     } catch (error) {
-      console.error(`🔄 PR lookup failed during rerun for ${headSha}:`, error);
+      console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
       return createCheckOnSha(
         context,
         headSha,
         'neutral',
-        'Spec could not be loaded (transient error)',
-        'GitHub API/network issue during rerun. Re-run the check or try again.'
+        'Could not fetch PR data',
+        'GitHub API issue while fetching PR details. Re-run the check or try again.'
       );
     }
   }
