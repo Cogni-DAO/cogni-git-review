@@ -60,7 +60,7 @@ describe("Simple Integration Tests", () => {
       })
       // Mock spec file fetch - return minimal spec
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(200, {
         type: "file",
         content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
@@ -105,15 +105,15 @@ describe("Simple Integration Tests", () => {
       })
       // Mock spec file fetch - return 404
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "abc123def456789012345678901234567890abcd" })
+      .query({ ref: "main" })
       .reply(404, { message: "Not Found" })
-      // Mock check run creation - should be neutral
+      // Mock check run creation - should be failure (missing spec)
       .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
         // Basic verification
         assert.strictEqual(typeof body.name, "string");
         assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
         assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "neutral");
+        assert.strictEqual(body.conclusion, "failure");
         assert.strictEqual(typeof body.output, "object");
         assert.strictEqual(typeof body.output.summary, "string");
         return true;
@@ -121,7 +121,7 @@ describe("Simple Integration Tests", () => {
       .reply(200, { 
         id: 9999999998, 
         status: "completed", 
-        conclusion: "neutral" 
+        conclusion: "failure" 
       });
 
     // Send webhook event

@@ -1,89 +1,85 @@
 // Test fixtures for repository specifications
 
 export const SPEC_FIXTURES = {
-  // Valid minimal spec - just the essentials
-  minimal: `intent:
+  // Valid minimal spec - list-of-gates format
+  minimal: `schema_version: '0.2.1'
+
+intent:
   name: minimal-project
-  mission: Basic project configuration
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Basic project functionality
+  non_goals:
+    - Complex features
 
 gates:
-  spec_mode: enforced
-  check_presentation:
-    name: 'Cogni Git PR Review'`,
+  - id: review_limits
+    with:
+      max_changed_files: 100
+      max_total_diff_kb: 500`,
 
-  // Valid full spec - all fields populated
-  full: `intent:
+  // Valid full spec with all gates enabled
+  full: `schema_version: '0.2.1'
+
+intent:
   name: full-project
-  mission: Comprehensive project with all configuration options
   goals:
     - Primary goal of the project
     - Secondary goal
   non_goals:
     - What this project does not do
-  ownership:
-    maintainers: ['@test-org/maintainers', '@test-org/admins']
-    maturity: beta
 
 gates:
-  spec_mode: enforced
-  on_missing_spec: neutral_with_annotation
-  deny_paths: 
-    - '**/*.exe'
-    - '**/*.dll'
-    - 'secrets/**'
-    - '.env'
-  review_limits:
-    max_changed_files: 50
-    max_total_diff_kb: 200
-  required_files:
-    - 'README.md'
-    - 'LICENSE'
-  commit_policy:
-    conventional_commits: true
-    signed_off_by: false
-  check_presentation:
-    name: 'Full Project Check'`,
+  - id: review_limits
+    with:
+      max_changed_files: 50
+      max_total_diff_kb: 200
+  - id: goal_declaration
+  - id: forbidden_scopes`,
 
   // Bootstrap mode spec - for gradual rollout
-  bootstrap: `intent:
+  bootstrap: `schema_version: '0.2.1'
+
+intent:
   name: bootstrap-project
-  mission: Project in bootstrap mode for safe rollout
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Project in bootstrap mode for safe rollout
+  non_goals:
+    - Heavy validation during initial rollout
 
 gates:
-  spec_mode: bootstrap
-  on_missing_spec: neutral_with_annotation
-  deny_paths: ['**/*.exe', 'secrets/**']
-  check_presentation:
-    name: 'Bootstrap Check'`,
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500`,
 
   // Advisory mode spec - for testing
-  advisory: `intent:
+  advisory: `schema_version: '0.2.1'
+
+intent:
   name: advisory-project
-  mission: Project in advisory mode for evaluation
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Project in advisory mode for evaluation
+  non_goals:
+    - Blocking enforcement during testing
 
 gates:
-  spec_mode: advisory
-  deny_paths: ['**/*.exe']
-  check_presentation:
-    name: 'Advisory Check'`,
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500`,
 
   // Custom check name spec
-  customName: `intent:
+  customName: `schema_version: '0.2.1'
+
+intent:
   name: custom-check-project
-  mission: Project with custom check name
-  ownership:
-    maintainers: ['@test-org/maintainers']
+  goals:
+    - Project with custom check name
+  non_goals:
+    - Default naming conventions
 
 gates:
-  spec_mode: enforced
-  check_presentation:
-    name: 'Custom Repository Check'`,
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500`,
 
   // Invalid YAML - malformed syntax
   invalidYaml: `intent:
@@ -101,50 +97,167 @@ random_field: value`,
   empty: ``,
 
   // Only intent, missing gates
-  missingGates: `intent:
+  missingGates: `schema_version: '0.2.1'
+
+intent:
   name: incomplete-project
-  mission: Missing gates section`,
+  goals:
+    - Missing gates section`,
 
   // Only gates, missing intent
-  missingIntent: `gates:
-  spec_mode: enforced
-  check_presentation:
-    name: 'Check Name'`
+  missingIntent: `schema_version: '0.2.1'
+
+gates:
+  review_limits:
+    max_changed_files: 100
+    max_total_diff_kb: 500`,
+
+  // Behavior contract test fixtures
+  behaviorTest30_100: `schema_version: '0.2.1'
+
+intent:
+  name: behavior-test-project
+  goals:
+    - Test behavior contract
+  non_goals:
+    - Complex features
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration
+  - id: forbidden_scopes`,
+
+  behaviorTest10_50: `schema_version: '0.2.1'
+
+intent:
+  name: behavior-test-project
+  goals:
+    - Test behavior contract with lower limits
+  non_goals:
+    - Complex features
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 10
+      max_total_diff_kb: 50`,
+
+  // Gate consistency test fixtures - for testing "presence = enabled" semantics
+  gateConsistency1Gate: `schema_version: '0.2.1'
+
+intent:
+  name: single-gate-project
+  goals:
+    - Test single gate execution
+  non_goals:
+    - Multiple gates
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100`,
+
+  gateConsistency2Gates: `schema_version: '0.2.1'
+
+intent:
+  name: two-gate-project
+  goals:
+    - Test two gates execution
+  non_goals:
+    - Complete gate coverage
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration`,
+
+  gateConsistency3Gates: `schema_version: '0.2.1'
+
+intent:
+  name: all-gates-project
+  goals:
+    - Test all three gates execution
+  non_goals:
+    - Partial gate coverage
+
+gates:
+  - id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - id: goal_declaration
+  - id: forbidden_scopes`,
+
+  gateConsistency2GatesNoLimits: `schema_version: '0.2.1'
+
+intent:
+  name: no-limits-project
+  goals:
+    - Test gates without review_limits
+  non_goals:
+    - File or size limits
+
+gates:
+  - id: goal_declaration
+  - id: forbidden_scopes`,
+
+  // Legacy spec format (from main branch) - v0.2.1 with object-style gates
+  // This should result in 0 gates running because dynamic registry can't discover gates
+  legacy: `schema_version: '0.2.1'
+
+intent:
+  name: cogni-git-review
+  goals:
+    - Automated PR hygiene checks with essential file restrictions
+    - Single required check aggregating multiple validation signals
+  non_goals:
+    - Heavy in-process scanning or AI analysis
+    - Secrets retention or external tool integration
+
+gates:
+  review_limits:
+    max_changed_files: 40
+    max_total_diff_kb: 1500`
 };
 
 // Expected parsed results for valid specs
 export const EXPECTED_SPECS = {
   minimal: {
+    schema_version: '0.2.1',
     intent: {
       name: 'minimal-project',
-      mission: 'Basic project configuration',
-      ownership: {
-        maintainers: ['@test-org/maintainers'],
-        maturity: 'alpha' // Should be merged from defaults
-      }
+      goals: ['Basic project functionality'],
+      non_goals: ['Complex features']
     },
-    gates: {
-      spec_mode: 'enforced',
-      on_missing_spec: 'neutral_with_annotation', // From defaults
-      deny_paths: ['**/*.exe', '**/*.dll', '**/.env', '.env', 'secrets/**'], // From defaults
-      review_limits: { max_changed_files: 100, max_total_diff_kb: 500 }, // From defaults
-      check_presentation: {
-        name: 'Cogni Git PR Review'
+    gates: [
+      {
+        id: 'review_limits',
+        with: { max_changed_files: 100, max_total_diff_kb: 500 }
       }
-    }
+    ]
   },
 
-  customName: {
+  full: {
+    schema_version: '0.2.1',
     intent: {
-      name: 'custom-check-project',
-      mission: 'Project with custom check name'
+      name: 'full-project',
+      goals: ['Primary goal of the project', 'Secondary goal'],
+      non_goals: ['What this project does not do']
     },
-    gates: {
-      spec_mode: 'enforced',
-      check_presentation: {
-        name: 'Custom Repository Check'
-      }
-    }
+    gates: [
+      {
+        id: 'review_limits',
+        with: { max_changed_files: 50, max_total_diff_kb: 200 }
+      },
+      { id: 'goal_declaration' },
+      { id: 'forbidden_scopes' }
+    ]
   }
 };
 

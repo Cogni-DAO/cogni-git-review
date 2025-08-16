@@ -6,19 +6,20 @@
 
 ## Current Test Architecture
 
-### **Unit Tests** - Spec Loader
-**Location**: `test/simple-spec-test.js`  
-**Coverage**: Spec loading, caching, error handling with direct mocking  
-**Status**: ✅ 8 tests passing  
+### **Unit Tests** - Spec Loader & Gates
+**Location**: `test/unit/*.test.js`  
+**Coverage**: Spec loading, caching, error handling + individual gate logic  
+**Status**: ✅ 15 tests passing (9 spec loader + 6 gate stubs)  
 
-### **Integration Tests** - Webhook Flow
-**Location**: `test/integration/simple-integration.test.js`  
-**Coverage**: Complete webhook → spec loading → check creation flow  
-**Status**: ✅ 2 tests passing  
+### **Integration Tests** - Webhook Flow & Launcher Hardening
+**Location**: `test/integration/*.test.js`  
+**Coverage**: Complete webhook → spec loading → gate evaluation → check creation + launcher robustness  
+**Status**: ✅ 21+ tests passing (4 behavior + 2 simple + 3 spec-aware + 12 hardened launcher)  
 
-### **Legacy Tests** - Original Mock Integration  
+### **Mock Integration Tests** - Basic Webhook Mechanics
 **Location**: `test/mock-integration/webhook-handlers.test.js`  
-**Status**: ⚠️ Outdated (pre-spec-loading era)  
+**Coverage**: Basic webhook-to-check flows with hardcoded expectations  
+**Status**: ✅ 9 tests passing  
 
 ## DRY Test Fixtures 🎯
 
@@ -27,24 +28,40 @@
 **Purpose**: Reusable YAML specs and mock contexts to eliminate duplication  
 **Usage**: Import and use across all tests
 
+### **Hardened Launcher Testing**
+**Location**: `test/integration/hardened-launcher.test.js` (12 tests)  
+**Coverage**: Timeout handling, unknown gates, partial results, ID normalization, duplicate gates  
+**Key scenarios**:
+- Timeout before/during gate execution → partial results
+- Unknown gate handling → neutral with unimplemented_gate reason
+- ID normalization → spec gate.id always wins over handler-provided ID
+- Malformed gate outputs → safely normalized
+- Duplicate gates → run in spec order as separate results
+
+### **CRITICAL: Always Use Fixtures - No Inline YAML**
+
+**❌ WRONG:**
+```javascript
+const badSpec = `schema_version: '0.2.1'...`;
+```
+
+**✅ RIGHT:**  
+```javascript
+const spec = SPEC_FIXTURES.minimal;
+```
+
 **Available Fixtures**:
 ```javascript
-import { SPEC_FIXTURES, createMockContext, createMockContextWithSpec } from './fixtures/repo-specs.js';
+import { SPEC_FIXTURES, createMockContext } from './fixtures/repo-specs.js';
 
-// Predefined specs
-SPEC_FIXTURES.minimal      // Basic working spec
-SPEC_FIXTURES.full         // All fields populated  
-SPEC_FIXTURES.bootstrap    // Bootstrap mode
-SPEC_FIXTURES.advisory     // Advisory mode
-SPEC_FIXTURES.customName   // Custom check name
-SPEC_FIXTURES.invalidYaml  // Malformed YAML
-SPEC_FIXTURES.invalidStructure // Missing required sections
+SPEC_FIXTURES.minimal           // Basic working spec
+SPEC_FIXTURES.customName        // Custom check name
+SPEC_FIXTURES.behaviorTest30_100 // 30 files, 100KB limits
+SPEC_FIXTURES.invalidYaml       // Malformed YAML
+SPEC_FIXTURES.invalidStructure  // Missing sections
 
-// Mock context factories
-createMockContext("org", "repo", "success")     // Working API
-createMockContext("org", "repo", "not_found")   // 404 response
-createMockContext("org", "repo", "invalid_yaml") // Bad YAML
-createMockContextWithSpec(yamlString)           // Custom spec content
+createMockContext("org", "repo", "success")   // Working API
+createMockContext("org", "repo", "not_found") // 404 response
 ```
 
 ### **Webhook Fixtures** - Existing
@@ -136,20 +153,29 @@ createMockContextWithSpec(yamlString)           // Custom spec content
 
 ## Running Tests
 
-**Working Tests** (✅ 10 tests passing):
+**All Tests**:
 ```bash
-npx node --test test/simple-spec-test.js test/integration/simple-integration.test.js
-```
-
-**All Tests** (⚠️ includes failing legacy tests):
-```bash
-npm test  # Currently 10/23 passing due to legacy test issues
+npm test  # All tests: 60 total, 59 pass, 1 skip
 ```
 
 **Individual Test Suites**:
 ```bash
-npx node --test test/simple-spec-test.js           # Unit tests (8 tests)
-npx node --test test/integration/simple-integration.test.js  # Integration (2 tests)
+# Unit Tests
+npx node --test test/unit/goal-declaration-stub.test.js      # Gate stub (6 tests)
+npx node --test test/unit/forbidden-scopes-stub.test.js     # Gate stub (6 tests)  
+
+# Integration Tests  
+npx node --test test/integration/cogni-evaluated-gates-behavior.test.js  # Behavior (4 tests)
+npx node --test test/integration/simple-integration.test.js             # Basic flow (2 tests)
+npx node --test test/integration/spec-aware-webhook.test.js             # Spec scenarios (4 tests)
+npx node --test test/integration/hardened-launcher.test.js              # Launcher robustness (12 tests)
+npx node --test test/integration/spec-gate-consistency.test.js          # Gate consistency (4 tests)
+
+# Mock Integration
+npx node --test test/mock-integration/webhook-handlers.test.js           # Basic webhooks (9 tests)
+
+# Spec Loader Unit Tests  
+npx node --test  # Spec loader tests are in main suite (9 tests)
 ```
 
 ## Test Development Guidelines
