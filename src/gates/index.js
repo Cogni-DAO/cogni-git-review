@@ -3,7 +3,7 @@
  * Orchestrates all gate evaluations (Cogni local, External, AI advisory)
  */
 
-import { runConfiguredGates } from './cogni/index.js';
+import { runConfiguredGates } from './run-configured.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management

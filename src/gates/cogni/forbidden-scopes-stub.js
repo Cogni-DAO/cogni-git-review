@@ -3,6 +3,9 @@
  * Part of Cogni Gate Evaluation system (Wave 1 - deterministic stub only)
  */
 
+// Gate registry contract exports
+export const id = 'forbidden_scopes';
+
 /**
  * Evaluate forbidden scopes requirement - STUB VERSION
  * Simply passes if repo spec has at least 1 non_goal defined
@@ -45,4 +48,28 @@ export async function evaluateForbiddenScopes(context, pr, spec) {
       oversize: true
     };
   }
+}
+
+/**
+ * Registry-compatible run function for forbidden_scopes gate
+ * @param {object} ctx - Run context with spec, etc.
+ * @param {object} gate - Gate configuration from spec
+ * @returns {Promise<object>} Normalized gate result
+ */
+export async function run(ctx, gate) {
+  // Use existing legacy evaluator
+  const legacyResult = await evaluateForbiddenScopes(ctx, ctx.pr, ctx.spec);
+
+  // Convert to normalized result shape (ID will be set by launcher)
+  return {
+    status: legacyResult.oversize ? 'neutral' : (legacyResult.violations.length > 0 ? 'fail' : 'pass'),
+    neutral_reason: legacyResult.oversize ? 'internal_error' : undefined,
+    violations: legacyResult.violations.map(v => ({
+      code: v.rule,
+      message: v.annotation || v.actual,
+      path: null,
+      meta: { actual: v.actual, limit: v.limit }
+    })),
+    stats: legacyResult.stats
+  };
 }

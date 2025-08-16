@@ -103,8 +103,8 @@ describe('Spec-Gate Consistency Tests', () => {
         // Verify other gates are NOT mentioned in the output
         assert(!outputText.includes('goal_declaration_stub'), 
           "Should not execute goal_declaration_stub when not configured");
-        assert(!outputText.includes('forbidden_scopes_stub'), 
-          "Should not execute forbidden_scopes_stub when not configured");
+        assert(!outputText.includes('forbidden_scopes'), 
+          "Should not execute forbidden_scopes when not configured");
         
         return true;
       })
@@ -145,12 +145,12 @@ describe('Spec-Gate Consistency Tests', () => {
         // Verify correct gates are mentioned in passed section
         assert(outputText.includes("review_limits"), 
           "Should execute review_limits gate");
-        assert(outputText.includes("goal_declaration_stub"), 
-          "Should execute goal_declaration_stub gate");
+        assert(outputText.includes("goal_declaration"), 
+          "Should execute goal_declaration gate");
         
         // Verify forbidden_scopes_stub is NOT mentioned
-        assert(!outputText.includes('forbidden_scopes_stub'), 
-          "Should not execute forbidden_scopes_stub when not configured");
+        assert(!outputText.includes('forbidden_scopes'), 
+          "Should not execute forbidden_scopes when not configured");
         
         return true;
       })
@@ -191,10 +191,10 @@ describe('Spec-Gate Consistency Tests', () => {
         // Verify all gates are mentioned in passed section
         assert(outputText.includes("review_limits"), 
           "Should execute review_limits gate");
-        assert(outputText.includes("goal_declaration_stub"), 
-          "Should execute goal_declaration_stub gate");
-        assert(outputText.includes("forbidden_scopes_stub"), 
-          "Should execute forbidden_scopes_stub gate");
+        assert(outputText.includes("goal_declaration"), 
+          "Should execute goal_declaration gate");
+        assert(outputText.includes("forbidden_scopes"), 
+          "Should execute forbidden_scopes gate");
         
         return true;
       })
@@ -233,10 +233,10 @@ describe('Spec-Gate Consistency Tests', () => {
           "Should execute exactly 2 gates");
         
         // Verify correct gates are mentioned (NO review_limits) 
-        assert(outputText.includes("goal_declaration_stub"), 
-          "Should execute goal_declaration_stub gate");
-        assert(outputText.includes("forbidden_scopes_stub"), 
-          "Should execute forbidden_scopes_stub gate");
+        assert(outputText.includes("goal_declaration"), 
+          "Should execute goal_declaration gate");
+        assert(outputText.includes("forbidden_scopes"), 
+          "Should execute forbidden_scopes gate");
         
         // Verify review_limits is NOT mentioned - this validates dynamic discovery
         assert(!outputText.includes('review_limits'), 
