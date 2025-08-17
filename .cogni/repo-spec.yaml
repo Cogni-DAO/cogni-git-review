@@ -24,3 +24,8 @@ gates:
       parser: eslint_json
       artifact_name: eslint-report
       artifact_path: reports/eslint-report.json
+  - id: secrets_scan
+    source: external
+    runner: artifact.sarif
+    with:
+      artifact_name: gitleaks.sarif
