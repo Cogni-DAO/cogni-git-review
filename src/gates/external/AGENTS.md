@@ -68,9 +68,13 @@ if (ctx.abort?.aborted) {
 }
 ```
 
-### Artifact Download Pattern
-1. List workflow runs for PR head SHA
-2. Find most recent successful run
-3. Download named artifact with size limits
-4. Parse with error handling → violations
-5. Return normalized result
+### Artifact Resolution Pattern (Internal)
+External gates handle artifact resolution internally using the Subscribe & Wait pattern:
+1. External gate receives enhanced context with `ctx.workflow_run.id` from workflow_run.completed event
+2. Gate calls `resolveArtifact(octokit, repo, runId, headSha, artifactName)` internally
+3. Primary: Direct run_id lookup; Fallback: Head SHA filtering with retry (2 attempts @ 5s)
+4. ZIP extraction with 25MB size limits and signature validation
+5. Parse JSON/SARIF with error handling → violations array
+6. Return normalized result with timeout handling
+
+**Context Enhancement**: workflow_run events receive missing PR data via context.payload.pull_request and stored spec via context.storedSpec for seamless gate execution.
