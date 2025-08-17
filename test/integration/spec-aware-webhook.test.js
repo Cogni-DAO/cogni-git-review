@@ -182,6 +182,7 @@ describe("Spec-Aware Webhook Integration Tests", () => {
   });
 
   // TODO: Fix pending mock issue - Bug ID: 0849bf8a-9b4b-45df-b58d-b9daef6fa4f1
+  // Seems the same as Bug ID: 515b4dfe-01df-490e-b324-4f52dde56440
   // Always shows exactly 1 pending auth token mock regardless of count
   test.skip("spec loading is cached across multiple webhook events", async () => {
     console.log("🧪 CACHING TEST STARTED");

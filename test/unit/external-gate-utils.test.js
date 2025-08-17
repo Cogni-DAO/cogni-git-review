@@ -14,7 +14,7 @@ import {
   createNeutralResult
 } from '../../src/gates/external/utils/shared.js';
 import { downloadAndExtractJson } from '../../src/gates/external/utils/artifacts.js';
-import { createZipArtifact, ZIP_FIXTURES } from '../fixtures/createZipArtifact.js';
+import { createZipArtifact, ZIP_FIXTURES } from '../helpers/createZipArtifact.js';
 import { createMockWorkflowContext, MOCK_CONTEXTS } from '../mocks/createMockWorkflowContext.js';
 
 describe('external gate utilities', () => {

@@ -32,8 +32,24 @@ export async function run(ctx, gate) {
       return createNeutralResult('timeout', 'Gate execution timed out before starting', startTime);
     }
 
-    // Resolve artifact using internal artifact resolution pattern
-    const artifactName = config.artifact_name || 'eslint-report';
+    // Validate required configuration
+    if (!config.artifact_name) {
+      return {
+        status: 'fail',
+        violations: [{
+          code: 'missing_config',
+          message: 'artifact_name is required for external gates',
+          path: null,
+          line: null,
+          column: null,
+          level: 'error'
+        }],
+        stats: { duration_ms: Date.now() - startTime }
+      };
+    }
+
+    // Resolve artifact using internal artifact resolution pattern  
+    const artifactName = config.artifact_name;
     
     // Use universal context structure (repo is already resolved, pr.head.sha is normalized)
     const artifactBuffer = await resolveArtifact(
