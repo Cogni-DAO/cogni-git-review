@@ -6,6 +6,10 @@ import { runAllGates } from './src/gates/index.js';
 
 const PR_REVIEW_NAME = "Cogni Git PR Review";
 
+// In-memory check state management for MVP
+// Maps head_sha -> check_run_id for idempotent updates
+const checkStateMap = new Map();
+
 /**
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
@@ -32,6 +36,7 @@ export default (app) => {
 
   app.on("check_suite.rerequested", handleCheckRerun);
   app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], handlePullRequest);
+  app.on("workflow_run.completed", handleWorkflowComplete);
 
   async function createCheckOnSha(context, sha, conclusion, summary, text) {
     const started_at = new Date();
@@ -46,13 +51,13 @@ export default (app) => {
     }));
   }
 
-  async function evaluateAndCreateCheck(context, pull_request) {
+  async function evaluateAndCreateCheck(context, pull_request, enableExternal = false) {
     const startTime = new Date();
     try {
       const { spec, source } = await loadRepoSpec(context);
       console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
 
-      const runResult = await runAllGates(context, pull_request, spec);
+      const runResult = await runAllGates(context, pull_request, spec, { enableExternal });
       
       // Map tri-state to GitHub check conclusions
       const conclusion = mapStatusToConclusion(runResult.overall_status);
@@ -185,7 +190,63 @@ export default (app) => {
   }
 
   async function handlePullRequest(context) {
-    return evaluateAndCreateCheck(context, context.payload.pull_request);
+    const pr = context.payload.pull_request;
+    console.log(`📝 PR Event: ${context.payload.action} for PR #${pr.number}, SHA: ${pr.head.sha}`);
+    
+    // Create check with in_progress status, skip external gates
+    const startTime = new Date();
+    try {
+      const { spec, source } = await loadRepoSpec(context);
+      console.log(`📄 Spec loaded from ${source} for PR #${pr.number}`);
+
+      // Run only internal gates (external gates disabled)
+      const runResult = await runAllGates(context, pr, spec, { enableExternal: false });
+      
+      // Create check with in_progress status
+      const checkResult = await context.octokit.checks.create(context.repo({
+        name: PR_REVIEW_NAME,
+        head_sha: pr.head.sha,
+        status: "in_progress",
+        started_at: startTime,
+        output: {
+          title: PR_REVIEW_NAME,
+          summary: 'Evaluating gates...',
+          text: `Running ${spec.gates?.length || 0} gates. Waiting for external workflow completion.`
+        }
+      }));
+
+      // Store check_id for later updates
+      checkStateMap.set(pr.head.sha, checkResult.data.id);
+      console.log(`📝 Created in_progress check ${checkResult.data.id} for SHA ${pr.head.sha}`);
+      
+      return checkResult;
+      
+    } catch (error) {
+      console.error(`📄 Spec load failed for PR #${pr.number}:`, error);
+      
+      const isMissing = error?.code === 'SPEC_MISSING';
+      const isInvalid = error?.code === 'SPEC_INVALID';
+      
+      const conclusion = (isMissing || isInvalid) ? 'failure' : 'neutral';
+      const summary = isMissing
+        ? 'No .cogni/repo-spec.yaml found'
+        : (isInvalid ? 'Invalid .cogni/repo-spec.yaml' : 'Spec could not be loaded (transient error)');
+      const text = isMissing
+        ? 'Add `.cogni/repo-spec.yaml` to configure this required check.'
+        : (isInvalid
+            ? `Repository spec validation failed: ${error.message || 'Unknown error'}`
+            : 'GitHub API/network issue while loading the spec. Re-run the check or try again.');
+
+      return context.octokit.checks.create(context.repo({
+        name: PR_REVIEW_NAME,
+        head_sha: pr.head.sha,
+        status: "completed",
+        started_at: startTime,
+        conclusion,
+        completed_at: new Date(),
+        output: { title: PR_REVIEW_NAME, summary, text }
+      }));
+    }
   }
 
   async function handleCheckRerun(context) {
@@ -218,7 +279,7 @@ export default (app) => {
       );
       
       console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
-      return evaluateAndCreateCheck(context, fullPR);
+      return evaluateAndCreateCheck(context, fullPR, true); // Enable external gates for rerun
     } catch (error) {
       console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
       return createCheckOnSha(
@@ -228,6 +289,129 @@ export default (app) => {
         'Could not fetch PR data',
         'GitHub API issue while fetching PR details. Re-run the check or try again.'
       );
+    }
+  }
+
+  /**
+   * Handle workflow_run.completed events for external gate evaluation
+   */
+  async function handleWorkflowComplete(context) {
+    const workflowRun = context.payload.workflow_run;
+    console.log(`🏃 Workflow completed: ${workflowRun.name} (${workflowRun.id}), SHA: ${workflowRun.head_sha}`);
+
+    // Find open PR matching this head_sha
+    try {
+      const { data: openPRs } = await context.octokit.pulls.list(context.repo({ state: 'open' }));
+      const matchingPR = openPRs.find(pr => pr.head.sha === workflowRun.head_sha);
+      
+      if (!matchingPR) {
+        console.log(`🏃 No open PR found for SHA ${workflowRun.head_sha}, skipping`);
+        return;
+      }
+
+      // Staleness guard - ensure PR head hasn't changed
+      const { data: currentPR } = await context.octokit.pulls.get(
+        context.repo({ pull_number: matchingPR.number })
+      );
+      
+      if (currentPR.head.sha !== workflowRun.head_sha) {
+        console.log(`🏃 Stale workflow run - PR head is now ${currentPR.head.sha}, ignoring ${workflowRun.head_sha}`);
+        return;
+      }
+
+      // Check if we have a check to update
+      const checkId = checkStateMap.get(workflowRun.head_sha);
+      if (!checkId) {
+        console.log(`🏃 No check found for SHA ${workflowRun.head_sha}, creating new one`);
+        return evaluateAndCreateCheck(context, currentPR, true);
+      }
+
+      // Update existing check with external gates enabled
+      await updateCheckWithExternalGates(context, currentPR, checkId, workflowRun.id);
+      
+    } catch (error) {
+      console.error(`🏃 Failed to handle workflow completion:`, error);
+    }
+  }
+
+  /**
+   * Update existing check run with external gate results
+   */
+  async function updateCheckWithExternalGates(context, pr, checkId, workflowRunId) {
+    const startTime = new Date();
+    try {
+      const { spec, source } = await loadRepoSpec(context);
+      console.log(`📄 Spec loaded from ${source} for workflow update, PR #${pr.number}`);
+
+      // Run all gates with external gates enabled
+      const runResult = await runAllGates(context, pr, spec, { 
+        enableExternal: true,
+        workflowRunId // Pass workflow run ID for artifact resolution
+      });
+      
+      const conclusion = mapStatusToConclusion(runResult.overall_status);
+      const { summary, text } = formatGateResults(runResult);
+      
+      // Prepare annotations (limit to 50 for MVP)
+      const annotations = [];
+      for (const gate of runResult.gates) {
+        if (gate.violations) {
+          for (const violation of gate.violations.slice(0, 50 - annotations.length)) {
+            if (violation.path && violation.line) {
+              annotations.push({
+                path: violation.path,
+                start_line: violation.line,
+                end_line: violation.line,
+                start_column: violation.column || 1,
+                end_column: violation.column || 1,
+                annotation_level: violation.level === 'error' ? 'failure' : 'warning',
+                message: `${violation.code}: ${violation.message}`
+              });
+            }
+          }
+          if (annotations.length >= 50) break;
+        }
+      }
+
+      // Add truncation note if needed
+      const totalViolations = runResult.gates.reduce((sum, gate) => sum + (gate.violations?.length || 0), 0);
+      if (totalViolations > 50) {
+        text += `\n\n📝 **Note**: Showing first 50 of ${totalViolations} findings. Re-run check to see all results.`;
+      }
+
+      // Update the existing check
+      await context.octokit.checks.update({
+        ...context.repo(),
+        check_run_id: checkId,
+        status: "completed",
+        conclusion,
+        completed_at: new Date(),
+        output: {
+          title: PR_REVIEW_NAME,
+          summary,
+          text,
+          annotations
+        }
+      });
+
+      console.log(`🏃 Updated check ${checkId} with ${annotations.length} annotations, status: ${conclusion}`);
+      
+    } catch (error) {
+      console.error(`🏃 Failed to update check ${checkId}:`, error);
+      
+      // Update check with error status
+      await context.octokit.checks.update({
+        ...context.repo(),
+        check_run_id: checkId,
+        status: "completed",
+        conclusion: "neutral",
+        completed_at: new Date(),
+        output: {
+          title: PR_REVIEW_NAME,
+          summary: "External gate evaluation failed",
+          text: `Error evaluating external gates: ${error.message}`
+        }
+      });
     }
   }
 

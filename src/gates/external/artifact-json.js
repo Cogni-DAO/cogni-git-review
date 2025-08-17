@@ -3,7 +3,6 @@
  * Downloads ZIP artifacts from GitHub Actions and extracts JSON reports
  */
 
-import { downloadAndExtractJson } from './utils/artifacts.js';
 import { 
   determineStatus, 
   normalizeLevel, 
@@ -19,9 +18,10 @@ export const runner = 'artifact.json';
  * Registry-compatible run function for artifact.json gate
  * @param {object} ctx - Run context with octokit, pr, etc.
  * @param {object} gate - Gate configuration from spec
+ * @param {Buffer} artifactData - Pre-resolved artifact JSON data
  * @returns {Promise<object>} Normalized gate result
  */
-export async function run(ctx, gate) {
+export async function run(ctx, gate, artifactData) {
   const config = gate.with || {};
   const startTime = Date.now();
 
@@ -31,33 +31,30 @@ export async function run(ctx, gate) {
       return createNeutralResult('timeout', 'Gate execution timed out before starting', startTime);
     }
 
-    // Validate required configuration
-    const artifactName = config.artifact_name;
-    if (!artifactName) {
+    // Validate artifact data is provided
+    if (!artifactData) {
       return {
-        status: 'fail',
+        status: 'neutral',
+        neutral_reason: 'missing_artifact',
         violations: [{
-          code: 'missing_config',
-          message: 'artifact_name is required in gate configuration',
+          code: 'missing_artifact',
+          message: 'No artifact data provided to parser',
           path: null,
           line: null,
           column: null,
-          level: 'error'
+          level: 'info'
         }],
         stats: { duration_ms: Date.now() - startTime }
       };
     }
 
-    // Download and extract JSON from ZIP artifact
-    const parsedData = await downloadAndExtractJson({
-      octokit: ctx.octokit,
-      repo: ctx.repo,
-      pr: ctx.pr,
-      artifactName,
-      artifactPath: config.artifact_path,
-      signal: ctx.abort?.signal,
-      maxSizeBytes: (config.artifact_size_mb || 25) * 1024 * 1024
-    });
+    // Parse artifact data as JSON
+    let parsedData;
+    try {
+      parsedData = JSON.parse(artifactData.toString('utf8'));
+    } catch (parseError) {
+      return createNeutralResult('parse_error', `Failed to parse artifact JSON: ${parseError.message}`, startTime);
+    }
 
     if (ctx.abort?.aborted) {
       return createNeutralResult('timeout', 'Gate execution timed out during artifact processing', startTime);
@@ -80,7 +77,7 @@ export async function run(ctx, gate) {
       status,
       violations: cappedViolations,
       stats: {
-        artifact_name: artifactName,
+        artifact_name: config.artifact_name || 'unknown',
         parser: config.parser || 'custom',
         violations_count: processedViolations.length,
         errors: cappedViolations.filter(v => v.level === 'error').length,
@@ -97,15 +94,7 @@ export async function run(ctx, gate) {
       return createNeutralResult('timeout', 'Gate execution timed out', startTime);
     }
 
-    // Artifact or parsing errors
-    if (error.message.includes('not found') || error.message.includes('No JSON') || error.message.includes('No suitable workflow run')) {
-      return createNeutralResult('missing_artifact', error.message, startTime);
-    }
-
-    if (error.message.includes('exceeds') || error.message.includes('too large')) {
-      return createNeutralResult('artifact_too_large', error.message, startTime);
-    }
-
+    // Parsing errors
     if (error.message.includes('parse') || error.message.includes('JSON')) {
       return createNeutralResult('parse_error', error.message, startTime);
     }

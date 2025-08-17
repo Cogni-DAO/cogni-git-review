@@ -29,8 +29,9 @@
     "eslint-plugin-n": "^17.21.3",
     "eslint-plugin-promise": "^7.2.1",
     "globals": "^16.3.0",
-    "nock": "^14.0.9",
-    "smee-client": "^2.0.0"
+    "nock": "^14.0.10",
+    "smee-client": "^2.0.0",
+    "yauzl": "^3.2.0"
   },
   "engines": {
     "node": ">= 18"

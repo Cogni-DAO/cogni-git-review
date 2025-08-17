@@ -4,6 +4,8 @@
  */
 
 import { runConfiguredGates } from './run-configured.js';
+import { resolveArtifact } from './external/artifact-resolver.js';
+import { run as runEslint } from './external/artifact-json.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
@@ -42,7 +44,8 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     deadline_ms: opts.deadlineMs,
     annotation_budget: 50,
     idempotency_key: `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`,
-    abort: abortCtl.signal
+    abort: abortCtl.signal,
+    workflowRunId: opts.workflowRunId // Pass workflow run ID for artifact resolution
   };
 
   // Set up timeout handler
@@ -62,9 +65,9 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     
     const hasFailLocal = localResults.some(r => r.status === 'fail');
 
-    // 2) External gates (v2) - skip if local failure or partial execution
+    // 2) External gates - run when enabled (typically from workflow_run handler)
     let externalResults = [];
-    if (!hasFailLocal && !isPartial && opts.enableExternal) {
+    if (opts.enableExternal) {
       externalResults = await runExternalGates(runCtx);
     }
 
@@ -108,11 +111,110 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
 }
 
 /**
- * Stub for external gates (v2) - returns empty array for MVP
- * @param {object} runCtx - Run context
- * @returns {Promise<Array>} Empty array of gate results
+ * Run external gates with artifact resolution
+ * @param {object} runCtx - Run context with workflowRunId
+ * @returns {Promise<Array>} Array of external gate results
  */
 async function runExternalGates(runCtx) {
-  runCtx.logger('debug', 'External gates disabled for MVP');
-  return [];
+  const startTime = Date.now();
+  runCtx.logger('debug', 'Running external gates', { workflowRunId: runCtx.workflowRunId });
+  
+  // Find external gates in spec
+  const externalGates = runCtx.spec.gates?.filter(gate => gate.source === 'external') || [];
+  if (externalGates.length === 0) {
+    runCtx.logger('debug', 'No external gates configured');
+    return [];
+  }
+
+  const results = [];
+  
+  for (const gate of externalGates) {
+    // Check for timeout before each gate
+    if (runCtx.abort?.aborted) {
+      runCtx.logger('warn', 'External gate execution aborted due to timeout', { gate_id: gate.id });
+      break;
+    }
+
+    const gateStartTime = Date.now();
+    try {
+      let gateResult;
+      
+      if (gate.runner === 'artifact.json') {
+        // Handle ESLint JSON artifacts
+        const artifactName = gate.with?.artifact_name || 'eslint-report';
+        const artifact = await resolveArtifact(
+          runCtx.octokit,
+          runCtx.repo,
+          runCtx.workflowRunId,
+          runCtx.pr.head.sha,
+          artifactName
+        );
+        
+        if (!artifact) {
+          gateResult = {
+            status: 'neutral',
+            neutral_reason: 'artifact_not_found',
+            violations: [{
+              code: 'artifact_missing',
+              message: `Artifact '${artifactName}' not found after workflow completion`,
+              path: null,
+              line: null,
+              column: null,
+              level: 'info'
+            }],
+            stats: { artifact_name: artifactName }
+          };
+        } else {
+          // Parse artifact and run gate
+          gateResult = await runEslint(runCtx, gate, artifact);
+        }
+      } else {
+        // Unknown runner type
+        gateResult = {
+          status: 'neutral',
+          neutral_reason: 'unknown_runner',
+          violations: [{
+            code: 'unknown_runner',
+            message: `Unknown external gate runner: ${gate.runner}`,
+            path: null,
+            line: null,
+            column: null,
+            level: 'info'
+          }],
+          stats: { runner: gate.runner }
+        };
+      }
+      
+      // Ensure gate result has required fields
+      const finalResult = {
+        id: gate.id,
+        status: gateResult.status || 'neutral',
+        neutral_reason: gateResult.neutral_reason,
+        violations: gateResult.violations || [],
+        stats: gateResult.stats || {},
+        duration_ms: Date.now() - gateStartTime
+      };
+      
+      results.push(finalResult);
+      runCtx.logger('debug', `External gate ${gate.id} completed`, { status: finalResult.status });
+      
+    } catch (error) {
+      runCtx.logger('error', `External gate ${gate.id} crashed`, { error: error.message });
+      
+      results.push({
+        id: gate.id,
+        status: 'neutral',
+        neutral_reason: 'internal_error',
+        violations: [],
+        stats: { error: error.message },
+        duration_ms: Date.now() - gateStartTime
+      });
+    }
+  }
+  
+  runCtx.logger('debug', `External gates completed: ${results.length} results`, { 
+    duration_ms: Date.now() - startTime 
+  });
+  
+  return results;
 }
