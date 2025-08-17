@@ -21,12 +21,19 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
   const runCtx = {
     repo: context.repo(),
     pr: { 
-      number: pr.number, 
-      head_sha: pr.head?.sha || pr.head_sha, 
-      base_sha: pr.base?.sha, 
+      number: pr.number,
+      head: {
+        sha: pr.head?.sha || pr.head_sha,
+        repo: { 
+          name: pr.head?.repo?.name || context.payload.repository.name 
+        }
+      },
+      base: {
+        sha: pr.base?.sha
+      },
       changed_files: pr.changed_files, 
       additions: pr.additions, 
-      deletions: pr.deletions 
+      deletions: pr.deletions
     },
     spec,
     octokit: context.octokit,
