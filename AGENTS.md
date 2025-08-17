@@ -44,11 +44,15 @@ gates:
   - id: forbidden_scopes
   
   # External gates (ingest artifacts)
-  - id: artifact_json
+  - id: eslint
+    source: external
+    runner: artifact.json
     with:
-      preset: eslint_json
+      parser: eslint_json
       artifact_name: eslint-results
-  - id: artifact_sarif
+  - id: security-scan
+    source: external
+    runner: artifact.sarif
     with:
       artifact_name: security-scan
 ```

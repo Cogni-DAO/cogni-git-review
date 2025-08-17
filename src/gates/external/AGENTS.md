@@ -16,8 +16,8 @@ External gates **do not execute tools** - they ingest artifacts uploaded by GitH
 - Parser presets: `eslint.json`, `ruff.json`
 
 ## Gate Types
-- **artifact_json**: Parses JSON artifacts with configurable presets
-- **artifact_sarif**: Parses SARIF format reports from security tools
+- **artifact.json**: Parses JSON artifacts with configurable presets
+- **artifact.sarif**: Parses SARIF format reports from security tools
 
 ## Principles
 - **Security**: Read-only artifact ingestion, no code execution

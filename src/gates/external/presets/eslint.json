@@ -39,7 +39,9 @@
   },
   "usage": {
     "gate_config": {
-      "id": "artifact_json",
+      "id": "eslint",
+      "source": "external", 
+      "runner": "artifact.json",
       "with": {
         "parser": "eslint_json",
         "artifact_name": "eslint-results"
