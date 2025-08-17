@@ -195,3 +195,48 @@ npx node --test  # Spec loader tests are in main suite (9 tests)
 - **Skip cleanup**: Always clear caches and mocks in test teardown
 
 **All working tests should pass** before committing changes.
+
+## Linting Fix Best Practices
+
+When ESLint flags unused variables, choose the best fix based on the situation:
+
+### **Preferred Approaches** (Best to Worst)
+
+#### 1. **Don't Create What You Don't Use** ✅ BEST
+```javascript
+// ❌ Bad: Extract then ignore
+const { overall_status: _overall_status, gates, early_exit } = runResult;
+
+// ✅ Good: Only extract what you need  
+const { gates, early_exit } = runResult;
+```
+
+#### 2. **Don't Compute What You Don't Use** ✅ BETTER
+```javascript
+// ❌ Bad: Compute then ignore
+const _hasNeutralLocal = localResults.some(r => r.status === 'neutral');
+
+// ✅ Good: Remove the unused computation entirely
+// (just delete the line)
+```
+
+#### 3. **Underscore for Interface Compliance** ✅ ACCEPTABLE
+```javascript  
+// ✅ Acceptable: Required by interface but unused by implementation
+export async function myFunction(ctx, _options) {
+  // options param required by interface but this implementation doesn't use it
+}
+```
+
+### **When to Use Each Approach**
+
+- **Don't extract/compute**: When value is genuinely not needed by the function
+- **Underscore prefix**: When parameter is required by interface/API but unused by specific implementation
+- **Consider refactoring**: If many functions have unused params, maybe the interface needs improvement
+
+### **Red Flags** ❌
+- **Multiple underscores in same function**: Suggests over-extraction or poor design
+- **Computing unused values**: Waste of CPU cycles and cognitive load
+- **Underscore for laziness**: When you could easily restructure the code
+
+**Goal**: Clean, intentional code where every line serves a purpose.

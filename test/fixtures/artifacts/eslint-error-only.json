@@ -1,0 +1,23 @@
+[
+  {
+    "filePath": "src/a.js",
+    "messages": [
+      {
+        "ruleId": "no-undef",
+        "message": "x is not defined",
+        "severity": 2,
+        "line": 3,
+        "column": 10,
+        "nodeType": "Identifier",
+        "source": "console.log(x);"
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 1,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "// Example file\nconsole.log('hello');\nconsole.log(x);"
+  }
+]

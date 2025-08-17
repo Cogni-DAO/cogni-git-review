@@ -10,10 +10,10 @@ import { runConfiguredGates } from './run-configured.js';
  * @param {import('probot').Context} context - Probot context
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
- * @param {object} opts - Options { enableExternal: false, deadlineMs: 8000 }
- * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
+ * @param {object} opts - Options { deadlineMs: 8000, workflowRunId?: number }
+ * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number, pendingExternalGates: string[]}>}
  */
-export async function runAllGates(context, pr, spec, opts = { enableExternal: false, deadlineMs: 8000 }) {
+export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }) {
   const started = Date.now();
   const abortCtl = new AbortController();
   
@@ -21,13 +21,33 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
   const runCtx = {
     repo: context.repo(),
     pr: { 
-      number: pr.number, 
-      head_sha: pr.head?.sha || pr.head_sha, 
-      base_sha: pr.base?.sha, 
+      number: pr.number,
+      head: {
+        sha: pr.head?.sha || pr.head_sha,
+        repo: { 
+          name: pr.head?.repo?.name || context.payload.repository.name 
+        }
+      },
+      base: {
+        sha: pr.base?.sha
+      },
       changed_files: pr.changed_files, 
       additions: pr.additions, 
-      deletions: pr.deletions 
+      deletions: pr.deletions
     },
+    workflow_run: context.payload.workflow_run ? {
+      id: context.payload.workflow_run.id,
+      head_sha: context.payload.workflow_run.head_sha,
+      name: context.payload.workflow_run.name,
+      status: context.payload.workflow_run.status,
+      conclusion: context.payload.workflow_run.conclusion
+    } : (opts.workflowRunId ? {
+      id: opts.workflowRunId,
+      head_sha: pr.head?.sha || pr.head_sha,
+      name: 'unknown',
+      status: 'completed',
+      conclusion: 'success'
+    } : undefined),
     spec,
     octokit: context.octokit,
     logger: (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {})),
@@ -46,24 +66,14 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
 
   try {
     // 1) Run all configured local gates in spec order
-    const localResults = await runConfiguredGates(runCtx);
+    const launcherResult = await runConfiguredGates(runCtx);
+    const allGates = launcherResult?.results || [];
+    const pendingExternalGates = launcherResult?.pendingExternalGates || [];
     
     // Detect partial execution (timeout/abort)
     const expectedGateCount = spec.gates?.length || 0;
-    const isPartial = localResults.length < expectedGateCount;
+    const isPartial = allGates.length < expectedGateCount;
     const isAborted = runCtx.abort.aborted;
-    
-    const hasFailLocal = localResults.some(r => r.status === 'fail');
-    const hasNeutralLocal = localResults.some(r => r.status === 'neutral');
-
-    // 2) External gates (v2) - skip if local failure or partial execution
-    let externalResults = [];
-    if (!hasFailLocal && !isPartial && opts.enableExternal) {
-      externalResults = await runExternalGates(runCtx);
-    }
-
-    // 3) Aggregate all results
-    const allGates = [...localResults, ...externalResults];
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
@@ -77,7 +87,8 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     clearTimeout(timeoutId);
     return { 
       overall_status, 
-      gates: allGates, 
+      gates: allGates,
+      pendingExternalGates,
       duration_ms: Date.now() - started 
     };
 
@@ -101,12 +112,3 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
   }
 }
 
-/**
- * Stub for external gates (v2) - returns empty array for MVP
- * @param {object} runCtx - Run context
- * @returns {Promise<Array>} Empty array of gate results
- */
-async function runExternalGates(runCtx) {
-  runCtx.logger('debug', 'External gates disabled for MVP');
-  return [];
-}
