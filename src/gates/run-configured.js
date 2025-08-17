@@ -11,8 +11,8 @@ let registryPromise = null;
 
 /**
  * Run all configured gates from spec in order with dynamic resolution
- * @param {object} runCtx - Run context with spec, logger, etc.
- * @returns {Promise<GateResult[]>} Array of gate execution results
+ * @param {object} runCtx - Run context with spec, logger, options, etc.
+ * @returns {Promise<{results: GateResult[], pendingExternalGates: string[]}>} Gate execution results and pending external gates
  */
 export async function runConfiguredGates(runCtx) {
   // Build registry with logger on first call
@@ -20,10 +20,10 @@ export async function runConfiguredGates(runCtx) {
     registryPromise = buildRegistry(runCtx.log || console);
   }
   const registry = await registryPromise;
-  const gates = Array.isArray(runCtx.spec?.gates) ? runCtx.spec.gates : [];
+  const allGates = Array.isArray(runCtx.spec?.gates) ? runCtx.spec.gates : [];
   const results = [];
 
-  for (const gate of gates) {
+  for (const gate of allGates) {
     // Check for timeout before each gate - return partial results if aborted
     if (runCtx.abort?.aborted) {
       runCtx.logger?.('warn', 'Gate execution aborted due to timeout', { 
@@ -31,7 +31,7 @@ export async function runConfiguredGates(runCtx) {
         deadline_ms: runCtx.deadline_ms,
         partial_results: results.length
       });
-      return results;
+      return { results, pendingExternalGates: [] };
     }
 
     const handler = resolveHandler(registry, gate);
@@ -53,13 +53,18 @@ export async function runConfiguredGates(runCtx) {
           gate_id: gate.id,
           partial_results: results.length
         });
-        return results;
+        return { results, pendingExternalGates: [] };
       }
       // Non-abort errors are already normalized in safeRunGate; nothing to rethrow here.
     }
   }
 
-  return results;
+  // Identify external gates that returned neutral due to missing artifacts
+  const pendingExternalGates = results
+    .filter(r => r.status === 'neutral' && r.neutral_reason === 'missing_artifact')
+    .map(r => r.id);
+
+  return { results, pendingExternalGates };
 }
 
 /**
