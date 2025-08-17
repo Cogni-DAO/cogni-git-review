@@ -15,12 +15,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - name: Create reports directory
+        run: mkdir -p reports
       - name: Run ESLint and generate JSON report
-        run: npx eslint -f json . > eslint-report.json
+        run: npx eslint --format json --output-file reports/eslint-report.json .
         continue-on-error: true  # Allow workflow to succeed even if linting fails
       - name: Upload ESLint artifact
         uses: actions/upload-artifact@v4
+        if: always()  # Upload even if ESLint finds issues
         with:
           name: eslint-report
-          path: eslint-report.json
+          path: reports/eslint-report.json
           retention-days: 7
