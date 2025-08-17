@@ -12,6 +12,7 @@ intent:
 
 # Gates run in the order they appear below.
 gates:
+  # Built-in gates (run directly in bot process)
   - id: review_limits
     with:
       max_changed_files: 30
@@ -19,3 +20,51 @@ gates:
 
   # - id: goal_declaration
   # - id: forbidden_scopes
+
+  # External gates (ingest artifacts from GitHub Actions)
+  # Requires corresponding workflow to upload artifact
+  
+  # JavaScript/TypeScript projects
+  - id: eslint
+    source: external
+    runner: artifact.json
+    with:
+      artifact_name: 'eslint-report'
+      parser: 'eslint_json'
+      fail_on: 'errors'
+      timeout_ms: 180000
+
+  # # Python projects  
+  # - id: ruff
+  #   source: external
+  #   runner: artifact.json
+  #   with:
+  #     artifact_name: 'ruff-report'
+  #     parser: 'ruff_json'
+  #     fail_on: 'errors'
+  #     timeout_ms: 180000
+
+  # # Security scanning (any tool that outputs SARIF)
+  # - id: security-scan
+  #   source: external
+  #   runner: artifact.sarif
+  #   with:
+  #     artifact_name: 'security-report'
+  #     fail_on: 'errors'
+  #     timeout_ms: 300000
+
+  # # Custom tool with manual field mapping
+  # - id: custom-linter
+  #   source: external
+  #   runner: artifact.json
+  #   with:
+  #     artifact_name: 'custom-report'
+  #     custom_mapping:
+  #       root: '$[*]'
+  #       fields:
+  #         file: '$.filename'
+  #         line: '$.line'
+  #         code: '$.rule_id'
+  #         message: '$.description'
+  #         severity: '$.level'
+  #     fail_on: 'errors'
