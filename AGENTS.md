@@ -11,7 +11,62 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - **Dynamic Gate System**: Registry-based discovery with timeout handling
 - **Built-in Gates**: Direct execution within the bot process
 - **External Gates**: Artifact ingestion from GitHub Actions (secure, no code execution)
-- **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
+- **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`, `workflow_run.completed`
+
+## Context Architecture
+
+### Probot Context Object
+All webhook handlers receive a Probot `context` object containing:
+- **context.payload**: GitHub webhook payload (varies by event type)  
+- **context.octokit**: Authenticated GitHub API client
+- **context.repo()**: Method returning `{ owner, repo }` from payload
+- **context.log**: Structured logger
+
+### Context Variations by Event Type
+
+**PR Events** (`pull_request.*`):
+```javascript
+context.payload = {
+  action: "opened|synchronize|reopened",
+  pull_request: { /* complete PR data */ },
+  repository: { /* repo info */ }
+}
+```
+
+**Workflow Events** (`workflow_run.completed`):
+```javascript  
+context.payload = {
+  action: "completed", 
+  workflow_run: { /* workflow data */ },
+  repository: { /* repo info */ }
+  // NO pull_request!
+}
+```
+
+**Check Events** (`check_suite.rerequested`):
+```javascript
+context.payload = {
+  action: "rerequested",
+  check_suite: { /* check data */ },
+  repository: { /* repo info */ }
+  // NO pull_request!
+}
+```
+
+### Context Enhancement Pattern
+When bridging between event types (e.g., workflow → PR gates), enhance context:
+```javascript
+// Add missing data to workflow context
+context.payload.pull_request = prData;
+context.storedSpec = spec;
+// Now context has everything gates need
+```
+
+### Subscribe & Wait Pattern
+External gates use an event-driven pattern:
+1. **PR Event**: Create `in_progress` check, store state
+2. **Workflow Event**: Retrieve stored state, update check with results
+3. **Context Enhancement**: Bridge workflow context → gate execution context
 
 ## Repository Structure
 ```

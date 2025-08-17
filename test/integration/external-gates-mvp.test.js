@@ -15,6 +15,7 @@ import { createZipArtifact } from "../helpers/createZipArtifact.js";
 
 import { describe, beforeEach, afterEach, test } from "node:test";
 import assert from "node:assert";
+import yaml from "js-yaml";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesPath = path.join(__dirname, "../fixtures");
@@ -103,7 +104,10 @@ describe("External Gates MVP", () => {
   test("workflow_run.completed updates check with ESLint results", async () => {
     // Simulate stored check state from PR event
     global.checkStateMap = global.checkStateMap || new Map();
-    global.checkStateMap.set("abc123def456789012345678901234567890abcd", checkId);
+    global.checkStateMap.set("abc123def456789012345678901234567890abcd", { 
+      checkId, 
+      spec: yaml.load(SPEC_FIXTURES.withExternalGate)
+    });
 
     const mocks = nock("https://api.github.com")
       // Mock GitHub App authentication
@@ -288,7 +292,10 @@ describe("External Gates MVP", () => {
 
   test("workflow_run.completed creates neutral status for missing artifacts", async () => {
     global.checkStateMap = global.checkStateMap || new Map();
-    global.checkStateMap.set("abc123def456789012345678901234567890abcd", checkId);
+    global.checkStateMap.set("abc123def456789012345678901234567890abcd", { 
+      checkId, 
+      spec: yaml.load(SPEC_FIXTURES.withExternalGate)
+    });
 
     const mocks = nock("https://api.github.com")
       // Mock GitHub App authentication

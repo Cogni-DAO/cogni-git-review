@@ -7,7 +7,7 @@ import { runAllGates } from './src/gates/index.js';
 const PR_REVIEW_NAME = "Cogni Git PR Review";
 
 // In-memory check state management for MVP
-// Maps head_sha -> check_run_id for idempotent updates
+// Maps head_sha -> { checkId, spec } for idempotent updates with consistent spec
 const checkStateMap = new Map();
 
 // Export for testing cleanup
@@ -41,7 +41,8 @@ export default (app) => {
   app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], handlePullRequest);
   app.on("workflow_run.completed", handleWorkflowComplete);
 
-  async function createCheckOnSha(context, sha, conclusion, summary, text) {
+  async function createCheckOnSha(context, options) {
+    const { sha, conclusion, summary, text } = options;
     const started_at = new Date();
     return context.octokit.checks.create(context.repo({
       name: PR_REVIEW_NAME,
@@ -221,8 +222,11 @@ export default (app) => {
         }
       }));
 
-      // Store check_id for later updates
-      checkStateMap.set(pr.head.sha, checkResult.data.id);
+      // Store check_id AND spec for later updates  
+      checkStateMap.set(pr.head.sha, { 
+        checkId: checkResult.data.id,
+        spec: spec
+      });
       console.log(`📝 Created in_progress check ${checkResult.data.id} for SHA ${pr.head.sha}`);
       
       return checkResult;
@@ -267,13 +271,12 @@ export default (app) => {
 
     if (!prRef) {
       console.log(`🔄 RERUN: No PRs found in check_suite.pull_requests`);
-      return createCheckOnSha(
-        context,
-        headSha,
-        'failure',
-        'No associated PR found',
-        'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
-      );
+      return createCheckOnSha(context, {
+        sha: headSha,
+        conclusion: 'failure',
+        summary: 'No associated PR found',
+        text: 'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
+      });
     }
 
     console.log(`🔄 RERUN: Found PR #${prRef.number} in check_suite, fetching full PR data`);
@@ -288,13 +291,12 @@ export default (app) => {
       return evaluateAndCreateCheck(context, fullPR, true); // Enable external gates for rerun
     } catch (error) {
       console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
-      return createCheckOnSha(
-        context,
-        headSha,
-        'neutral',
-        'Could not fetch PR data',
-        'GitHub API issue while fetching PR details. Re-run the check or try again.'
-      );
+      return createCheckOnSha(context, {
+        sha: headSha,
+        conclusion: 'neutral',
+        summary: 'Could not fetch PR data',
+        text: 'GitHub API issue while fetching PR details. Re-run the check or try again.'
+      });
     }
   }
 
@@ -326,14 +328,19 @@ export default (app) => {
       }
 
       // Check if we have a check to update
-      const checkId = checkStateMap.get(workflowRun.head_sha);
-      if (!checkId) {
+      const storedState = checkStateMap.get(workflowRun.head_sha);
+      if (!storedState) {
         console.log(`🏃 No check found for SHA ${workflowRun.head_sha}, creating new one`);
         return evaluateAndCreateCheck(context, currentPR, true);
       }
 
-      // Update existing check with external gates enabled
-      await updateCheckWithExternalGates(context, currentPR, checkId, workflowRun.id);
+      // Add missing PR information to workflow context
+      context.payload.pull_request = currentPR;
+      context.storedSpec = storedState.spec;
+      context.storedCheckId = storedState.checkId;
+      
+      // Update existing check with external gates enabled  
+      await updateCheckWithExternalGates(context);
       
     } catch (error) {
       console.error(`🏃 Failed to handle workflow completion:`, error);
@@ -343,11 +350,16 @@ export default (app) => {
   /**
    * Update existing check run with external gate results
    */
-  async function updateCheckWithExternalGates(context, pr, checkId, workflowRunId) {
+  async function updateCheckWithExternalGates(context) {
     const startTime = new Date();
     try {
-      const { spec, source } = await loadRepoSpec(context);
-      console.log(`📄 Spec loaded from ${source} for workflow update, PR #${pr.number}`);
+      // Extract information from enhanced context
+      const pr = context.payload.pull_request;
+      const spec = context.storedSpec;
+      const checkId = context.storedCheckId;
+      const workflowRunId = context.payload.workflow_run.id;
+      
+      console.log(`📄 Using stored spec for workflow update, PR #${pr.number}`);
 
       // Run all gates with external gates enabled
       const runResult = await runAllGates(context, pr, spec, { 
@@ -404,6 +416,7 @@ export default (app) => {
       console.log(`🏃 Updated check ${checkId} with ${annotations.length} annotations, status: ${conclusion}`);
       
     } catch (error) {
+      const checkId = context.storedCheckId;
       console.error(`🏃 Failed to update check ${checkId}:`, error);
       
       // Update check with error status
