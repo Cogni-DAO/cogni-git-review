@@ -374,7 +374,6 @@ export default (app) => {
    * Update existing check run with external gate results
    */
   async function updateCheckWithExternalGates(context) {
-    const startTime = new Date();
     try {
       // Extract information from enhanced context
       const pr = context.payload.pull_request;
@@ -391,7 +390,7 @@ export default (app) => {
       });
       
       const conclusion = mapStatusToConclusion(runResult.overall_status);
-      const { summary, text } = formatGateResults(runResult);
+      const { summary, text: baseText } = formatGateResults(runResult);
       
       // Prepare annotations (limit to 50 for MVP)
       const annotations = [];
@@ -416,9 +415,9 @@ export default (app) => {
 
       // Add truncation note if needed
       const totalViolations = runResult.gates.reduce((sum, gate) => sum + (gate.violations?.length || 0), 0);
-      if (totalViolations > 50) {
-        text += `\n\n📝 **Note**: Showing first 50 of ${totalViolations} findings. Re-run check to see all results.`;
-      }
+      const text = totalViolations > 50 
+        ? baseText + `\n\n📝 **Note**: Showing first 50 of ${totalViolations} findings. Re-run check to see all results.`
+        : baseText;
 
       // Update the existing check
       await context.octokit.checks.update({
