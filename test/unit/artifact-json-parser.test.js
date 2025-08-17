@@ -32,6 +32,11 @@ exports.parseViolations = parseViolations;
 // eval(moduleCode);
 // const { parseEslintJson, parseRuffJson, parseViolations } = moduleContext.exports;
 
+// Placeholder functions to prevent lint errors while tests are skipped
+const parseEslintJson = () => [];
+const parseRuffJson = () => [];
+const parseViolations = () => [];
+
 // Load test fixtures
 const eslintFixture = JSON.parse(await readFile(join(__dirname, '../fixtures/artifacts/eslint-happy.json'), 'utf8'));
 const ruffFixture = JSON.parse(await readFile(join(__dirname, '../fixtures/artifacts/ruff-happy.json'), 'utf8'));

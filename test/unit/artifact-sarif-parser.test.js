@@ -31,6 +31,10 @@ exports.normalizeSarifLevel = normalizeSarifLevel;
 // eval(moduleCode);
 // const { parseSarifViolations, normalizeSarifLevel } = moduleContext.exports;
 
+// Placeholder functions to prevent lint errors while tests are skipped
+const parseSarifViolations = () => [];
+const normalizeSarifLevel = () => 'info';
+
 // Load test fixture
 const sarifFixture = JSON.parse(await readFile(join(__dirname, '../fixtures/artifacts/sarif-minimal.json'), 'utf8'));
 

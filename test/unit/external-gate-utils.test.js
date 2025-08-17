@@ -63,7 +63,7 @@ describe('external gate utilities', () => {
     test('handles repo name parameter (for future extensions)', () => {
       // Currently unused but available for more specific path stripping
       const path = '/home/runner/work/specific-repo/specific-repo/src/main.js';
-      assert.strictEqual(normalizeFilePath(path, 'specific-repo'), 'src/main.js');
+      assert.strictEqual(normalizeFilePath(path), 'src/main.js');
     });
   });
   
@@ -87,7 +87,7 @@ describe('external gate utilities', () => {
         }
       ];
       
-      const { violations, unnormalizableCount } = processViolations(rawViolations, 'repo');
+      const { violations, unnormalizableCount } = processViolations(rawViolations);
       
       assert.strictEqual(violations.length, 2);
       assert.strictEqual(unnormalizableCount, 0);
@@ -120,7 +120,7 @@ describe('external gate utilities', () => {
         }
       ];
       
-      const { violations, unnormalizableCount } = processViolations(rawViolations, 'repo');
+      const { violations, unnormalizableCount } = processViolations(rawViolations);
       
       // Should have good violation + summary
       assert.strictEqual(violations.length, 2);

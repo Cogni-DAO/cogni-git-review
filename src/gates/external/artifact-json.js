@@ -67,8 +67,7 @@ export async function run(ctx, gate) {
     const rawViolations = parseViolations(parsedData, config);
 
     // Process violations with path normalization
-    const repoName = ctx.pr.head.repo.name;
-    const { violations: processedViolations } = processViolations(rawViolations, repoName);
+    const { violations: processedViolations } = processViolations(rawViolations);
 
     // Apply finding limits
     const maxFindings = config.max_findings || 1000;

@@ -6,10 +6,9 @@
 /**
  * Normalize file paths from CI environments to repo-relative paths
  * @param {string} filePath - Raw file path from linter output
- * @param {string} [repoName] - Repository name for path stripping
  * @returns {string|null} Normalized path or null if unnormalizable
  */
-export function normalizeFilePath(filePath, repoName) {
+export function normalizeFilePath(filePath) {
   if (!filePath || typeof filePath !== 'string') {
     return null;
   }
@@ -23,9 +22,9 @@ export function normalizeFilePath(filePath, repoName) {
 
   // Strip common Linux CI prefixes
   const linuxPatterns = [
-    /^\/home\/runner\/work\/[^\/]+\/[^\/]+\//,  // GitHub Actions
+    /^\/home\/runner\/work\/[^/]+\/[^/]+\//,  // GitHub Actions
     /^\/github\/workspace\//,                    // Docker-based CI
-    /^\/builds\/[^\/]+\/[^\/]+\//               // GitLab CI
+    /^\/builds\/[^/]+\/[^/]+\//               // GitLab CI
   ];
 
   for (const pattern of linuxPatterns) {
@@ -168,15 +167,14 @@ export function createNeutralResult(reason, message, startTime) {
 /**
  * Create standardized violation objects with path normalization
  * @param {Array} rawViolations - Raw violations from parser
- * @param {string} [repoName] - Repository name for path normalization
  * @returns {object} Processed violations with normalization info
  */
-export function processViolations(rawViolations, repoName) {
+export function processViolations(rawViolations) {
   const processedViolations = [];
   const unnormalizablePaths = [];
 
   for (const violation of rawViolations) {
-    const normalizedPath = normalizeFilePath(violation.path, repoName);
+    const normalizedPath = normalizeFilePath(violation.path);
     
     if (normalizedPath === null && violation.path) {
       // Track unnormalizable paths for summary
