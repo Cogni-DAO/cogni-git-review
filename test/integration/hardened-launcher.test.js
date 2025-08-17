@@ -43,7 +43,8 @@ describe('Hardened Launcher Integration Tests', () => {
         }
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should return empty array - no gates executed before timeout
       assert.strictEqual(results.length, 0);
@@ -84,7 +85,8 @@ describe('Hardened Launcher Integration Tests', () => {
       // Abort immediately before calling
       abortController.abort();
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should return empty array when aborted before any gates run
       assert.strictEqual(results.length, 0);
@@ -117,7 +119,8 @@ describe('Hardened Launcher Integration Tests', () => {
       // Abort immediately - this will test the pre-gate check
       abortController.abort();
       
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should return empty results when aborted before any gates run
       assert.strictEqual(results.length, 0);
@@ -157,7 +160,8 @@ describe('Hardened Launcher Integration Tests', () => {
         }
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should have 3 results, preserving order
       assert.strictEqual(results.length, 3);
@@ -210,7 +214,8 @@ describe('Hardened Launcher Integration Tests', () => {
         }
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should have exactly 1 result with normalized ID
       assert.strictEqual(results.length, 1);
@@ -239,7 +244,8 @@ describe('Hardened Launcher Integration Tests', () => {
         logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should safely normalize unknown gate to neutral
       assert.strictEqual(results.length, 1);
@@ -276,7 +282,8 @@ describe('Hardened Launcher Integration Tests', () => {
         logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // All should normalize consistently
       assert.strictEqual(results.length, 3);
@@ -311,7 +318,8 @@ describe('Hardened Launcher Integration Tests', () => {
         }
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should have 4 results: 3 real gates + 1 unknown
       assert.strictEqual(results.length, 4);
@@ -357,7 +365,8 @@ describe('Hardened Launcher Integration Tests', () => {
         }
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should have 3 results: review_limits (pass), goal_declaration, review_limits (fail)
       assert.strictEqual(results.length, 3);
@@ -401,7 +410,8 @@ describe('Hardened Launcher Integration Tests', () => {
         logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should return empty array
       assert.strictEqual(results.length, 0);
@@ -423,7 +433,8 @@ describe('Hardened Launcher Integration Tests', () => {
         logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should return empty array
       assert.strictEqual(results.length, 0);
@@ -448,7 +459,8 @@ describe('Hardened Launcher Integration Tests', () => {
         }
       };
 
-      const results = await runConfiguredGates(runCtx);
+      const launcherResult = await runConfiguredGates(runCtx);
+      const results = launcherResult.results;
       
       // Should have 3 results for 3 configured gates
       assert.strictEqual(results.length, 3);

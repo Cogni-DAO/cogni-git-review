@@ -4,18 +4,16 @@
  */
 
 import { runConfiguredGates } from './run-configured.js';
-import { resolveArtifact } from './external/artifact-resolver.js';
-import { run as runEslint } from './external/artifact-json.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
  * @param {import('probot').Context} context - Probot context
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
- * @param {object} opts - Options { enableExternal: false, deadlineMs: 8000 }
- * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
+ * @param {object} opts - Options { deadlineMs: 8000, workflowRunId?: number }
+ * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number, pendingExternalGates: string[]}>}
  */
-export async function runAllGates(context, pr, spec, opts = { enableExternal: false, deadlineMs: 8000 }) {
+export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }) {
   const started = Date.now();
   const abortCtl = new AbortController();
   
@@ -68,23 +66,14 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
 
   try {
     // 1) Run all configured local gates in spec order
-    const localResults = await runConfiguredGates(runCtx);
+    const launcherResult = await runConfiguredGates(runCtx);
+    const allGates = launcherResult?.results || [];
+    const pendingExternalGates = launcherResult?.pendingExternalGates || [];
     
     // Detect partial execution (timeout/abort)
     const expectedGateCount = spec.gates?.length || 0;
-    const isPartial = localResults.length < expectedGateCount;
+    const isPartial = allGates.length < expectedGateCount;
     const isAborted = runCtx.abort.aborted;
-    
-    const hasFailLocal = localResults.some(r => r.status === 'fail');
-
-    // 2) External gates - run when enabled (typically from workflow_run handler)
-    let externalResults = [];
-    if (opts.enableExternal) {
-      externalResults = await runExternalGates(runCtx);
-    }
-
-    // 3) Aggregate all results
-    const allGates = [...localResults, ...externalResults];
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
@@ -98,7 +87,8 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     clearTimeout(timeoutId);
     return { 
       overall_status, 
-      gates: allGates, 
+      gates: allGates,
+      pendingExternalGates,
       duration_ms: Date.now() - started 
     };
 
@@ -122,111 +112,3 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
   }
 }
 
-/**
- * Run external gates with artifact resolution
- * @param {object} runCtx - Run context with workflowRunId
- * @returns {Promise<Array>} Array of external gate results
- */
-async function runExternalGates(runCtx) {
-  const startTime = Date.now();
-  runCtx.logger('debug', 'Running external gates', { workflowRunId: runCtx.workflow_run?.id });
-  
-  // Find external gates in spec
-  const externalGates = runCtx.spec.gates?.filter(gate => gate.source === 'external') || [];
-  if (externalGates.length === 0) {
-    runCtx.logger('debug', 'No external gates configured');
-    return [];
-  }
-
-  const results = [];
-  
-  for (const gate of externalGates) {
-    // Check for timeout before each gate
-    if (runCtx.abort?.aborted) {
-      runCtx.logger('warn', 'External gate execution aborted due to timeout', { gate_id: gate.id });
-      break;
-    }
-
-    const gateStartTime = Date.now();
-    try {
-      let gateResult;
-      
-      if (gate.runner === 'artifact.json') {
-        // Handle ESLint JSON artifacts
-        const artifactName = gate.with?.artifact_name || 'eslint-report';
-        const artifact = await resolveArtifact(
-          runCtx.octokit,
-          runCtx.repo,
-          runCtx.workflow_run?.id,
-          runCtx.pr.head.sha,
-          artifactName
-        );
-        
-        if (!artifact) {
-          gateResult = {
-            status: 'neutral',
-            neutral_reason: 'artifact_not_found',
-            violations: [{
-              code: 'artifact_missing',
-              message: `Artifact '${artifactName}' not found after workflow completion`,
-              path: null,
-              line: null,
-              column: null,
-              level: 'info'
-            }],
-            stats: { artifact_name: artifactName }
-          };
-        } else {
-          // Parse artifact and run gate
-          gateResult = await runEslint(runCtx, gate, artifact);
-        }
-      } else {
-        // Unknown runner type
-        gateResult = {
-          status: 'neutral',
-          neutral_reason: 'unknown_runner',
-          violations: [{
-            code: 'unknown_runner',
-            message: `Unknown external gate runner: ${gate.runner}`,
-            path: null,
-            line: null,
-            column: null,
-            level: 'info'
-          }],
-          stats: { runner: gate.runner }
-        };
-      }
-      
-      // Ensure gate result has required fields
-      const finalResult = {
-        id: gate.id,
-        status: gateResult.status || 'neutral',
-        neutral_reason: gateResult.neutral_reason,
-        violations: gateResult.violations || [],
-        stats: gateResult.stats || {},
-        duration_ms: Date.now() - gateStartTime
-      };
-      
-      results.push(finalResult);
-      runCtx.logger('debug', `External gate ${gate.id} completed`, { status: finalResult.status });
-      
-    } catch (error) {
-      runCtx.logger('error', `External gate ${gate.id} crashed`, { error: error.message });
-      
-      results.push({
-        id: gate.id,
-        status: 'neutral',
-        neutral_reason: 'internal_error',
-        violations: [],
-        stats: { error: error.message },
-        duration_ms: Date.now() - gateStartTime
-      });
-    }
-  }
-  
-  runCtx.logger('debug', `External gates completed: ${results.length} results`, { 
-    duration_ms: Date.now() - startTime 
-  });
-  
-  return results;
-}

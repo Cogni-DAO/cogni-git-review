@@ -68,13 +68,12 @@ if (ctx.abort?.aborted) {
 }
 ```
 
-### Artifact Resolution Pattern (Internal)
-External gates handle artifact resolution internally using the Subscribe & Wait pattern:
-1. External gate receives enhanced context with `ctx.workflow_run.id` from workflow_run.completed event
-2. Gate calls `resolveArtifact(octokit, repo, runId, headSha, artifactName)` internally
-3. Primary: Direct run_id lookup; Fallback: Head SHA filtering with retry (2 attempts @ 5s)
-4. ZIP extraction with 25MB size limits and signature validation
-5. Parse JSON/SARIF with error handling → violations array
-6. Return normalized result with timeout handling
+### Execution Pattern
+External gates execute immediately on every call:
+1. **PR Event**: Gate attempts artifact resolution, returns `neutral` with `missing_artifact` if unavailable
+2. **Workflow Event**: Gate re-runs with `workflowRunId` in context, artifacts now available
+3. **Artifact Resolution**: `resolveArtifact(octokit, repo, runId, headSha, artifactName)` with fallback retry
+4. **Processing**: ZIP extraction (25MB limit), JSON/SARIF parsing, violation normalization
+5. **Return**: Standard gate result with pass/fail/neutral status
 
-**Context Enhancement**: workflow_run events receive missing PR data via context.payload.pull_request and stored spec via context.storedSpec for seamless gate execution.
+**Context Enhancement**: Workflow events pass `workflowRunId` to gates for artifact resolution during execution.

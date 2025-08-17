@@ -15,11 +15,10 @@ src/gates/
 ```
 
 ## Available Gates
-- **review_limits**: File count + diff size validation
-- **goal_declaration**: Passes if `spec.intent.goals` has ≥1 item
-- **forbidden_scopes**: Passes if `spec.intent.non_goals` has ≥1 item
+- **Internal gates** execute immediately: `review_limits`, `goal_declaration`, `forbidden_scopes`
+- **External gates** return neutral if artifacts missing: configured via `source: external` in spec
 
-**Important**: Only gates configured in `spec.gates[]` will execute. If a gate is not listed in the spec, it will not run.
+**Important**: Only gates configured in `spec.gates[]` will execute. All gates run immediately; external gates return `neutral` with `missing_artifact` reason when artifacts unavailable.
 
 ## Root Contract
 `runAllGates()` returns:
@@ -27,6 +26,7 @@ src/gates/
 {
   overall_status: "pass" | "fail" | "neutral",
   gates: [GateResult, ...],
+  pendingExternalGates: [gateId, ...],  // Gates that returned neutral/missing_artifact
   duration_ms: number
 }
 ```

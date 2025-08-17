@@ -55,15 +55,33 @@ export default (app) => {
     }));
   }
 
-  async function evaluateAndCreateCheck(context, pull_request, enableExternal = false) {
+  async function createCompletedCheck(context, runResult, headSha, startTime) {
+    const conclusion = mapStatusToConclusion(runResult.overall_status);
+    const { summary, text } = formatGateResults(runResult);
+
+    const checkResult = await context.octokit.checks.create(context.repo({
+      name: PR_REVIEW_NAME,
+      head_sha: headSha,
+      status: "completed",
+      started_at: startTime,
+      conclusion,
+      completed_at: new Date(),
+      output: { title: PR_REVIEW_NAME, summary, text }
+    }));
+
+    console.log(`📝 Created completed check ${checkResult.data.id} for SHA ${headSha} with conclusion: ${conclusion}`);
+    return checkResult;
+  }
+
+  async function evaluateAndCreateCheck(context, pull_request, workflowRunId = null) {
     const startTime = new Date();
     try {
       const { spec, source } = await loadRepoSpec(context);
       console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
 
       const runResult = await runAllGates(context, pull_request, spec, { 
-        enableExternal,
-        deadlineMs: enableExternal ? 30000 : 8000 // Longer timeout for external gates
+        workflowRunId,
+        deadlineMs: 30000 // Standard timeout for all gates
       });
       
       // Map tri-state to GitHub check conclusions
@@ -206,30 +224,35 @@ export default (app) => {
       const { spec, source } = await loadRepoSpec(context);
       console.log(`📄 Spec loaded from ${source} for PR #${pr.number}`);
 
-      // Run only internal gates (external gates disabled)
-      const runResult = await runAllGates(context, pr, spec, { enableExternal: false });
+      // Run all gates
+      const runResult = await runAllGates(context, pr, spec);
       
-      // Create check with in_progress status
-      const checkResult = await context.octokit.checks.create(context.repo({
-        name: PR_REVIEW_NAME,
-        head_sha: pr.head.sha,
-        status: "in_progress",
-        started_at: startTime,
-        output: {
-          title: PR_REVIEW_NAME,
-          summary: 'Evaluating gates...',
-          text: `Running ${spec.gates?.length || 0} gates. Waiting for external workflow completion.`
-        }
-      }));
+      if (runResult.pendingExternalGates?.length > 0) {
+        // Has external gates - Subscribe & Wait pattern
+        const checkResult = await context.octokit.checks.create(context.repo({
+          name: PR_REVIEW_NAME,
+          head_sha: pr.head.sha,
+          status: "in_progress",
+          started_at: startTime,
+          output: {
+            title: PR_REVIEW_NAME,
+            summary: 'Evaluating gates...',
+            text: `Running ${spec.gates?.length || 0} gates. Waiting for external workflow completion.`
+          }
+        }));
 
-      // Store check_id AND spec for later updates  
-      checkStateMap.set(pr.head.sha, { 
-        checkId: checkResult.data.id,
-        spec: spec
-      });
-      console.log(`📝 Created in_progress check ${checkResult.data.id} for SHA ${pr.head.sha}`);
-      
-      return checkResult;
+        // Store check_id AND spec for later updates  
+        checkStateMap.set(pr.head.sha, { 
+          checkId: checkResult.data.id,
+          spec: spec
+        });
+        console.log(`📝 Created in_progress check ${checkResult.data.id} for SHA ${pr.head.sha} (pending: ${runResult.pendingExternalGates.join(', ')})`);
+        
+        return checkResult;
+      } else {
+        // Internal only - immediate completion
+        return createCompletedCheck(context, runResult, pr.head.sha, startTime);
+      }
       
     } catch (error) {
       console.error(`📄 Spec load failed for PR #${pr.number}:`, error);
@@ -288,7 +311,7 @@ export default (app) => {
       );
       
       console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
-      return evaluateAndCreateCheck(context, fullPR, true); // Enable external gates for rerun
+      return evaluateAndCreateCheck(context, fullPR); // Rerun with all gates
     } catch (error) {
       console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
       return createCheckOnSha(context, {
@@ -331,7 +354,7 @@ export default (app) => {
       const storedState = checkStateMap.get(workflowRun.head_sha);
       if (!storedState) {
         console.log(`🏃 No check found for SHA ${workflowRun.head_sha}, creating new one`);
-        return evaluateAndCreateCheck(context, currentPR, true);
+        return evaluateAndCreateCheck(context, currentPR, workflowRun.id);
       }
 
       // Add missing PR information to workflow context
@@ -361,11 +384,10 @@ export default (app) => {
       
       console.log(`📄 Using stored spec for workflow update, PR #${pr.number}`);
 
-      // Run all gates with external gates enabled
+      // Run all gates with workflow context for artifact resolution
       const runResult = await runAllGates(context, pr, spec, { 
-        enableExternal: true,
         workflowRunId, // Pass workflow run ID for artifact resolution
-        deadlineMs: 30000 // Increase timeout for external gates (30 seconds)
+        deadlineMs: 30000 // Standard timeout (30 seconds)
       });
       
       const conclusion = mapStatusToConclusion(runResult.overall_status);

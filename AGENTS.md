@@ -4,14 +4,16 @@
 **cogni-git-review** - CogniDAO's GitHub App that automatically evaluates pull requests against repository-defined quality gates, providing fast feedback on code changes, with the goal of keeping the codebase clean, consistent, and aligned with the project's goals.
 
 ## Core Function
-The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. Built-in gates run directly (file limits, goal compliance, scope validation), while external gates ingest artifacts from GitHub Actions workflows. Results appear as GitHub check runs with pass/fail/neutral status.
+The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. All gates execute immediately; external gates return neutral status when artifacts are unavailable. Results appear as GitHub check runs with pass/fail/neutral status.
 
 ## Architecture Overview
 - **Framework**: Probot v13.4.7 (JavaScript ES modules)
-- **Dynamic Gate System**: Registry-based discovery with timeout handling
-- **Built-in Gates**: Direct execution within the bot process
-- **External Gates**: Artifact ingestion from GitHub Actions (secure, no code execution)
+- **Unified Gate System**: All gates execute immediately; external gates return neutral when artifacts unavailable
+- **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
+- **Artifact Resolution**: External gates ingest GitHub Actions artifacts when available
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`, `workflow_run.completed`
+
+**Note**: Current architecture is MVP implementation. Future design (work item `8f01ab04-922d-478f-ba1a-5bc1eca8b529`) targets unified async execution for all gates.
 
 ## Context Architecture
 
@@ -64,9 +66,9 @@ context.storedSpec = spec;
 
 ### Subscribe & Wait Pattern
 External gates use an event-driven pattern:
-1. **PR Event**: Create `in_progress` check, store state
-2. **Workflow Event**: Retrieve stored state, update check with results
-3. **Context Enhancement**: Bridge workflow context → gate execution context
+1. **PR Event**: Run all gates; create `completed` check if no pending external gates, otherwise `in_progress`
+2. **Workflow Event**: Re-run gates with artifact context, update check with final results
+3. **Context Enhancement**: Pass `workflowRunId` for artifact resolution during gate execution
 
 ## Repository Structure
 ```
@@ -115,12 +117,12 @@ gates:
 
 ## Key Features
 - **Dynamic gate discovery**: Gates auto-discovered from filesystem
-- **Hybrid execution model**: Built-in gates run directly, external gates ingest artifacts
+- **All gates run immediately**: Internal gates execute directly, external gates return neutral if artifacts missing
+- **Smart check creation**: Creates completed check for internal-only specs, in_progress for specs with external gates
 - **Security-first external gates**: No code execution, artifact-only ingestion
 - **Timeout handling**: Partial results when execution times out
 - **Robust error handling**: Gate crashes become neutral results
 - **Universal linter support**: JSON/SARIF artifact ingestion for any linting tool
-- **Comprehensive testing**: 102 tests covering edge cases and robustness
 
 ## Development
 
@@ -128,7 +130,7 @@ gates:
 ```bash
 npm install
 npm start  # Local development with webhook proxy
-npm test   # Run all 102 tests (99 pass, 2 fail, 1 skip)
+npm test   # Run tests (several integration tests currently skipped due to mocking issues)
 ```
 
 ### Key Resources
