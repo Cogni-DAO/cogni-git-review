@@ -1,0 +1,52 @@
+{
+  "description": "Parser preset for ESLint JSON output format - DEPRECATED: Uses dedicated parser",
+  "parser": "eslint_json",
+  "deprecated_fields": {
+    "note": "JSONPath fields below are deprecated. This preset now uses a dedicated parser in artifact-json.js",
+    "root": "$[*].messages[*]",
+    "fields": {
+      "file": "$.filePath",
+      "line": "$.line", 
+      "column": "$.column",
+      "code": "$.ruleId",
+      "message": "$.message",
+      "severity": "$.severity"
+    }
+  },
+  "format": {
+    "description": "ESLint JSON format: Array<{filePath, messages[]}>",
+    "example_structure": [
+      {
+        "filePath": "src/example.js",
+        "messages": [
+          {
+            "ruleId": "no-unused-vars",
+            "message": "'unused' is defined but never used",
+            "line": 5,
+            "column": 7,
+            "severity": 1,
+            "nodeType": "Identifier",
+            "endLine": 5,
+            "endColumn": 12
+          }
+        ]
+      }
+    ],
+    "severity_mapping": {
+      "1": "warning",
+      "2": "error"
+    }
+  },
+  "usage": {
+    "gate_config": {
+      "id": "eslint",
+      "source": "external", 
+      "runner": "artifact.json",
+      "with": {
+        "parser": "eslint_json",
+        "artifact_name": "eslint-results"
+      }
+    },
+    "workflow_command": "npx eslint -f json . > eslint-report.json"
+  }
+}

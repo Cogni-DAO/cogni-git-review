@@ -2,6 +2,17 @@
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that CogniDAO&#x27;s primary code management bot, built as a github app. 
 
+## Why External Gates?
+
+- **One required check, many signals.** Cogni aggregates Linting, security scans, and other tools into a single status: **Cogni Git PR Review**.
+- **Rich, scalable feedback.** Uses the Checks API to post inline annotations in batches, handling reports with hundreds of violations.
+- **Secure artifact ingestion.** No code execution - just reads JSON/SARIF artifacts from your existing workflows.
+- **Universal compatibility.** Works with any linting/scanning tool that outputs structured data.
+- **Org-wide consistency.** `.cogni/repo-spec.yaml` defines which gates run and their pass/fail criteria.
+- **Not bypassable.** Runs on every PR, including web edits, with deterministic results.
+
+_See [docs/EXTERNAL_GATES.md](docs/EXTERNAL_GATES.md) for the complete adoption guide and security model._
+
 ## Installation
 
 1. **Install the GitHub App** on your repository
