@@ -13,15 +13,23 @@
   ],
   "scripts": {
     "start": "probot run ./index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "js-yaml": "^4.1.0",
     "micromatch": "^4.0.8",
     "probot": "^13.0.1"
   },
   "devDependencies": {
-    "nock": "^14.0.9",
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-n": "^17.21.3",
+    "eslint-plugin-promise": "^7.2.1",
+    "globals": "^16.3.0",
+    "nock": "^14.0.10",
     "smee-client": "^2.0.0"
   },
   "engines": {
