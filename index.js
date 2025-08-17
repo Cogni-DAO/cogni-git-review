@@ -10,6 +10,9 @@ const PR_REVIEW_NAME = "Cogni Git PR Review";
 // Maps head_sha -> check_run_id for idempotent updates
 const checkStateMap = new Map();
 
+// Export for testing cleanup
+global.checkStateMap = checkStateMap;
+
 /**
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
@@ -57,7 +60,10 @@ export default (app) => {
       const { spec, source } = await loadRepoSpec(context);
       console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
 
-      const runResult = await runAllGates(context, pull_request, spec, { enableExternal });
+      const runResult = await runAllGates(context, pull_request, spec, { 
+        enableExternal,
+        deadlineMs: enableExternal ? 30000 : 8000 // Longer timeout for external gates
+      });
       
       // Map tri-state to GitHub check conclusions
       const conclusion = mapStatusToConclusion(runResult.overall_status);
@@ -346,7 +352,8 @@ export default (app) => {
       // Run all gates with external gates enabled
       const runResult = await runAllGates(context, pr, spec, { 
         enableExternal: true,
-        workflowRunId // Pass workflow run ID for artifact resolution
+        workflowRunId, // Pass workflow run ID for artifact resolution
+        deadlineMs: 30000 // Increase timeout for external gates (30 seconds)
       });
       
       const conclusion = mapStatusToConclusion(runResult.overall_status);

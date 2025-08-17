@@ -2,7 +2,7 @@
 # initially configuring your GitHub App.
 #
 # NOTE: changing this file will not update your GitHub App settings.
-# You must visit github.com/settings/apps/your-app-name to edit them.
+# You must visit https://github.com/organizations/Cogni-DAO/settings/apps/cogni-git-review/permissions to edit them.
 #
 # Read more about configuring your GitHub App:
 # https://probot.github.io/docs/development/#configuring-a-github-app
@@ -36,6 +36,7 @@ default_events:
 # - project_column
 # - public
   - pull_request
+  - workflow_run
 # - pull_request_review
 # - pull_request_review_comment
 # - push
@@ -52,6 +53,10 @@ default_events:
 # the value (for example, write).
 # Valid values are `read`, `write`, and `none`
 default_permissions:
+  # GitHub Actions workflows, runs, artifacts, and secrets.
+  # https://developer.github.com/v3/apps/permissions/#permission-on-actions
+  actions: read
+
   # Repository creation, deletion, settings, teams, and collaborators.
   # https://developer.github.com/v3/apps/permissions/#permission-on-administration
   # administration: read

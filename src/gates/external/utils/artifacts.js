@@ -3,7 +3,7 @@
  * Handles GitHub Actions artifact download with ZIP extraction and safety limits
  */
 
-import AdmZip from 'adm-zip';
+import { unzipSync } from 'fflate';
 
 /**
  * Download and extract JSON/SARIF from GitHub Actions artifact
@@ -64,32 +64,36 @@ export async function downloadAndExtractJson({
     throw new Error(`Downloaded artifact exceeds size limit: ${Math.round(zipBuffer.byteLength / 1024 / 1024)}MB`);
   }
 
-  // Extract the ZIP
-  const zip = new AdmZip(zipBuffer);
-  const entries = zip.getEntries();
+  // Extract the ZIP using fflate
+  const zipData = new Uint8Array(zipBuffer);
+  const unzipped = unzipSync(zipData);
+  
+  // Get available filenames
+  const filenames = Object.keys(unzipped);
 
   // Determine which file to extract
-  let targetEntry;
+  let targetFilename;
   if (artifactPath) {
     // Use specific path if provided
-    targetEntry = entries.find(e => e.entryName === artifactPath);
-    if (!targetEntry) {
-      throw new Error(`File '${artifactPath}' not found in artifact ZIP. Available files: ${entries.map(e => e.entryName).join(', ')}`);
+    if (!unzipped[artifactPath]) {
+      throw new Error(`File '${artifactPath}' not found in artifact ZIP. Available files: ${filenames.join(', ')}`);
     }
+    targetFilename = artifactPath;
   } else {
     // Auto-detect JSON or SARIF file
-    targetEntry = entries.find(e => /\.(json|sarif)$/i.test(e.entryName));
-    if (!targetEntry) {
-      throw new Error(`No JSON or SARIF file found in artifact ZIP. Set 'artifact_path' in gate config or ensure your workflow uploads a .json/.sarif file. Available files: ${entries.map(e => e.entryName).join(', ')}`);
+    targetFilename = filenames.find(name => /\.(json|sarif)$/i.test(name));
+    if (!targetFilename) {
+      throw new Error(`No JSON or SARIF file found in artifact ZIP. Set 'artifact_path' in gate config or ensure your workflow uploads a .json/.sarif file. Available files: ${filenames.join(', ')}`);
     }
   }
 
   // Extract and parse the content
   try {
-    const content = zip.readAsText(targetEntry, 'utf8');
+    const fileData = unzipped[targetFilename];
+    const content = new TextDecoder().decode(fileData);
     return JSON.parse(content);
   } catch (error) {
-    throw new Error(`Failed to parse JSON from '${targetEntry.entryName}': ${error.message}`);
+    throw new Error(`Failed to parse JSON from '${targetFilename}': ${error.message}`);
   }
 }
 

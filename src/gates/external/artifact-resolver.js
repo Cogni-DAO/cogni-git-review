@@ -3,6 +3,8 @@
  * Handles direct run_id lookup with head_sha fallback and minimal retry logic
  */
 
+import { unzipSync } from 'fflate';
+
 /**
  * Resolve artifact by direct run_id (primary method)
  * @param {object} octokit - GitHub API client
@@ -96,7 +98,7 @@ async function downloadArtifact(octokit, repo, artifactId) {
       }
 
       // Extract JSON file from zip (simple approach for MVP)
-      const jsonContent = await extractJsonFromZip(zipData);
+      const jsonContent = extractJsonFromZip(zipData);
       return jsonContent;
 
     } catch (error) {
@@ -116,44 +118,29 @@ async function downloadArtifact(octokit, repo, artifactId) {
  * @param {Buffer} zipBuffer - Zip file contents
  * @returns {Promise<Buffer|null>} JSON file contents or null
  */
-async function extractJsonFromZip(zipBuffer) {
+
+function extractJsonFromZip(zipBuffer) {
   try {
-    // For MVP, use a simple approach with yauzl or node-stream-zip
-    // This is a placeholder - in practice, we'd use a proper zip library
-    // For now, assume the artifact contains a single JSON file
+    // Convert to Uint8Array for fflate (single conversion at edge)
+    const u8 = zipBuffer instanceof Uint8Array ? zipBuffer : new Uint8Array(zipBuffer);
     
-    // Import yauzl dynamically (assuming it's available)
-    const yauzl = await import('yauzl');
+    // ZIP signature validation
+    if (u8.length < 4 || u8[0] !== 0x50 || u8[1] !== 0x4b || u8[2] !== 0x03 || u8[3] !== 0x04) {
+      throw new Error('invalid zip data (bad signature)');
+    }
     
-    return new Promise((resolve, reject) => {
-      yauzl.fromBuffer(zipBuffer, { lazyEntries: true }, (err, zipfile) => {
-        if (err) return reject(err);
-
-        zipfile.readEntry();
-        zipfile.on('entry', (entry) => {
-          // Take the first .json file we find
-          if (entry.fileName.endsWith('.json')) {
-            zipfile.openReadStream(entry, (err, readStream) => {
-              if (err) return reject(err);
-
-              const chunks = [];
-              readStream.on('data', chunk => chunks.push(chunk));
-              readStream.on('end', () => {
-                const jsonBuffer = Buffer.concat(chunks);
-                resolve(jsonBuffer);
-              });
-              readStream.on('error', reject);
-            });
-          } else {
-            zipfile.readEntry(); // Continue to next entry
-          }
-        });
-
-        zipfile.on('end', () => resolve(null)); // No JSON file found
-        zipfile.on('error', reject);
-      });
-    });
-
+    // Use sync unzip - no callback complexity
+    const files = unzipSync(u8);
+    
+    // Find first .json file
+    const jsonFilename = Object.keys(files).find(name => name.endsWith('.json'));
+    if (!jsonFilename) {
+      return null;
+    }
+    
+    // Return as Buffer for consistency with existing code
+    return Buffer.from(files[jsonFilename]);
+    
   } catch (error) {
     console.error('Failed to extract JSON from zip:', error.message);
     return null;

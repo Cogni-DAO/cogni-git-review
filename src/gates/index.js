@@ -37,6 +37,19 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
       additions: pr.additions, 
       deletions: pr.deletions
     },
+    workflow_run: context.payload.workflow_run ? {
+      id: context.payload.workflow_run.id,
+      head_sha: context.payload.workflow_run.head_sha,
+      name: context.payload.workflow_run.name,
+      status: context.payload.workflow_run.status,
+      conclusion: context.payload.workflow_run.conclusion
+    } : (opts.workflowRunId ? {
+      id: opts.workflowRunId,
+      head_sha: pr.head?.sha || pr.head_sha,
+      name: 'unknown',
+      status: 'completed',
+      conclusion: 'success'
+    } : undefined),
     spec,
     octokit: context.octokit,
     logger: (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {})),
@@ -44,8 +57,7 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     deadline_ms: opts.deadlineMs,
     annotation_budget: 50,
     idempotency_key: `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`,
-    abort: abortCtl.signal,
-    workflowRunId: opts.workflowRunId // Pass workflow run ID for artifact resolution
+    abort: abortCtl.signal
   };
 
   // Set up timeout handler
@@ -117,7 +129,7 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
  */
 async function runExternalGates(runCtx) {
   const startTime = Date.now();
-  runCtx.logger('debug', 'Running external gates', { workflowRunId: runCtx.workflowRunId });
+  runCtx.logger('debug', 'Running external gates', { workflowRunId: runCtx.workflow_run?.id });
   
   // Find external gates in spec
   const externalGates = runCtx.spec.gates?.filter(gate => gate.source === 'external') || [];
@@ -145,7 +157,7 @@ async function runExternalGates(runCtx) {
         const artifact = await resolveArtifact(
           runCtx.octokit,
           runCtx.repo,
-          runCtx.workflowRunId,
+          runCtx.workflow_run?.id,
           runCtx.pr.head.sha,
           artifactName
         );

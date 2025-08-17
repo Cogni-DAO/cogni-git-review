@@ -2,7 +2,7 @@
  * Test helper for creating ZIP artifacts for external gate testing
  */
 
-import AdmZip from 'adm-zip';
+import { zipSync, strToU8 } from 'fflate';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,36 +15,39 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * @returns {object} Parsed JSON content
  */
 function loadFixture(filename) {
-  const fixturePath = path.join(__dirname, 'artifacts', filename);
+  const fixturePath = path.join(__dirname, '../fixtures/artifacts', filename);
   return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 }
 
 /**
- * Create a ZIP buffer from file contents map
+ * Create a ZIP buffer from file contents map using fflate
  * @param {Record<string, string>} files - Map of filename to content
- * @returns {Buffer} ZIP file buffer
+ * @returns {Promise<Buffer>} ZIP file buffer
  * 
  * @example
- * const zipBuffer = createZipArtifact({
+ * const zipBuffer = await createZipArtifact({
  *   'reports/eslint.json': JSON.stringify(eslintResults),
  *   'logs/debug.txt': 'Debug information'
  * });
  */
 export function createZipArtifact(files) {
-  const zip = new AdmZip();
+  const zipData = {};
   
   for (const [filename, content] of Object.entries(files)) {
     if (typeof content === 'string') {
-      zip.addFile(filename, Buffer.from(content, 'utf8'));
+      zipData[filename] = strToU8(content);
     } else if (Buffer.isBuffer(content)) {
-      zip.addFile(filename, content);
+      zipData[filename] = new Uint8Array(content);
     } else {
       // Assume it's JSON-serializable
-      zip.addFile(filename, Buffer.from(JSON.stringify(content, null, 2), 'utf8'));
+      const jsonString = JSON.stringify(content, null, 2);
+      zipData[filename] = strToU8(jsonString);
     }
   }
   
-  return zip.toBuffer();
+  // Use sync ZIP creation for reliability
+  const zipBuffer = zipSync(zipData, { level: 0 });
+  return Buffer.from(zipBuffer);
 }
 
 /**
@@ -54,8 +57,9 @@ export function createZipArtifact(files) {
  * @returns {Buffer} ZIP file buffer
  */
 export function createSingleFileZip(filename, content) {
+  const contentStr = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
   return createZipArtifact({
-    [filename]: typeof content === 'string' ? content : JSON.stringify(content, null, 2)
+    [filename]: contentStr
   });
 }
 

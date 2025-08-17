@@ -74,6 +74,7 @@ describe("External Gates MVP", () => {
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: "main" })
       .reply(200, {
+        type: "file",
         content: Buffer.from(SPEC_FIXTURES.withExternalGate).toString("base64"),
         encoding: "base64",
       })
@@ -115,6 +116,7 @@ describe("External Gates MVP", () => {
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: "main" })
       .reply(200, {
+        type: "file",
         content: Buffer.from(SPEC_FIXTURES.withExternalGate).toString("base64"),
         encoding: "base64",
       })
@@ -153,23 +155,38 @@ describe("External Gates MVP", () => {
           },
         ],
       })
-      // Mock artifact download
+      // Mock artifact download (handle multiple retry attempts)
       .get("/repos/derekg1729/cogni-git-review/actions/artifacts/987654/zip")
-      .reply(200, () => {
-        return createZipArtifact(JSON.stringify(eslintHappy), "eslint-report.json");
+      .times(3) // Allow up to 3 calls for retries
+      .reply(() => {
+        // Use simple reply form with proper headers for binary data
+        const zipBuffer = createZipArtifact({
+          "eslint-report.json": JSON.stringify(eslintHappy)
+        });
+        return [200, zipBuffer, { 
+          'Content-Type': 'application/zip',
+          'Content-Length': zipBuffer.length.toString()
+        }];
       })
       // Mock check update - expect failure due to ESLint error
       .patch(`/repos/derekg1729/cogni-git-review/check-runs/${checkId}`, (body) => {
         assert.strictEqual(body.status, "completed");
         assert.strictEqual(body.conclusion, "failure");
-        assert.ok(body.output.summary.includes("Gate failures"));
-        assert.ok(Array.isArray(body.annotations));
-        assert.ok(body.annotations.length > 0);
         
-        // Verify annotation contains ESLint finding
-        const errorAnnotation = body.annotations.find(a => a.annotation_level === "failure");
+        // CORRECT: Annotations must be nested under output
+        assert.ok(body.output, "Must have output object");
+        assert.ok(body.output.title, "Must have output.title");
+        assert.ok(body.output.summary.includes("Gate failures"), "Must have summary with failures");
+        assert.ok(Array.isArray(body.output.annotations), "Must have output.annotations array");
+        assert.ok(body.output.annotations.length > 0, "Must have annotations");
+        
+        // Verify annotation has required fields per GitHub API
+        const errorAnnotation = body.output.annotations.find(a => a.annotation_level === "failure");
         assert.ok(errorAnnotation, "Should have error-level annotation");
-        assert.ok(errorAnnotation.message.includes("no-console"));
+        assert.ok(errorAnnotation.path, "Annotation must have path");
+        assert.ok(typeof errorAnnotation.start_line === "number", "Annotation must have start_line");
+        assert.ok(typeof errorAnnotation.end_line === "number", "Annotation must have end_line");
+        assert.ok(errorAnnotation.message.includes("no-console"), "Annotation must have message");
         
         return true;
       })
@@ -284,6 +301,7 @@ describe("External Gates MVP", () => {
       .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
       .query({ ref: "main" })
       .reply(200, {
+        type: "file",
         content: Buffer.from(SPEC_FIXTURES.withExternalGate).toString("base64"),
         encoding: "base64",
       })

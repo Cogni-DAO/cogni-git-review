@@ -10,18 +10,19 @@ import {
   createNeutralResult,
   processViolations 
 } from './utils/shared.js';
+import { resolveArtifact } from './artifact-resolver.js';
 
 // Gate registry contract exports
 export const runner = 'artifact.json';
 
 /**
  * Registry-compatible run function for artifact.json gate
- * @param {object} ctx - Run context with octokit, pr, etc.
+ * Handles internal artifact resolution following design principles
+ * @param {object} ctx - Run context with octokit, pr, repo(), abort, logger
  * @param {object} gate - Gate configuration from spec
- * @param {Buffer} artifactData - Pre-resolved artifact JSON data
  * @returns {Promise<object>} Normalized gate result
  */
-export async function run(ctx, gate, artifactData) {
+export async function run(ctx, gate) {
   const config = gate.with || {};
   const startTime = Date.now();
 
@@ -31,14 +32,31 @@ export async function run(ctx, gate, artifactData) {
       return createNeutralResult('timeout', 'Gate execution timed out before starting', startTime);
     }
 
-    // Validate artifact data is provided
-    if (!artifactData) {
+    // Resolve artifact using internal artifact resolution pattern
+    const artifactName = config.artifact_name || 'eslint-report';
+    
+    // Use universal context structure (repo is already resolved, pr.head.sha is normalized)
+    const artifactBuffer = await resolveArtifact(
+      ctx.octokit,
+      ctx.repo, // Already resolved by universal context 
+      ctx.workflow_run?.id,
+      ctx.pr.head.sha, // Normalized by universal context
+      artifactName
+    );
+
+    // Check for timeout after artifact resolution
+    if (ctx.abort?.aborted) {
+      return createNeutralResult('timeout', 'Gate execution timed out during artifact resolution', startTime);
+    }
+
+    // Handle missing artifact
+    if (!artifactBuffer) {
       return {
         status: 'neutral',
         neutral_reason: 'missing_artifact',
         violations: [{
           code: 'missing_artifact',
-          message: 'No artifact data provided to parser',
+          message: `Artifact '${artifactName}' not found in workflow run`,
           path: null,
           line: null,
           column: null,
@@ -51,7 +69,7 @@ export async function run(ctx, gate, artifactData) {
     // Parse artifact data as JSON
     let parsedData;
     try {
-      parsedData = JSON.parse(artifactData.toString('utf8'));
+      parsedData = JSON.parse(artifactBuffer.toString('utf8'));
     } catch (parseError) {
       return createNeutralResult('parse_error', `Failed to parse artifact JSON: ${parseError.message}`, startTime);
     }
