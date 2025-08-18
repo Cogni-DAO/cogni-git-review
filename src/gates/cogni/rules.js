@@ -30,12 +30,10 @@ export async function run(context, spec) {
     if (rules.length === 0) {
       const errorCount = diagnostics.filter(d => d.severity === 'error').length;
       return {
-        id: 'rules',
-        conclusion: 'neutral',
-        title: 'AI Rules',
-        summary: errorCount > 0 ? `No valid rules loaded (${errorCount} errors)` : 'No rules enabled',
-        text: buildDiagnosticsText(diagnostics, gateConfig.enable),
-        annotations: [],
+        status: 'neutral',
+        neutral_reason: errorCount > 0 ? 'load_errors' : 'no_rules',
+        violations: [],
+        stats: { diagnostics: diagnostics.length, enabled_rules: gateConfig.enable?.length || 0 },
         duration_ms: Date.now() - startTime
       };
     }
@@ -64,29 +62,32 @@ export async function run(context, spec) {
       model: gateConfig.model || process.env.AI_MODEL || 'gpt-4o-mini'
     });
     
-    // Step 4: Determine final conclusion
+    // Step 4: Determine final conclusion and convert to registry format
     const conclusion = determineConclusion(providerResult, rule);
+    const status = conclusion === 'success' ? 'pass' : conclusion === 'failure' ? 'fail' : 'neutral';
     
     return {
-      id: 'rules',
-      conclusion,
-      title: 'AI Rules',
-      summary: `Goal alignment: ${conclusion} (score: ${(providerResult.score || 0).toFixed(2)})`,
-      text: buildResultText(providerResult, rule),
-      annotations: [], // No annotations in MVP
+      status,
+      neutral_reason: status === 'neutral' ? 'ai_result' : undefined,
+      violations: status === 'fail' ? [`Goal alignment failed (score: ${(providerResult.score || 0).toFixed(2)})`] : [],
+      stats: {
+        rule_id: rule.rule_key,
+        score: providerResult.score || 0,
+        threshold: rule.success_criteria?.threshold || 0.7
+      },
       duration_ms: Date.now() - startTime
     };
     
   } catch (error) {
     console.error('Rules gate error:', error);
     
+    const errorStatus = gateConfig.neutral_on_error !== false ? 'neutral' : 'fail';
+    
     return {
-      id: 'rules',
-      conclusion: gateConfig.neutral_on_error !== false ? 'neutral' : 'failure',
-      title: 'AI Rules', 
-      summary: `AI evaluation failed: ${error.message}`,
-      text: `Rules gate encountered an error:\n\n\`\`\`\n${error.stack || error.message}\n\`\`\``,
-      annotations: [],
+      status: errorStatus,
+      neutral_reason: errorStatus === 'neutral' ? 'internal_error' : undefined,
+      violations: errorStatus === 'fail' ? [error.message] : [],
+      stats: { error: error.message },
       duration_ms: Date.now() - startTime
     };
   }

@@ -1,7 +1,7 @@
 /**
- * Integration Test for AI Rules Gate
+ * Unit Test for AI Rules Gate
  * 
- * Tests the complete flow: rule loading → selection → evidence building → gate execution
+ * Tests rules gate function in isolation: rule loading → evidence building → gate execution
  * Using reusable fixtures following DRY principle.
  */
 
@@ -11,7 +11,7 @@ import yaml from 'js-yaml';
 import { run as runRulesGate } from '../../src/gates/cogni/rules.js';
 import { SPEC_FIXTURES, createAIRulesContext, PR_FIXTURES } from '../fixtures/repo-specs.js';
 
-describe('AI Rules Integration - Real PR Data Tests', () => {
+describe('AI Rules Gate Unit Tests', () => {
 
   test('ai_rules_gate_loads_and_selects_rules', async () => {
     const context = createAIRulesContext('authFeaturePR');
@@ -23,21 +23,22 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
     try {
       const result = await runRulesGate(context, spec);
       
-      // Basic result structure validation
+      // Basic result structure validation - registry format
       assert.ok(result, 'Gate should return a result');
-      assert.strictEqual(result.id, 'rules', 'Result should have correct gate ID');
-      assert.ok(['success', 'failure', 'neutral'].includes(result.conclusion), 'Should have valid conclusion');
+      assert.ok(['pass', 'fail', 'neutral'].includes(result.status), 'Should have valid status');
       assert.ok(typeof result.duration_ms === 'number', 'Should include duration');
-      assert.ok(Array.isArray(result.annotations), 'Should have annotations array');
+      assert.ok(Array.isArray(result.violations), 'Should have violations array');
+      assert.ok(result.stats && typeof result.stats === 'object', 'Should have stats object');
       
-      // Validate summary contains rule information
-      assert.ok(result.summary.includes('alignment'), 'Summary should mention goal alignment');
+      // Validate stats contains rule information
+      assert.ok(result.stats.rule_id, 'Stats should include rule ID');
       
       console.log('AI Rules Gate Result:', {
-        conclusion: result.conclusion,
-        summary: result.summary,
-        annotationCount: result.annotations.length,
-        duration: result.duration_ms
+        status: result.status,
+        neutral_reason: result.neutral_reason,
+        violationCount: result.violations.length,
+        duration: result.duration_ms,
+        stats: result.stats
       });
       
     } catch (error) {
@@ -63,9 +64,9 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
       // MVP applies rule to ALL PRs, so this will always find applicable rules
       const result = await runRulesGate(context, spec);
       
-      // MVP behavior: rule applies to all PRs, so should get neutral (no AI provider)
-      assert.ok(['success', 'failure', 'neutral'].includes(result.conclusion), 'Should have valid conclusion');
-      assert.ok(result.summary.includes('alignment'), 'Summary should indicate goal alignment');
+      // MVP behavior: rule applies to all PRs, validates registry format
+      assert.ok(['pass', 'fail', 'neutral'].includes(result.status), 'Should have valid status');
+      assert.ok(result.stats && typeof result.stats === 'object', 'Should have stats object');
       
     } catch (error) {
       console.log('Integration error in no-applicable test:', error.message);
@@ -85,8 +86,8 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
     const result = await runRulesGate(context, spec);
     
     // Zero valid rules should return NEUTRAL per user requirement
-    assert.strictEqual(result.conclusion, 'neutral', 'Zero valid rules should result in neutral');
-    assert.ok(result.summary.includes('0 applicable') || result.summary.includes('No valid rules'), 'Summary should indicate rule loading issue');
+    assert.strictEqual(result.status, 'neutral', 'Zero valid rules should result in neutral');
+    assert.ok(result.neutral_reason === 'no_rules' || result.neutral_reason === 'load_errors', 'Should have neutral reason');
   });
 
   test('ai_rules_gate_error_handling', async () => {
@@ -97,7 +98,7 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
     const result = await runRulesGate(context, spec);
     
     // Should handle errors gracefully with neutral result
-    assert.ok(['neutral', 'failure'].includes(result.conclusion), 'Error should result in neutral or failure');
-    assert.ok(result.summary.includes('No rules') || result.summary.includes('no errors'), 'Should include diagnostic information');
+    assert.ok(['neutral', 'fail'].includes(result.status), 'Error should result in neutral or fail');
+    assert.ok(Array.isArray(result.violations), 'Should have violations array');
   });
 });
