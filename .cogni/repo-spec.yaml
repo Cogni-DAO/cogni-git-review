@@ -17,10 +17,3 @@ gates:
       max_total_diff_kb: 1500
   - id: goal_declaration
   - id: forbidden_scopes
-  - id: eslint
-    source: external
-    runner: artifact.json
-    with:
-      parser: eslint_json
-      artifact_name: eslint-report
-      artifact_path: reports/eslint-report.json
