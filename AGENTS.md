@@ -4,14 +4,13 @@
 **cogni-git-review** - CogniDAO's GitHub App that automatically evaluates pull requests against repository-defined quality gates, providing fast feedback on code changes, with the goal of keeping the codebase clean, consistent, and aligned with the project's goals.
 
 ## Core Function
-The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. All gates execute immediately; external gates return neutral status when artifacts are unavailable. Results appear as GitHub check runs with pass/fail/neutral status.
+The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. All gates execute immediately. Results appear as GitHub check runs with pass/fail/neutral status.
 
 ## Architecture Overview
 - **Framework**: Probot v13.4.7 (JavaScript ES modules)
-- **Unified Gate System**: All gates execute immediately; external gates return neutral when artifacts unavailable
+- **Unified Gate System**: All gates execute immediately
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
-- **Artifact Resolution**: External gates ingest GitHub Actions artifacts when available
-- **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`, `workflow_run.completed`
+- **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
 
 **Note**: Current architecture is MVP implementation. Future design (work item `8f01ab04-922d-478f-ba1a-5bc1eca8b529`) targets unified async execution for all gates.
 
@@ -35,16 +34,6 @@ context.payload = {
 }
 ```
 
-**Workflow Events** (`workflow_run.completed`):
-```javascript  
-context.payload = {
-  action: "completed", 
-  workflow_run: { /* workflow data */ },
-  repository: { /* repo info */ }
-  // NO pull_request!
-}
-```
-
 **Check Events** (`check_suite.rerequested`):
 ```javascript
 context.payload = {
@@ -64,11 +53,6 @@ context.storedSpec = spec;
 // Now context has everything gates need
 ```
 
-### Subscribe & Wait Pattern
-External gates use an event-driven pattern:
-1. **PR Event**: Run all gates; create `completed` check if no pending external gates, otherwise `in_progress`
-2. **Workflow Event**: Re-run gates with artifact context, update check with final results
-3. **Context Enhancement**: Pass `workflowRunId` for artifact resolution during gate execution
 
 ## Repository Structure
 ```
@@ -77,7 +61,6 @@ External gates use an event-driven pattern:
 │   ├── spec-loader.js         # Repository specification loading
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
-│       └── external/          # Artifact-based linter integrations (→ AGENTS.md)
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── integration/           # End-to-end tests (→ AGENTS.md)
@@ -100,29 +83,15 @@ gates:
   - id: goal_declaration
   - id: forbidden_scopes
   
-  # External gates (ingest artifacts)
-  - id: eslint
-    source: external
-    runner: artifact.json
-    with:
-      parser: eslint_json
-      artifact_name: eslint-results
-  - id: security-scan
-    source: external
-    runner: artifact.sarif
-    with:
-      artifact_name: security-scan
 ```
 **Principle**: Only gates listed in the spec execute ("presence = enabled")
 
 ## Key Features
 - **Dynamic gate discovery**: Gates auto-discovered from filesystem
-- **All gates run immediately**: Internal gates execute directly, external gates return neutral if artifacts missing
-- **Smart check creation**: Creates completed check for internal-only specs, in_progress for specs with external gates
-- **Security-first external gates**: No code execution, artifact-only ingestion
+- **All gates run immediately**: Gates execute directly
+- **Smart check creation**: Creates completed check for all specs
 - **Timeout handling**: Partial results when execution times out
 - **Robust error handling**: Gate crashes become neutral results
-- **Universal linter support**: JSON/SARIF artifact ingestion for any linting tool
 
 ## Development
 

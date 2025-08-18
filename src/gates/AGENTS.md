@@ -6,19 +6,16 @@ src/gates/
 ├── index.js           # runAllGates() - root orchestrator with timeout handling
 ├── run-configured.js  # Dynamic gate launcher with registry-based discovery
 ├── registry.js        # Gate discovery and loading system
-├── cogni/
-│   ├── review-limits.js
-│   ├── goal-declaration-stub.js
-│   └── forbidden-scopes-stub.js
-└── external/
-    └── index.js       # Future: third-party tools
+└── cogni/
+    ├── review-limits.js
+    ├── goal-declaration-stub.js
+    └── forbidden-scopes-stub.js
 ```
 
 ## Available Gates
-- **Internal gates** execute immediately: `review_limits`, `goal_declaration`, `forbidden_scopes`
-- **External gates** return neutral if artifacts missing: configured via `source: external` in spec
+- **Gates** execute immediately: `review_limits`, `goal_declaration`, `forbidden_scopes`
 
-**Important**: Only gates configured in `spec.gates[]` will execute. All gates run immediately; external gates return `neutral` with `missing_artifact` reason when artifacts unavailable.
+**Important**: Only gates configured in `spec.gates[]` will execute.
 
 ## Root Contract
 `runAllGates()` returns:
@@ -26,7 +23,6 @@ src/gates/
 {
   overall_status: "pass" | "fail" | "neutral",
   gates: [GateResult, ...],
-  pendingExternalGates: [gateId, ...],  // Gates that returned neutral/missing_artifact
   duration_ms: number
 }
 ```
@@ -54,7 +50,7 @@ Individual gates return `GateResult` (or `null` if not configured):
 ## Registry-Based Discovery
 Gates are automatically discovered by scanning filesystem:
 ```javascript
-// Registry scans src/gates/cogni/ and src/gates/external/
+// Registry scans src/gates/cogni/
 const registry = await buildRegistry(logger);
 const handler = resolveHandler(registry, gateConfig);
 

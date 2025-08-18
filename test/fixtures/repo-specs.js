@@ -36,28 +36,6 @@ gates:
   - id: goal_declaration
   - id: forbidden_scopes`,
 
-  // External gate spec for MVP testing
-  withExternalGate: `schema_version: '0.2.1'
-
-intent:
-  name: external-gate-project
-  goals:
-    - Test external gate functionality
-  non_goals:
-    - Complex multi-gate scenarios
-
-gates:
-  - id: review_limits
-    with:
-      max_changed_files: 30
-      max_total_diff_kb: 100
-  - id: eslint
-    source: external
-    runner: artifact.json
-    with:
-      parser: eslint_json
-      artifact_name: eslint-report
-      fail_on: errors`,
 
   // Bootstrap mode spec - for gradual rollout
   bootstrap: `schema_version: '0.2.1'

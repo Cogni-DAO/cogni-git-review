@@ -10,13 +10,12 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 /**
  * Build registry of available gates by scanning gate directories
  * @param {object} logger - Optional Probot-style logger
- * @returns {Promise<{cogni: Map<string, Function>, external: Map<string, Function>}>}
+ * @returns {Promise<{cogni: Map<string, Function>}>}
  */
 export async function buildRegistry(logger) {
   const log = logger || console;
   const registry = {
-    cogni: new Map(),
-    external: new Map()
+    cogni: new Map()
   };
 
   // Load gates from a directory
@@ -42,10 +41,6 @@ export async function buildRegistry(logger) {
           registry.cogni.set(module.id, module.run);
         }
 
-        // Register external gates by their 'runner' export
-        if (kind === 'external' && module.runner && typeof module.run === 'function') {
-          registry.external.set(module.runner, module.run);
-        }
       } catch (error) {
         // Log gate loading failures via Probot logger
         if (log.warn) {
@@ -64,7 +59,6 @@ export async function buildRegistry(logger) {
   // Scan gate directories using module-relative paths
   const currentModuleDir = path.dirname(fileURLToPath(import.meta.url));
   await loadGatesFromDir(path.join(currentModuleDir, 'cogni'), 'cogni');
-  await loadGatesFromDir(path.join(currentModuleDir, 'external'), 'external');
 
   return registry;
 }
@@ -76,15 +70,6 @@ export async function buildRegistry(logger) {
  * @returns {Function|null} Gate handler function or null if not found
  */
 export function resolveHandler(registry, gate) {
-  // Determine gate source (defaults to 'cogni')
-  const source = gate.source ?? 'cogni';
-
-  if (source === 'external') {
-    // External gates use 'runner' field
-    const runner = gate.runner || '';
-    return registry.external.get(runner) ?? null;
-  } else {
-    // Cogni gates use 'id' field
-    return registry.cogni.get(gate.id) ?? null;
-  }
+  // All gates are cogni gates - use 'id' field
+  return registry.cogni.get(gate.id) ?? null;
 }

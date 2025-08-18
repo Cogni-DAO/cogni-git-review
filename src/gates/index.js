@@ -10,8 +10,8 @@ import { runConfiguredGates } from './run-configured.js';
  * @param {import('probot').Context} context - Probot context
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
- * @param {object} opts - Options { deadlineMs: 8000, workflowRunId?: number }
- * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number, pendingExternalGates: string[]}>}
+ * @param {object} opts - Options { deadlineMs: 8000 }
+ * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
 export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }) {
   const started = Date.now();
@@ -35,19 +35,6 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }
       additions: pr.additions, 
       deletions: pr.deletions
     },
-    workflow_run: context.payload.workflow_run ? {
-      id: context.payload.workflow_run.id,
-      head_sha: context.payload.workflow_run.head_sha,
-      name: context.payload.workflow_run.name,
-      status: context.payload.workflow_run.status,
-      conclusion: context.payload.workflow_run.conclusion
-    } : (opts.workflowRunId ? {
-      id: opts.workflowRunId,
-      head_sha: pr.head?.sha || pr.head_sha,
-      name: 'unknown',
-      status: 'completed',
-      conclusion: 'success'
-    } : undefined),
     spec,
     octokit: context.octokit,
     logger: (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {})),
@@ -65,10 +52,9 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }
   }, opts.deadlineMs);
 
   try {
-    // 1) Run all configured local gates in spec order
+    // 1) Run all configured gates in spec order
     const launcherResult = await runConfiguredGates(runCtx);
     const allGates = launcherResult?.results || [];
-    const pendingExternalGates = launcherResult?.pendingExternalGates || [];
     
     // Detect partial execution (timeout/abort)
     const expectedGateCount = spec.gates?.length || 0;
@@ -88,7 +74,6 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }
     return { 
       overall_status, 
       gates: allGates,
-      pendingExternalGates,
       duration_ms: Date.now() - started 
     };
 
