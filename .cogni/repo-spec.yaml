@@ -3,11 +3,21 @@ schema_version: '0.1.2'
 intent:
   name: cogni-git-review
   goals:
-    - Automated PR hygiene checks with essential file restrictions
-    - Single required check aggregating multiple validation signals
+    - Enforce deterministic, machine-checkable PR hygiene via a single required check run
+    - Seamlessly fit developer workflows and existing Repo management tools (Github Actions, Allstar, Checks API, etc.)
+    - Deliver AI-powered advisory review to keep repo aligned to repo goals, and avoid scope creep.
+    - Be dogfoodable on this repo and trivially adoptable via intallation and dropping .cogni/repo-spec.yaml in a repo.
+    - Stay extensible toward CI/CD orchestration and auto-merge via LangGraph.js workflows
+    - Provide fast tri-state verdicts (success|failure|neutral) with fail-safe neutral on errors
+    - Integrate with CogniMemory MCP for PR context, audit trails, and future codebase indexing
+    - Scale org-wide with per-repo opt-in and graceful defaults when spec is absent
   non_goals:
-    - Heavy in-process scanning or AI analysis
-    - Secrets retention or external tool integration
+    - Re-implementing mature OSS scanners, linters, or policy managers. Strong preference towards integration over duplication
+    - Long-running or heavy in-process analysis that degrades PR latency (batch/offload instead)
+    - Storing secrets or sensitive artifacts in the app; use provider-native secrets
+    - Subjective style enforcement beyond explicit repo rules/policies
+    - Destructive git operations or auto-merge without explicit, policy-driven safeguards and auditability
+    - Vendor lock-in or proprietary-only integrations that block open-source contributors
 
 # Gates run in the order they appear below.
 gates:
@@ -17,10 +27,3 @@ gates:
       max_total_diff_kb: 1500
   - id: goal_declaration
   - id: forbidden_scopes
-  - id: eslint
-    source: external
-    runner: artifact.json
-    with:
-      parser: eslint_json
-      artifact_name: eslint-report
-      artifact_path: reports/eslint-report.json

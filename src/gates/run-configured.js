@@ -12,7 +12,7 @@ let registryPromise = null;
 /**
  * Run all configured gates from spec in order with dynamic resolution
  * @param {object} runCtx - Run context with spec, logger, options, etc.
- * @returns {Promise<{results: GateResult[], pendingExternalGates: string[]}>} Gate execution results and pending external gates
+ * @returns {Promise<{results: GateResult[]}>} Gate execution results
  */
 export async function runConfiguredGates(runCtx) {
   // Build registry with logger on first call
@@ -31,7 +31,7 @@ export async function runConfiguredGates(runCtx) {
         deadline_ms: runCtx.deadline_ms,
         partial_results: results.length
       });
-      return { results, pendingExternalGates: [] };
+      return { results };
     }
 
     const handler = resolveHandler(registry, gate);
@@ -53,18 +53,13 @@ export async function runConfiguredGates(runCtx) {
           gate_id: gate.id,
           partial_results: results.length
         });
-        return { results, pendingExternalGates: [] };
+        return { results };
       }
       // Non-abort errors are already normalized in safeRunGate; nothing to rethrow here.
     }
   }
 
-  // Identify external gates that returned neutral due to missing artifacts
-  const pendingExternalGates = results
-    .filter(r => r.status === 'neutral' && r.neutral_reason === 'missing_artifact')
-    .map(r => r.id);
-
-  return { results, pendingExternalGates };
+  return { results };
 }
 
 /**

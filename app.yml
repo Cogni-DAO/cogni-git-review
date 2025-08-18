@@ -36,7 +36,6 @@ default_events:
 # - project_column
 # - public
   - pull_request
-  - workflow_run
 # - pull_request_review
 # - pull_request_review_comment
 # - push
@@ -53,10 +52,6 @@ default_events:
 # the value (for example, write).
 # Valid values are `read`, `write`, and `none`
 default_permissions:
-  # GitHub Actions workflows, runs, artifacts, and secrets.
-  # https://developer.github.com/v3/apps/permissions/#permission-on-actions
-  actions: read
-
   # Repository creation, deletion, settings, teams, and collaborators.
   # https://developer.github.com/v3/apps/permissions/#permission-on-administration
   # administration: read
