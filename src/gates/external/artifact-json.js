@@ -150,55 +150,15 @@ function parseViolations(data, config) {
   const parser = config.parser;
   
   switch (parser) {
-    case 'eslint_json':
-      return parseEslintJson(data);
     case 'ruff_json':
       return parseRuffJson(data);
     default:
       if (config.custom_mapping) {
-        throw new Error('Custom mapping not implemented in v1. Use dedicated parsers: eslint_json, ruff_json');
+        throw new Error('Custom mapping not implemented in v1. Use dedicated parsers: ruff_json');
       } else {
-        throw new Error(`Unknown parser '${parser}'. Supported parsers: eslint_json, ruff_json`);
+        throw new Error(`Unknown parser '${parser}'. Supported parsers: ruff_json`);
       }
   }
-}
-
-/**
- * Parse ESLint JSON format: Array<{filePath, messages[]}>
- * @param {Array} eslintResults - ESLint results array
- * @returns {Array} Normalized violations
- */
-function parseEslintJson(eslintResults) {
-  const violations = [];
-  
-  if (!Array.isArray(eslintResults)) {
-    throw new Error('ESLint JSON format expects an array of file results');
-  }
-  
-  for (const fileResult of eslintResults) {
-    const filePath = fileResult.filePath;
-    const messages = fileResult.messages || [];
-    
-    for (const message of messages) {
-      violations.push({
-        code: message.ruleId || 'unknown',
-        message: message.message || 'No message',
-        path: filePath,
-        line: Number(message.line) || null,
-        column: Number(message.column) || null,
-        level: normalizeLevel(message.severity),
-        meta: {
-          severity: message.severity,
-          nodeType: message.nodeType,
-          source: message.source,
-          endLine: message.endLine,
-          endColumn: message.endColumn
-        }
-      });
-    }
-  }
-  
-  return violations;
 }
 
 /**
