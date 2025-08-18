@@ -5,9 +5,12 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import fs from 'fs';
+import path from 'path';
 import * as aiProvider from '../../src/ai/provider.js';
-import prAligned from '../fixtures/ai/pr-aligned.json' with { type: 'json' };
-import prScopeCreep from '../fixtures/ai/pr-scope-creep.json' with { type: 'json' };
+
+const prAligned = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'test/fixtures/ai/pr-aligned.json'), 'utf-8'));
+const prScopeCreep = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'test/fixtures/ai/pr-scope-creep.json'), 'utf-8'));
 
 describe('AI Provider Contract Tests', () => {
   let originalEnv;

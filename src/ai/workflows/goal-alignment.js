@@ -17,7 +17,7 @@ export async function createGoalAlignmentWorkflow() {
   // TODO: Replace with actual LangGraph implementation when dependency is added
   
   return {
-    async invoke(input, options = {}) {
+    async invoke(input, _options = {}) {
       // Mock workflow execution
       const startTime = Date.now();
       
