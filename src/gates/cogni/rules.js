@@ -17,6 +17,7 @@ export const id = 'rules';
 export async function run(context, spec) {
   const startTime = Date.now();
   const gateConfig = spec.gates?.find(g => g.id === 'rules')?.with || {};
+  console.log(`🔍 Rules: Gate config:`, JSON.stringify(gateConfig, null, 2));
   
   try {
     // Step 1: Load only the first enabled rule (MVP)

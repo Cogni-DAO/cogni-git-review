@@ -33,7 +33,9 @@ export async function loadRules(config) {
   const usedRuleKeys = new Set();
 
   // Check if rules directory exists
+  console.log(`🔍 Rules: Checking directory ${rules_dir}`);
   if (!fs.existsSync(rules_dir)) {
+    console.log(`❌ Rules: Directory not found ${rules_dir}`);
     return {
       rules: [],
       diagnostics: [{
@@ -44,13 +46,17 @@ export async function loadRules(config) {
       }]
     };
   }
+  console.log(`✅ Rules: Directory exists ${rules_dir}`);;
 
   // Process each enabled rule file
+  console.log(`🔍 Rules: Processing enabled files [${enabled.join(', ')}]`);
   for (const enabledFile of enabled) {
     const filePath = path.join(rules_dir, enabledFile);
+    console.log(`🔍 Rules: Loading file ${filePath}`);
     
     try {
       const result = await loadSingleRule(filePath, blocking_default);
+      console.log(`✅ Rules: Loaded ${result.rule?.id || 'invalid'} from ${enabledFile}`);
       
       if (result.success) {
         // Check for duplicate rule keys
