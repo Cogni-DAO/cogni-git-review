@@ -224,7 +224,70 @@ intent:
 gates:
   review_limits:
     max_changed_files: 40
-    max_total_diff_kb: 1500`
+    max_total_diff_kb: 1500`,
+
+  // AI Rules integration test spec
+  aiRulesIntegration: `schema_version: '0.2.1'
+
+intent:
+  name: ai-rules-test-project
+  goals:
+    - Build secure authentication system
+    - Maintain good documentation
+  non_goals:
+    - Complex legacy integration
+    - Unsecured endpoints
+
+gates:
+  - id: ai_rules
+    with:
+      rules_dir: .cogni/rules
+      enable: [goal-alignment.yaml]
+      model: gpt-4o-mini
+      timeout_ms: 90000
+      neutral_on_error: true
+      blocking_default: true
+      snippet_window: 20`,
+
+  // AI Rules with non-existent rule (for testing zero valid rules)
+  aiRulesNoValidRules: `schema_version: '0.2.1'
+
+intent:
+  name: ai-rules-no-rules-project
+  goals:
+    - Test zero valid rules handling
+  non_goals:
+    - Any rules that actually exist
+
+gates:
+  - id: ai_rules
+    with:
+      rules_dir: .cogni/rules
+      enable: [nonexistent-rule.yaml]
+      model: gpt-4o-mini
+      timeout_ms: 90000
+      neutral_on_error: true
+      blocking_default: true`,
+
+  // AI Rules with invalid directory (for error handling)
+  aiRulesInvalidDir: `schema_version: '0.2.1'
+
+intent:
+  name: ai-rules-invalid-dir-project  
+  goals:
+    - Test error handling
+  non_goals:
+    - Working directories
+
+gates:
+  - id: ai_rules
+    with:
+      rules_dir: /does/not/exist
+      enable: [goal-alignment.yaml]
+      model: gpt-4o-mini
+      timeout_ms: 90000
+      neutral_on_error: true
+      blocking_default: true`
 };
 
 // Helper for accessing specs by key  
@@ -336,5 +399,96 @@ export function createMockContextWithSpec(specContent, owner = "test-org", repo 
         })
       }
     }
+  };
+}
+
+// PR Context fixtures for AI Rules testing
+export const PR_FIXTURES = {
+  // Realistic authentication feature PR
+  authFeaturePR: {
+    title: 'Add new feature for user authentication',
+    body: 'Implements OAuth login flow with proper error handling',
+    changed_files: [
+      {
+        filename: 'src/auth/oauth.js',
+        status: 'added',
+        additions: 45,
+        deletions: 0
+      },
+      {
+        filename: 'src/auth/utils.js', 
+        status: 'modified',
+        additions: 12,
+        deletions: 3
+      },
+      {
+        filename: 'docs/auth.md',
+        status: 'added',
+        additions: 25,
+        deletions: 0
+      }
+    ],
+    hunks_by_file: {
+      'src/auth/oauth.js': [
+        { start_line: 1, line_count: 45, lines: ['// OAuth implementation', '// ...'] }
+      ],
+      'src/auth/utils.js': [
+        { start_line: 10, line_count: 15, lines: ['function validateUser() {', '// ...'] }
+      ]
+    }
+  },
+
+  // Config-only changes (should not match src/** selectors)
+  configOnlyPR: {
+    title: 'Update package dependencies',
+    body: 'Bump lodash version for security',
+    changed_files: [
+      {
+        filename: 'package.json',
+        status: 'modified',
+        additions: 2,
+        deletions: 1
+      }
+    ],
+    hunks_by_file: {
+      'package.json': [
+        { start_line: 10, line_count: 3, lines: ['"version": "1.0.1"'] }
+      ]
+    }
+  },
+
+  // Documentation-only changes
+  docsOnlyPR: {
+    title: 'Update README with new installation steps',
+    body: 'Clarifies setup process for new contributors',
+    changed_files: [
+      {
+        filename: 'README.md',
+        status: 'modified',
+        additions: 15,
+        deletions: 5
+      },
+      {
+        filename: 'docs/setup.md',
+        status: 'added',
+        additions: 30,
+        deletions: 0
+      }
+    ],
+    hunks_by_file: {
+      'README.md': [
+        { start_line: 20, line_count: 20, lines: ['## Installation', '...'] }
+      ],
+      'docs/setup.md': [
+        { start_line: 1, line_count: 30, lines: ['# Setup Guide', '...'] }
+      ]
+    }
+  }
+};
+
+// Factory for creating full AI Rules gate contexts
+export function createAIRulesContext(prFixtureKey = 'authFeaturePR') {
+  return {
+    pr: PR_FIXTURES[prFixtureKey]
   };
 }
