@@ -1,0 +1,41 @@
+{
+  "description": "Test fixture: PR that aligns with repository goals",
+  "pr": {
+    "title": "Add fast PR hygiene check for file count limits",
+    "body": "Implements file count validation to ensure PRs stay focused and reviewable. This directly supports the goal of enforcing deterministic PR hygiene.",
+    "additions": 45,
+    "deletions": 2,
+    "changed_files": [
+      {
+        "filename": "src/gates/cogni/review-limits.js",
+        "additions": 20,
+        "deletions": 1,
+        "status": "modified"
+      },
+      {
+        "filename": "test/unit/review-limits.test.js", 
+        "additions": 25,
+        "deletions": 1,
+        "status": "modified"
+      }
+    ]
+  },
+  "spec": {
+    "intent": {
+      "goals": [
+        "Enforce deterministic, machine-checkable PR hygiene via a single required check run",
+        "Deliver fast tri-state verdicts (success|failure|neutral) with fail-safe neutral on errors"
+      ],
+      "non_goals": [
+        "Re-implementing mature OSS scanners, linters, or policy managers",
+        "Long-running or heavy in-process analysis that degrades PR latency"
+      ]
+    }
+  },
+  "expected_result": {
+    "verdict": "success",
+    "alignment_score": 0.9,
+    "violations": [],
+    "summary": "PR directly advances PR hygiene goals with focused file count validation"
+  }
+}
