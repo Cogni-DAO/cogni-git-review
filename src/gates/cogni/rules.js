@@ -14,7 +14,7 @@ export const id = 'rules';
 /**
  * Evaluate PR against the first enabled AI rule
  */
-export async function evaluateRules(context, spec) {
+export async function run(context, spec) {
   const startTime = Date.now();
   const gateConfig = spec.gates?.find(g => g.id === 'rules')?.with || {};
   

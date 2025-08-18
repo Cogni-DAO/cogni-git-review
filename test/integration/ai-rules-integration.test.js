@@ -8,7 +8,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import yaml from 'js-yaml';
-import { evaluateRules } from '../../src/gates/cogni/rules.js';
+import { run as runRulesGate } from '../../src/gates/cogni/rules.js';
 import { SPEC_FIXTURES, createAIRulesContext, PR_FIXTURES } from '../fixtures/repo-specs.js';
 
 describe('AI Rules Integration - Real PR Data Tests', () => {
@@ -21,7 +21,7 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
     // We expect it to find the goal-alignment rule and determine it applies to src/** changes
     
     try {
-      const result = await evaluateRules(context, spec);
+      const result = await runRulesGate(context, spec);
       
       // Basic result structure validation
       assert.ok(result, 'Gate should return a result');
@@ -61,7 +61,7 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
 
     try {
       // MVP applies rule to ALL PRs, so this will always find applicable rules
-      const result = await evaluateRules(context, spec);
+      const result = await runRulesGate(context, spec);
       
       // MVP behavior: rule applies to all PRs, so should get neutral (no AI provider)
       assert.ok(['success', 'failure', 'neutral'].includes(result.conclusion), 'Should have valid conclusion');
@@ -82,7 +82,7 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
     const context = createAIRulesContext('authFeaturePR');
     const spec = yaml.load(SPEC_FIXTURES.rulesMvpNoValidRules);
 
-    const result = await evaluateRules(context, spec);
+    const result = await runRulesGate(context, spec);
     
     // Zero valid rules should return NEUTRAL per user requirement
     assert.strictEqual(result.conclusion, 'neutral', 'Zero valid rules should result in neutral');
@@ -94,7 +94,7 @@ describe('AI Rules Integration - Real PR Data Tests', () => {
     // Use existing invalid directory fixture - FOLLOWS DRY PRINCIPLE
     const spec = yaml.load(SPEC_FIXTURES.rulesMvpInvalidDir);
 
-    const result = await evaluateRules(context, spec);
+    const result = await runRulesGate(context, spec);
     
     // Should handle errors gracefully with neutral result
     assert.ok(['neutral', 'failure'].includes(result.conclusion), 'Error should result in neutral or failure');

@@ -7,7 +7,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { evaluateRules } from '../../src/gates/cogni/rules.js';
+import { run as runRulesGate } from '../../src/gates/cogni/rules.js';
 import { SPEC_FIXTURES, createAIRulesContext } from '../fixtures/repo-specs.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -74,7 +74,7 @@ success_criteria:
     const context = createAIRulesContext('authFeaturePR');
     const spec = yaml.load(SPEC_FIXTURES.rulesMvpNoValidRules);
     
-    const result = await evaluateRules(context, spec);
+    const result = await runRulesGate(context, spec);
     
     assert.strictEqual(result.id, 'rules', 'Should have correct gate ID');
     assert.strictEqual(result.conclusion, 'neutral', 'No rules should result in neutral');
@@ -97,7 +97,7 @@ gates:
       enable: [goal-alignment.yaml]
       neutral_on_error: true`);
 
-    const result = await evaluateRules(context, invalidSpec);
+    const result = await runRulesGate(context, invalidSpec);
     
     assert.strictEqual(result.conclusion, 'neutral', 'Invalid directory should result in neutral');
     assert.ok(result.summary.includes('No rules') || result.summary.includes('no errors'), 'Should indicate no rules');
@@ -114,7 +114,7 @@ gates:
       const context = createAIRulesContext('authFeaturePR');
       const spec = yaml.load(SPEC_FIXTURES.rulesMvpIntegration.replace('.cogni/rules', testRulesDir));
       
-      const result = await evaluateRules(context, spec);
+      const result = await runRulesGate(context, spec);
       
       // Should have proper structure regardless of AI provider result
       assert.strictEqual(result.id, 'rules', 'Should have correct gate ID');
@@ -142,7 +142,7 @@ gates:
     const spec = yaml.load(SPEC_FIXTURES.rulesMvpIntegration);
     
     // This should work even if the directory doesn't exist
-    const result = await evaluateRules(context, spec);
+    const result = await runRulesGate(context, spec);
     
     // Should handle config gracefully
     assert.ok(result.id === 'rules', 'Should parse gate ID correctly');
