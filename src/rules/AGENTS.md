@@ -1,53 +1,37 @@
-# Rules Directory - Extensible AI Rule System
+# Rules Directory - Rule Loading Infrastructure
 
 ## Purpose
-Core infrastructure for loading, validating, and selecting declarative AI rules from `.cogni/rules/*.yaml` files. This directory implements the rule foundation that enables repository-specific AI policy without code changes.
-
-## Architecture Principle
-**Policy-as-Configuration**: Rules are declarative YAML files that specify evaluation criteria, evidence requirements, and success thresholds. The engine loads, validates, and executes rules through the single AI entrypoint.
+Infrastructure for loading and validating YAML rule definitions from `.cogni/rules/` directory.
 
 ## Directory Structure
 ```
 src/rules/
-├── AGENTS.md           # This file - design and interaction patterns
 ├── loader.js           # Load and validate .cogni/rules/*.yaml files
-├── selector.js         # Filter rules by path/diff_kind selectors  
-└── evidence.js         # Build evidence bundles (diff_summary + file_snippets)
+├── selector.js         # Filter rules by path/diff patterns (unused in MVP)
+└── evidence.js         # Build evidence bundles (unused in MVP)
 ```
 
-## Core APIs
-
-### Rule Loader (`loader.js`)
-**Purpose**: Load, validate, and canonicalize rule files with robust error handling.
-
+## Loader API
 ```javascript
-import { loadRules } from '../rules/loader.js';
+import { loadRules } from './src/rules/loader.js';
 
-const result = await loadRules({
+const { rules, diagnostics } = await loadRules({
   rules_dir: '.cogni/rules',
   enabled: ['goal-alignment.yaml'],
   blocking_default: true
 });
-
-// Returns: { 
-//   rules: Array<Rule>, 
-//   diagnostics: Array<{file, error}> 
-// }
 ```
 
-**Key Behaviors**:
-- **Canonical Rule Keys**: Uses `rule.id` or filename stem; rejects duplicates early
-- **Schema Validation**: Validates against `rule-spec.schema.json`; collects diagnostics for invalid files  
-- **Zero Valid Rules → NEUTRAL**: If no rules pass validation, returns diagnostic for ai_rules gate
+**Behavior**:
+- Validates rules against MVP schema
+- Rejects duplicate rule IDs
+- Returns diagnostics for invalid files
+- Zero valid rules → NEUTRAL gate result
 
-### Rule Selector (`selector.js`)
-**Purpose**: Filter loaded rules based on PR changes using path globs and diff kinds.
-
-```javascript
-import { selectApplicableRules } from '../rules/selector.js';
-
-const applicable = selectApplicableRules(rules, {
-  changed_files: [{ path: 'src/foo.js', kind: 'modify' }],
+## MVP Constraints
+- Rules apply to all PRs (selector.js unused)
+- Evidence is built by rules gate (evidence.js unused)
+- Only `loadRules()` function used in MVP
   hunks_by_file: { 'src/foo.js': [...] }
 });
 

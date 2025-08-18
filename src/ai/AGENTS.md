@@ -1,53 +1,38 @@
 # AI Directory - Single Entrypoint Pattern
 
 ## Architecture Principle
-**CRITICAL**: There is ONE AND ONLY ONE AI entrypoint in this codebase.
-
-- **Single Entrypoint**: `provider.js` contains the ONLY function that makes LLM calls
-- **All AI flows through**: `async function review(input, options) -> { verdict, annotations, violations, provenance }`
-- **No direct LLM calls**: No other module may call OpenAI, Anthropic, or any LLM service directly
+**CRITICAL**: Only `provider.js` makes LLM calls. All AI functionality flows through the single `review()` function. This is a boundary to enable this repo to stay scoped, clean, and refactorable.
 
 ## Directory Structure
 ```
 src/ai/
-├── provider.js           # SINGLE AI ENTRYPOINT - review() function
+├── provider.js           # Single AI entrypoint - review() function
 ├── workflows/            # LangGraph workflows (called by provider only)
 ├── prompts/             # LLM prompt templates
 └── schemas/             # JSON Schema validation
 ```
 
-## Contract Enforcement
-- **API Surface**: Only `provider.review()` is exposed to gates
-- **Deterministic**: Temperature=0, JSON Schema validation, structured output
-- **Timeout Handling**: Centralized in provider with graceful fallback
-- **Error Policy**: AI_NEUTRAL_ON_ERROR controls failure behavior
-
-## Integration Pattern
-Gates call provider like this:
+## Provider Contract
 ```javascript
 const result = await provider.review({
-  goals: spec.intent.goals,
-  non_goals: spec.intent.non_goals, 
-  pr: prData,
-  diffSummary: generateDiffSummary(pr)
-}, { 
-  timeoutMs: process.env.AI_TIMEOUT_MS || 180000 
+  goals: ['repo goal'],
+  non_goals: ['repo non-goal'],
+  pr_title: 'PR title',
+  pr_body: 'PR description', 
+  diff_summary: 'Change summary',
+  rule: { id: 'rule-name', success_criteria: { threshold: 0.7 } }
 });
 
-// Map to existing violations format
-violations.push(...normalizeToViolations(result));
+// Returns: { score: 0.85, violations: [], provenance: {} }
 ```
 
-## Configuration
-Environment-based (no schema changes):
-- `AI_BLOCKING=true|false` - Whether AI failures block PRs
+## Environment Configuration
 - `AI_TIMEOUT_MS=180000` - Per-call timeout
 - `AI_MODEL=gpt-4o-mini` - Model selection
-- `AI_NEUTRAL_ON_ERROR=true` - Neutral on error vs fail
+- `AI_NEUTRAL_ON_ERROR=true` - Error handling policy
 - `OPENAI_API_KEY` - Provider credentials
 
-## Adding New AI Features
-1. Extend `provider.review()` input/output contract
-2. Update workflows within provider implementation
-3. Maintain single entrypoint - NO direct LLM calls elsewhere
-4. Add contract tests for new behavior
+## Constraints
+- No direct LLM calls outside provider.js
+- Gates decide pass/fail from score vs threshold
+- Temperature=0 for deterministic output
