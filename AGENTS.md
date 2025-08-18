@@ -3,6 +3,16 @@
 ## Project Overview
 **cogni-git-review** - CogniDAO's GitHub App that automatically evaluates pull requests against repository-defined quality gates, providing fast feedback on code changes, with the goal of keeping the codebase clean, consistent, and aligned with the project's goals.
 
+### Strategic Direction: Integration Over Duplication
+Following our core principle of **"integration over duplication"**, cogni-git-review is designed to seamlessly integrate with mature ecosystem tools rather than reimplementing them:
+
+- **GitHub Actions**: Leverage existing CI/CD workflows for linting, testing, security scanning
+- **OpenSSF Allstar**: Integrate with policy enforcement for security and compliance
+- **GitHub Checks API**: Provide unified PR status through native GitHub interfaces
+- **Existing OSS Tools**: Connect with mature scanners/linters rather than rebuilding them
+
+This approach ensures we **"seamlessly fit developer workflows and existing repo management tools"** while avoiding the maintenance burden and security risks of reimplementing well-established security and analysis tools.
+
 ## Core Function
 The bot reads `.cogni/repo-spec.yaml` from repositories and runs configured quality gates (file limits, goal compliance, scope validation) on every PR. Results appear as GitHub check runs with pass/fail/neutral status.
 
@@ -10,6 +20,18 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and runs configured qual
 - **Framework**: Probot v13.4.7 (JavaScript ES modules)
 - **Dynamic Gate System**: Registry-based discovery with timeout handling
 - **Events**: `pull_request`, `check_run`, `check_suite`
+- **Integration Model**: Built-in gates for PR hygiene + ecosystem integration for security/analysis
+
+### Current: V0.1 Foundation
+- **Built-in gates**: review_limits, goal_declaration, forbidden_scopes
+- **Simple, fast execution**: Deterministic PR hygiene checks only
+- **Clean architecture**: No external dependencies or complex artifact handling
+
+### Planned: V0.2 Ecosystem Integration
+- **Allstar Integration**: Policy enforcement through OpenSSF Allstar
+- **Actions Integration**: Connect with existing CI/CD workflows  
+- **Memory Integration**: CogniMemory MCP for context and audit trails
+- **Advisory AI**: Non-blocking AI-powered review suggestions
 
 ## Repository Structure
 ```
