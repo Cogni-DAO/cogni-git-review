@@ -287,7 +287,67 @@ gates:
       model: gpt-4o-mini
       timeout_ms: 90000
       neutral_on_error: true
-      blocking_default: true`
+      blocking_default: true`,
+
+  // MVP Rules Gate test spec (uses 'rules' gate id)
+  rulesMvpIntegration: `schema_version: '0.2.1'
+
+intent:
+  name: rules-mvp-test-project
+  goals:
+    - Build secure authentication system
+    - Maintain good documentation
+  non_goals:
+    - Complex legacy integration
+    - Unsecured endpoints
+
+gates:
+  - id: rules
+    with:
+      engine: ai
+      rules_dir: .cogni/rules
+      enable: [goal-alignment.yaml]
+      model: gpt-4o-mini
+      timeout_ms: 60000
+      neutral_on_error: true
+      blocking_default: true`,
+
+  // MVP Rules Gate with no valid rules
+  rulesMvpNoValidRules: `schema_version: '0.2.1'
+
+intent:
+  name: rules-mvp-no-rules-project
+  goals:
+    - Test zero valid rules handling
+  non_goals:
+    - Any rules that actually exist
+
+gates:
+  - id: rules
+    with:
+      engine: ai
+      rules_dir: .cogni/rules
+      enable: [nonexistent-rule.yaml]
+      model: gpt-4o-mini
+      timeout_ms: 60000
+      neutral_on_error: true
+      blocking_default: true`,
+
+  // MVP Rules Gate with invalid directory (for error handling)
+  rulesMvpInvalidDir: `schema_version: '0.2.1'
+
+intent:
+  name: rules-mvp-invalid-dir-project
+  goals:
+    - Test error handling
+  non_goals:
+    - Working directories
+
+gates:
+  - id: rules
+    with:
+      rules_dir: /does/not/exist
+      enable: [goal-alignment.yaml]`
 };
 
 // Helper for accessing specs by key  

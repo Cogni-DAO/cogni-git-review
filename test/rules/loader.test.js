@@ -12,23 +12,15 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { loadRules, validateRuleConsistency } from '../../src/rules/loader.js';
 
-// Test rule fixtures following DRY principle
+// Test rule fixtures following DRY principle - MVP Schema Format
 const RULE_FIXTURES = {
   validRule: {
     id: 'test-rule',
-    title: 'Test Rule',
     schema_version: '0.1',
     blocking: true,
-    selectors: {
-      paths: ['src/**'],
-      diff_kinds: ['add', 'modify']
-    },
-    evidence: {
-      include: ['diff_summary', 'file_snippets']
-    },
     prompt: {
       template: '.cogni/prompts/test.md',
-      variables: ['goals', 'non_goals', 'diff_summary', 'file_snippets']
+      variables: ['goals', 'non_goals', 'pr_title', 'pr_body', 'diff_summary']
     },
     success_criteria: {
       metric: 'score',
@@ -38,43 +30,34 @@ const RULE_FIXTURES = {
 
   duplicateRule1: {
     id: 'duplicate-id',
-    title: 'First Rule',
     schema_version: '0.1',
     blocking: true,
-    selectors: { paths: ['src/**'], diff_kinds: ['modify'] },
-    evidence: { include: ['diff_summary'] },
-    prompt: { template: '.cogni/prompts/test.md', variables: ['goals'] },
+    prompt: { template: '.cogni/prompts/test.md', variables: ['goals', 'diff_summary'] },
     success_criteria: { metric: 'score', threshold: 0.5 }
   },
 
   duplicateRule2: {
     id: 'duplicate-id', // Same ID!
-    title: 'Second Rule',
     schema_version: '0.1',
     blocking: false,
-    selectors: { paths: ['docs/**'], diff_kinds: ['add'] },
-    evidence: { include: ['diff_summary'] },
-    prompt: { template: '.cogni/prompts/test2.md', variables: ['goals'] },
+    prompt: { template: '.cogni/prompts/test2.md', variables: ['goals', 'pr_title'] },
     success_criteria: { metric: 'score', threshold: 0.8 }
   },
 
   invalidVariableRule: {
     id: 'bad-variables',
-    title: 'Bad Variables Rule',
     schema_version: '0.1',
     blocking: true,
-    selectors: { paths: ['**'], diff_kinds: ['modify'] },
-    evidence: { include: ['diff_summary'] },
     prompt: {
       template: '.cogni/prompts/test.md',
-      variables: ['goals', 'unsupported_variable', 'file_snippets'] // unsupported_variable is invalid
+      variables: ['goals', 'unsupported_variable', 'diff_summary'] // unsupported_variable is invalid
     },
     success_criteria: { metric: 'score', threshold: 0.5 }
   },
 
   incompleteRule: {
-    // Missing required fields
-    title: 'Incomplete Rule'
+    // Missing required fields - only has id
+    id: 'incomplete'
   }
 };
 
@@ -117,7 +100,7 @@ describe('Rule Loader - P0 Critical Tests', () => {
       assert.strictEqual(result.rules.length, 1, 'Should load exactly 1 rule');
       assert.strictEqual(result.rules[0].rule_key, 'test-rule', 'Rule key should match id');
       assert.strictEqual(result.rules[0].blocking, true, 'Should preserve blocking flag');
-      assert.strictEqual(result.rules[0].title, 'Test Rule', 'Should preserve title');
+      assert.strictEqual(result.rules[0].id, 'test-rule', 'Should preserve id');
       assert.strictEqual(result.diagnostics.length, 0, 'Should have no diagnostics for valid rule');
       
     } finally {
@@ -141,7 +124,7 @@ describe('Rule Loader - P0 Critical Tests', () => {
       
       // Validate rejection
       assert.strictEqual(result.rules.length, 1, 'Should only load first rule');
-      assert.strictEqual(result.rules[0].title, 'First Rule', 'Should keep first rule');
+      assert.strictEqual(result.rules[0].id, 'duplicate-id', 'Should keep first rule');
       
       // Check diagnostic
       const duplicateError = result.diagnostics.find(d => d.type === 'duplicate_rule_key');
