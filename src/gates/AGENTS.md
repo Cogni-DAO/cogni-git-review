@@ -6,12 +6,10 @@ src/gates/
 ├── index.js           # runAllGates() - root orchestrator with timeout handling
 ├── run-configured.js  # Dynamic gate launcher with registry-based discovery
 ├── registry.js        # Gate discovery and loading system
-├── cogni/
-│   ├── review-limits.js
-│   ├── goal-declaration-stub.js
-│   └── forbidden-scopes-stub.js
-└── external/
-    └── index.js       # Future: third-party tools
+└── cogni/
+    ├── review-limits.js
+    ├── goal-declaration-stub.js
+    └── forbidden-scopes-stub.js
 ```
 
 ## Available Gates
@@ -54,7 +52,7 @@ Individual gates return `GateResult` (or `null` if not configured):
 ## Registry-Based Discovery
 Gates are automatically discovered by scanning filesystem:
 ```javascript
-// Registry scans src/gates/cogni/ and src/gates/external/
+// Registry scans src/gates/cogni/
 const registry = await buildRegistry(logger);
 const handler = resolveHandler(registry, gateConfig);
 

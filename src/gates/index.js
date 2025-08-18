@@ -1,6 +1,6 @@
 /**
  * Root Gate Orchestrator - Stable import point with state management
- * Orchestrates all gate evaluations (Cogni local, External, AI advisory)
+ * Orchestrates all gate evaluations for pull requests
  */
 
 import { runConfiguredGates } from './run-configured.js';
@@ -10,10 +10,10 @@ import { runConfiguredGates } from './run-configured.js';
  * @param {import('probot').Context} context - Probot context
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
- * @param {object} opts - Options { enableExternal: false, deadlineMs: 8000 }
+ * @param {object} opts - Options { deadlineMs: 8000 }
  * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
-export async function runAllGates(context, pr, spec, opts = { enableExternal: false, deadlineMs: 8000 }) {
+export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }) {
   const started = Date.now();
   const abortCtl = new AbortController();
   
@@ -56,14 +56,8 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
     const hasFailLocal = localResults.some(r => r.status === 'fail');
     const hasNeutralLocal = localResults.some(r => r.status === 'neutral');
 
-    // 2) External gates (v2) - skip if local failure or partial execution
-    let externalResults = [];
-    if (!hasFailLocal && !isPartial && opts.enableExternal) {
-      externalResults = await runExternalGates(runCtx);
-    }
-
-    // 3) Aggregate all results
-    const allGates = [...localResults, ...externalResults];
+    // 2) All gates are local - no external integration
+    const allGates = localResults;
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
@@ -99,14 +93,4 @@ export async function runAllGates(context, pr, spec, opts = { enableExternal: fa
       duration_ms: Date.now() - started
     };
   }
-}
-
-/**
- * Stub for external gates (v2) - returns empty array for MVP
- * @param {object} runCtx - Run context
- * @returns {Promise<Array>} Empty array of gate results
- */
-async function runExternalGates(runCtx) {
-  runCtx.logger('debug', 'External gates disabled for MVP');
-  return [];
 }

@@ -17,8 +17,7 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and runs configured qual
 ├── src/
 │   ├── spec-loader.js         # Repository specification loading
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
-│       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
-│       └── external/          # Future: third-party integrations (→ AGENTS.md)
+│       └── cogni/             # Built-in quality gates (→ AGENTS.md)
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── integration/           # End-to-end tests (→ AGENTS.md)
