@@ -1,59 +1,38 @@
 # cogni-git-review
 
-> A GitHub App built with [Probot](https://github.com/probot/probot) that CogniDAO&#x27;s primary code management bot, built as a github app. 
+> A GitHub App built with [Probot](https://github.com/probot/probot). CogniDAO's primary code management bot and AI reviewer.
 
-## Why External Gates?
+## Why Cogni?
 
-- **One required check, many signals.** Cogni aggregates Linting, security scans, and other tools into a single status: **Cogni Git PR Review**.
-- **Rich, scalable feedback.** Uses the Checks API to post inline annotations in batches, handling reports with hundreds of violations.
-- **Secure artifact ingestion.** No code execution - just reads JSON/SARIF artifacts from your existing workflows.
-- **Universal compatibility.** Works with any linting/scanning tool that outputs structured data.
-- **Org-wide consistency.** `.cogni/repo-spec.yaml` defines which gates run and their pass/fail criteria.
-- **Not bypassable.** Runs on every PR, including web edits, with deterministic results.
+🎯 **Goal-aligned development.** Cogni reviews every PR against your repository's declared *goals* and *non-goals* (from `.cogni/repo-spec.yaml`), ensuring contributions move the project in the right direction.
 
-_See [docs/EXTERNAL_GATES.md](docs/EXTERNAL_GATES.md) for the complete adoption guide and security model._
+🧠 **AI-powered review.** Cogni provides deeper analysis of code changes, connecting them back to project intent and highlighting risks, inconsistencies, or misalignment.
+
+🔒 **Standard protection configurations with Existing CI tools.** On install, Cogni helps you enforce branch protection, required status checks, and organization policies through [Allstar](https://github.com/ossf/allstar) and GitHub Actions. Quickly set up your repo with stanard protections like linters, test suite executions, and security scanners.
+
+🪢 **DAO-ready governance.** Designed to lead community-run repositories. Cogni provides auditable AI reviews, with the future-option to layer in DAO voting and override mechanisms for collective decision-making.
 
 ## Installation
 
+TODO. Incomplete, sorry.
+
 1. **Install the GitHub App** on your repository
-2. **Set up branch protection**:
-   ```bash
-   # Copy the Makefile from this repo, then:
-   make setup-branch-protection OWNER=yourorg REPO=yourrepo
-   ```
-   
-   Or manually: Settings → Branches → Add rule requiring `Cogni Git PR Review` check
-
-3. **Test the setup** by opening a PR to verify the required check appears
-
-See [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md) for detailed setup options and troubleshooting.
+2. **Install Allstar** at your organization level (Soon: Cogni will guide you if missing)
+3. **Enable branch protection** See `make setup-branch-protection`
+4. **Add a repo spec**: Create `.cogni/repo-spec.yaml` defining your repository goals
+5. **Test**: Open a PR and confirm both `cogni-git-review` check appears
 
 ## Development Setup
 
 ```sh
-# Install dependencies
 npm install
-
-# Run the bot
 npm start
-```
-
-## Docker
-
-```sh
-# 1. Build container
-docker build -t cogni-git-review .
-
-# 2. Start container
-docker run -e APP_ID=<app-id> -e PRIVATE_KEY=<pem-value> cogni-git-review
 ```
 
 ## Contributing
 
-If you have suggestions for how cogni-git-review could be improved, or want to report a bug, open an issue! We'd love all and any contributions.
-
-For more, check out the [Contributing Guide](CONTRIBUTING.md).
+We welcome contributions! Please see the [Contributing Guide](CONTRIBUTING.md).
 
 ## License
 
-[ISC](LICENSE) © 2025 derekg1729
+[ISC](LICENSE) © 2025 CogniDAO

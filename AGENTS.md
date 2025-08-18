@@ -106,3 +106,9 @@ npm test   # Run tests (several integration tests currently skipped due to mocki
 - [Probot Framework Docs](https://probot.github.io/docs/)
 - [GitHub Checks API](https://docs.github.com/en/rest/checks)
 - Architecture details in AGENTS.md files throughout the repository
+
+## Integration Strategy
+
+**V0.2 Direction:** Integrate with OpenSSF Allstar for repository policies and GitHub Actions for standard CI checks (linting, builds, tests) rather than reimplementing these tools.
+
+**Reference:** Cogni Memory Project for Allstar integration, id: `f09702dd-0bc5-4a19-9a67-255f69fccb26`
