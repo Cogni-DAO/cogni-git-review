@@ -10,7 +10,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import Ajv from 'ajv';
 
-// Load rule schema for validation
+// Load rule schema for validation (keep existing for now)
 const SCHEMA_PATH = path.join(process.cwd(), 'src/ai/schemas/rule-spec.schema.json');
 const ruleSchema = JSON.parse(fs.readFileSync(SCHEMA_PATH, 'utf-8'));
 
@@ -193,7 +193,7 @@ function generateRuleKey(ruleData, filePath) {
 export function validateRuleConsistency(rules) {
   const errors = [];
   const checkedPrompts = new Set();
-  const supportedVariables = new Set(['goals', 'non_goals', 'diff_summary', 'file_snippets']);
+  const supportedVariables = new Set(['goals', 'non_goals', 'pr_title', 'pr_body', 'diff_summary']);
 
   for (const rule of rules) {
     // Validate prompt template exists (check once per template)

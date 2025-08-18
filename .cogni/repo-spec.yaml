@@ -27,3 +27,7 @@ gates:
       max_total_diff_kb: 1500
   - id: goal_declaration
   - id: forbidden_scopes
+  - id: rules
+    with:
+      rules_dir: .cogni/rules
+      enable: [goal-alignment.yaml]

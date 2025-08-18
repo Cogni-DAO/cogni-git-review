@@ -28,6 +28,7 @@ export async function createGoalAlignmentWorkflow() {
         const formatted = await mockFormatViolations(evaluated);
         
         return {
+          score: formatted.score,  // CRITICAL: Include score in workflow result
           violations: formatted.violations,
           verdict: formatted.verdict,
           annotations: formatted.annotations,
@@ -57,10 +58,10 @@ export async function createGoalAlignmentWorkflow() {
 async function mockAnalyzePR(input) {
   // TODO: Replace with actual LLM call to analyze PR
   return {
-    changes: input.diffSummary || 'No changes detected',
+    changes: input.diff_summary || 'No changes detected',
     intent: 'Unknown intent',
-    scope: input.pr.title?.includes('refactor') ? 'expansion' : 'focused',
-    files_changed: input.pr.changed_files?.length || 0
+    scope: input.pr_title?.includes('refactor') ? 'expansion' : 'focused',
+    files_changed: 0  // MVP doesn't pass file count
   };
 }
 
@@ -85,7 +86,7 @@ async function mockEvaluateAlignment(analyzed, input) {
   return {
     ...analyzed,
     violations,
-    alignment_score: violations.length === 0 ? 0.9 : 0.3
+    score: violations.length === 0 ? 0.9 : 0.3  // Fixed: use 'score' not 'alignment_score'
   };
 }
 
@@ -99,13 +100,14 @@ async function mockFormatViolations(evaluated) {
     path: null, // Goal violations are typically not file-specific
     meta: {
       severity: v.severity,
-      alignment_score: evaluated.alignment_score,
+      score: evaluated.score,  // Fixed: use 'score' not 'alignment_score'
       affected_goals: v.affected_goals,
       violated_non_goals: v.violated_non_goals
     }
   }));
   
   return {
+    score: evaluated.score,  // CRITICAL: Pass score to provider
     violations,
     verdict: violations.length === 0 ? 'success' : 'failure',
     annotations: violations.map(v => ({

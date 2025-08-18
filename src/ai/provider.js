@@ -61,6 +61,7 @@ export async function review(input, { timeoutMs = 180000 } = {}) {
 
       // Return structured result (no business logic applied here)
       return {
+        score: result.score || 0,  // CRITICAL: Include score for gate evaluation
         verdict: result.verdict || 'neutral',
         annotations: result.annotations || [],
         violations: result.violations || [],

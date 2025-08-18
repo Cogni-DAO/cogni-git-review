@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cogni.dao/schemas/rule-spec-mvp.schema.json",
+  "title": "Cogni AI Rule Specification - MVP",
+  "description": "Minimal schema for AI evaluation rules",
+  "type": "object",
+  "required": ["id", "schema_version", "prompt", "success_criteria"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "minLength": 3,
+      "maxLength": 50,
+      "description": "Unique identifier for the rule"
+    },
+    "schema_version": {
+      "type": "string",
+      "enum": ["0.1"],
+      "description": "Rule schema version"
+    },
+    "blocking": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether rule failure blocks PR"
+    },
+    "prompt": {
+      "type": "object",
+      "description": "Prompt configuration for AI evaluation",
+      "required": ["template", "variables"],
+      "additionalProperties": false,
+      "properties": {
+        "template": {
+          "type": "string",
+          "pattern": "^\\.cogni/prompts/[a-z0-9_/-]+\\.md$",
+          "description": "Path to prompt template file"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["goals", "non_goals", "pr_title", "pr_body", "diff_summary"]
+          },
+          "minItems": 1,
+          "description": "Template variables (MVP scope)"
+        }
+      }
+    },
+    "success_criteria": {
+      "type": "object",
+      "description": "Success criteria",
+      "required": ["metric", "threshold"],
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "type": "string",
+          "enum": ["score"],
+          "description": "Success metric type (MVP: score only)"
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum score for success (0-1)"
+        }
+      }
+    },
+    "selectors": {
+      "type": "object",
+      "description": "File selectors (present but ignored in MVP)",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Glob patterns (ignored in MVP)"
+        },
+        "diff_kinds": {
+          "type": "array", 
+          "items": {"type": "string"},
+          "description": "Change types (ignored in MVP)"
+        }
+      }
+    }
+  }
+}
