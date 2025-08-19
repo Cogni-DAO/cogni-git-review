@@ -6,26 +6,26 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { testPullRequestHandler } from '../helpers/integration-harness.js';
+import { testPullRequestHandler } from '../helpers/handler-harness.js';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' assert { type: 'json' };
 
 function payload() {
   return {
     ...pullRequestOpenedPayload,
-    repository: { 
-      ...pullRequestOpenedPayload.repository, 
-      name: 'test-repo', 
-      owner: { login: 'test-org' } 
+    repository: {
+      ...pullRequestOpenedPayload.repository,
+      name: 'test-repo',
+      owner: { login: 'test-org' }
     },
-    pull_request: { 
-      ...pullRequestOpenedPayload.pull_request, 
-      head: { 
-        ...pullRequestOpenedPayload.pull_request.head, 
-        sha: 'abc123def456789012345678901234567890abcd' 
-      }, 
-      changed_files: 5, 
-      additions: 30, 
-      deletions: 30 
+    pull_request: {
+      ...pullRequestOpenedPayload.pull_request,
+      head: {
+        ...pullRequestOpenedPayload.pull_request.head,
+        sha: 'abc123def456789012345678901234567890abcd'
+      },
+      changed_files: 5,
+      additions: 30,
+      deletions: 30
     }
   };
 }

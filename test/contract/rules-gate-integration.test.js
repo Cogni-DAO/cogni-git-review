@@ -7,7 +7,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { testPullRequestHandler } from '../helpers/integration-harness.js';
+import { testPullRequestHandler } from '../helpers/handler-harness.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import yaml from 'js-yaml';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' assert { type: 'json' };
@@ -15,10 +15,10 @@ import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.j
 function payload(overrides = {}) {
   return {
     ...pullRequestOpenedPayload,
-    repository: { 
-      ...pullRequestOpenedPayload.repository, 
-      name: 'test-repo', 
-      owner: { login: 'test-org' } 
+    repository: {
+      ...pullRequestOpenedPayload.repository,
+      name: 'test-repo',
+      owner: { login: 'test-org' }
     },
     pull_request: {
       ...pullRequestOpenedPayload.pull_request,
@@ -54,7 +54,7 @@ describe('Rules Gate Contract Tests', () => {
       'rules_dir: .cogni/rules',
       'rules_dir: /nonexistent/rules'
     );
-    
+
     await testPullRequestHandler({
       payload: payload(),
       spec: yaml.load(broken),

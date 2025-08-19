@@ -6,7 +6,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
-import { testEventHandler } from '../helpers/integration-harness.js';
+import { testEventHandler } from '../helpers/handler-harness.js';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 import prSynchronizePayload from '../fixtures/pull_request.synchronize.complete.json' with { type: 'json' };
 import prReopenedPayload from '../fixtures/pull_request.reopened.complete.json' with { type: 'json' };
@@ -109,11 +109,11 @@ describe("GitHub Webhook Handler Contract Tests", () => {
   test("check_suite.rerequested should handle missing stored spec gracefully", async () => {
     // This test verifies that rerun gets PR number from check_suite.pull_requests, 
     // fetches full PR data, but reports neutral when no stored spec available
-    
+
     const extraOctokit = {
-      pulls: { 
-        get: async () => ({ 
-          data: { 
+      pulls: {
+        get: async () => ({
+          data: {
             number: 12,
             state: "open",
             head: { sha: "e92817d301df48f3ea502537fbd0b3d9a3ef792a" },
@@ -121,8 +121,8 @@ describe("GitHub Webhook Handler Contract Tests", () => {
             changed_files: 3,
             additions: 11,
             deletions: 0
-          } 
-        }) 
+          }
+        })
       }
     };
 
@@ -141,7 +141,7 @@ describe("GitHub Webhook Handler Contract Tests", () => {
       },
       extraOctokit
     });
-    
+
     assert.strictEqual(calls.length, 1);
   });
 
