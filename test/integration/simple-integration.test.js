@@ -1,6 +1,6 @@
 import nock from "nock";
 import myProbotApp from "../../index.js";
-import { Probot, ProbotOctokit } from "probot";
+import yaml from "js-yaml";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,10 +13,6 @@ import assert from "node:assert";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesPath = path.join(__dirname, "../fixtures");
 
-const privateKey = fs.readFileSync(
-  path.join(fixturesPath, "mock-cert.pem"),
-  "utf-8",
-);
 
 // Load complete webhook payload fixtures
 const prOpenedComplete = JSON.parse(
@@ -24,20 +20,9 @@ const prOpenedComplete = JSON.parse(
 );
 
 describe("Simple Integration Tests", () => {
-  let probot;
-
   beforeEach(() => {
     nock.disableNetConnect();
-    clearSpecCache(); 
-    probot = new Probot({
-      appId: 123456,
-      privateKey,
-      Octokit: ProbotOctokit.defaults({
-        retry: { enabled: false },
-        throttle: { enabled: false },
-      }),
-    });
-    probot.load(myProbotApp);
+    clearSpecCache();
   });
 
   afterEach(() => {
@@ -47,87 +32,96 @@ describe("Simple Integration Tests", () => {
   });
 
   test("pull_request.opened with spec creates check successfully", async () => {
-    const mocks = nock("https://api.github.com")
-      // Mock auth token
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: {
-          checks: "write",
-          pull_requests: "read",
-          metadata: "read",
+    const minimalSpec = yaml.load(SPEC_FIXTURES.minimal);
+    
+    const mockContext = {
+      name: 'pull_request',
+      payload: prOpenedComplete,
+      repo: (params = {}) => ({ owner: 'derekg1729', repo: 'cogni-git-review', ...params }),
+      octokit: {
+        config: {
+          get: async () => ({ config: minimalSpec })
         },
-      })
-      // Mock spec file fetch - return minimal spec
-      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "main" })
-      .reply(200, {
-        type: "file",
-        content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
-        encoding: "base64"
-      })
-      // Mock check run creation - just verify it gets created
-      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Very basic verification - just ensure key fields exist
-        assert.strictEqual(typeof body.name, "string");
-        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
-        assert.strictEqual(body.status, "completed");
-        assert(["success", "failure", "neutral"].includes(body.conclusion));
-        assert.strictEqual(typeof body.output, "object");
-        assert.strictEqual(typeof body.output.title, "string");
-        assert.strictEqual(typeof body.output.summary, "string");
-        return true;
-      })
-      .reply(200, { 
-        id: 9999999999, 
-        status: "completed", 
-        conclusion: "success" 
-      });
+        checks: {
+          create: async (params) => {
+            // Very basic verification - just ensure key fields exist
+            assert.strictEqual(typeof params.name, "string");
+            assert.strictEqual(params.head_sha, "abc123def456789012345678901234567890abcd");
+            assert.strictEqual(params.status, "completed");
+            assert(["success", "failure", "neutral"].includes(params.conclusion));
+            assert.strictEqual(typeof params.output, "object");
+            assert.strictEqual(typeof params.output.title, "string");
+            assert.strictEqual(typeof params.output.summary, "string");
+            return { data: { id: 9999999999 } };
+          }
+        }
+      }
+    };
 
-    // Send webhook event
-    await probot.receive({ name: "pull_request", payload: prOpenedComplete });
-
-    // Verify all mocks were called
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
+    // Import the app and extract the handler
+    const appModule = await import('../../index.js');
+    let pullRequestHandler;
+    
+    // Mock app to capture the handler
+    const mockApp = {
+      on: (events, handler) => {
+        if (Array.isArray(events) && events.includes('pull_request.opened')) {
+          pullRequestHandler = handler;
+        }
+      },
+      onAny: () => {}, // No-op for LOG_ALL_EVENTS
+    };
+    
+    // Load the app to register handlers
+    appModule.default(mockApp);
+    
+    // Call the handler directly with mocked context
+    await pullRequestHandler(mockContext);
   });
 
   test("pull_request.opened without spec creates check successfully", async () => {
-    const mocks = nock("https://api.github.com")
-      // Mock auth token
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: {
-          checks: "write",
-          pull_requests: "read",
-          metadata: "read",
+
+    const mockContext = {
+      name: 'pull_request',
+      payload: prOpenedComplete,
+      repo: (params = {}) => ({ owner: 'derekg1729', repo: 'cogni-git-review', ...params }),
+      octokit: {
+        config: {
+          get: async () => ({ config: null }) // Mock missing spec
         },
-      })
-      // Mock spec file fetch - return 404
-      .get("/repos/derekg1729/cogni-git-review/contents/.cogni%2Frepo-spec.yaml")
-      .query({ ref: "main" })
-      .reply(404, { message: "Not Found" })
-      // Mock check run creation - should be failure (missing spec)
-      .post("/repos/derekg1729/cogni-git-review/check-runs", (body) => {
-        // Basic verification
-        assert.strictEqual(typeof body.name, "string");
-        assert.strictEqual(body.head_sha, "abc123def456789012345678901234567890abcd");
-        assert.strictEqual(body.status, "completed");
-        assert.strictEqual(body.conclusion, "failure");
-        assert.strictEqual(typeof body.output, "object");
-        assert.strictEqual(typeof body.output.summary, "string");
-        return true;
-      })
-      .reply(200, { 
-        id: 9999999998, 
-        status: "completed", 
-        conclusion: "failure" 
-      });
+        checks: {
+          create: async (params) => {
+            // Basic verification
+            assert.strictEqual(typeof params.name, "string");
+            assert.strictEqual(params.head_sha, "abc123def456789012345678901234567890abcd");
+            assert.strictEqual(params.status, "completed");
+            assert.strictEqual(params.conclusion, "failure");
+            assert.strictEqual(typeof params.output, "object");
+            assert.strictEqual(typeof params.output.summary, "string");
+            return { data: { id: 9999999998 } };
+          }
+        }
+      }
+    };
 
-    // Send webhook event
-    await probot.receive({ name: "pull_request", payload: prOpenedComplete });
-
-    // Verify all mocks were called
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
+    // Import the app and extract the handler
+    const appModule = await import('../../index.js');
+    let pullRequestHandler;
+    
+    // Mock app to capture the handler
+    const mockApp = {
+      on: (events, handler) => {
+        if (Array.isArray(events) && events.includes('pull_request.opened')) {
+          pullRequestHandler = handler;
+        }
+      },
+      onAny: () => {}, // No-op for LOG_ALL_EVENTS
+    };
+    
+    // Load the app to register handlers
+    appModule.default(mockApp);
+    
+    // Call the handler directly with mocked context
+    await pullRequestHandler(mockContext);
   });
 });

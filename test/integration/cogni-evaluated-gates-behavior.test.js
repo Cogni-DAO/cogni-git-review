@@ -7,17 +7,14 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import nock from 'nock';
 import yaml from 'js-yaml';
-import { Probot, ProbotOctokit } from "probot";
+import { clearSpecCache } from '../../src/spec-loader.js';
+import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import app from "../../index.js";
-import { clearSpecCache } from '../../src/spec-loader.js';
-import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesPath = path.join(__dirname, "../fixtures");
-const privateKey = fs.readFileSync(path.join(fixturesPath, "mock-cert.pem"), "utf-8");
 
 // Load complete webhook payload fixture (following AGENTS.md pattern)
 const prOpenedComplete = JSON.parse(
@@ -52,24 +49,10 @@ function createBehaviorPayload(prOverrides = {}) {
 }
 
 describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
-  let probot;
-  const savedFetch = global.fetch;
-
   beforeEach(() => {
     nock.cleanAll();
     nock.disableNetConnect();
     clearSpecCache();
-    
-    probot = new Probot({
-      appId: 123456,
-      privateKey,
-      Octokit: ProbotOctokit.defaults({
-        request: { fetch: undefined },
-        retry: { enabled: false },
-        throttle: { enabled: false }
-      })
-    });
-    probot.load(app);
   });
 
   afterEach(() => {
