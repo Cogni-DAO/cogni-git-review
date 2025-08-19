@@ -1,6 +1,6 @@
 /**
  * Validate universal PR structure fix
- * Direct test that simulates external gate access patterns that were failing
+ * Direct test that simulates I gate access patterns that were failing
  */
 
 import { test } from 'node:test';

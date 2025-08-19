@@ -5,8 +5,8 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { testPullRequestHandler } from '../helpers/integration-harness.js';
-import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' assert { type: 'json' };
+import { testPullRequestHandler } from '../helpers/handler-harness.js';
+import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 
 function payload(overrides = {}) {
   return {

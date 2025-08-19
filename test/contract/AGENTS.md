@@ -125,7 +125,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 
 ## Known Issues
 
-The `check_suite.rerequested` test currently fails due to a checkStateMap bug (Work Item: 18f6bdc8-052d-493a-8f2b-efa0ee478c2a). This is intentional - the test documents the bug.
+None currently.
 
 ## Adding Tests
 
