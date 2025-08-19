@@ -172,3 +172,28 @@ it('invalid rules dir → handles gracefully', async () => {
 
 ### Performance: 
 Current pattern enables fast test execution - entire suite runs in ~2-3 seconds vs minutes with HTTP mocking.
+
+
+
+
+---
+
+### ⚠ Status: Transitional (Service/Contract tests, not true integration)
+
+- **Harness ≠ network:** These tests call handlers with a fake context. They **do not** validate webhook wiring or real GitHub routes. That’s intentional for speed.
+
+- **Contents API + PR fetch not mirrored (yet):** Scenarios that need repo-spec via Contents API or PR stats on reruns (`check_suite.rerequested`) are **out of scope** here.  
+  _Interim rule:_ move those to a tiny Probot+Nock “wiring” suite.
+
+- **Directory naming:** Current “mock-integration” label is misleading; this is effectively **service/contract**.  
+  _Deferred fix:_ rename folder to `test/service/` and create `test/wiring/` for a minimal real-wiring suite.
+
+- **Assertion hygiene:** Avoid strict equality on human-readable messages; use `includes()`/regex and (later) shared constants.
+
+- **Determinism:** Always set explicit `head.sha`, `changed_files`, `additions`, `deletions` in payload builders. Don’t rely on API-derived values in this layer.
+
+**Deferred TODOs (leave unchecked on purpose)**
+- [ ] Upgrade harness to stub **Contents API** for `.cogni/repo-spec.yaml`.  
+- [ ] Add event dispatch for **opened/synchronize/reopened/check_suite.rerequested**.  
+- [ ] Introduce `MISSING_SPEC_MSG` (and friends) constants; update tests to regex/`includes`.  
+- [ ] Stand up **`test/wiring/`** with 3–4 Probot+Nock checks (spec 404, spec present, rerun PR stats, reopened path).
