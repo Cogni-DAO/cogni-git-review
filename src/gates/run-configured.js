@@ -11,24 +11,24 @@ let registryPromise = null;
 
 /**
  * Run all configured gates from spec in order with dynamic resolution
- * @param {object} runCtx - Run context with spec, logger, options, etc.
+ * @param {import('probot').Context} context - Probot context with execution metadata
  * @returns {Promise<{results: GateResult[]}>} Gate execution results
  */
-export async function runConfiguredGates(runCtx) {
+export async function runConfiguredGates(context) {
   // Build registry with logger on first call
   if (!registryPromise) {
-    registryPromise = buildRegistry(runCtx.log || console);
+    registryPromise = buildRegistry(context.log || console);
   }
   const registry = await registryPromise;
-  const allGates = Array.isArray(runCtx.spec?.gates) ? runCtx.spec.gates : [];
+  const allGates = Array.isArray(context.spec?.gates) ? context.spec.gates : [];
   const results = [];
 
   for (const gate of allGates) {
     // Check for timeout before each gate - return partial results if aborted
-    if (runCtx.abort?.aborted) {
-      runCtx.logger?.('warn', 'Gate execution aborted due to timeout', { 
+    if (context.abort?.aborted) {
+      context.logger?.('warn', 'Gate execution aborted due to timeout', { 
         gate_id: gate.id, 
-        deadline_ms: runCtx.deadline_ms,
+        deadline_ms: context.deadline_ms,
         partial_results: results.length
       });
       return { results };
@@ -37,7 +37,7 @@ export async function runConfiguredGates(runCtx) {
     const handler = resolveHandler(registry, gate);
     
     try {
-      const result = await safeRunGate(handler, runCtx, gate);
+      const result = await safeRunGate(handler, context, gate);
       
       // Force ID normalization - always use spec gate ID
       const finalResult = {
@@ -49,7 +49,7 @@ export async function runConfiguredGates(runCtx) {
     } catch (error) {
       if (error.message === 'aborted') {
         // Mid-gate abort - return partial results
-        runCtx.logger?.('warn', 'Gate execution aborted mid-gate', { 
+        context.logger?.('warn', 'Gate execution aborted mid-gate', { 
           gate_id: gate.id,
           partial_results: results.length
         });
