@@ -1,0 +1,75 @@
+{
+  "description": "Test fixture: PR that violates non-goals (scope creep)",
+  "pr": {
+    "title": "Implement advanced ML-based code quality prediction engine",
+    "body": "Adds sophisticated machine learning model to predict code quality issues using static analysis, AST parsing, and semantic understanding. This will revolutionize how we detect potential problems in PRs.",
+    "additions": 850,
+    "deletions": 12,
+    "changed_files": [
+      {
+        "filename": "src/ml/quality-predictor.js",
+        "additions": 300,
+        "deletions": 0,
+        "status": "added"
+      },
+      {
+        "filename": "src/ml/ast-analyzer.js",
+        "additions": 250,
+        "deletions": 0,
+        "status": "added"
+      },
+      {
+        "filename": "src/ml/models/quality-classifier.pkl",
+        "additions": 200,
+        "deletions": 0,
+        "status": "added"
+      },
+      {
+        "filename": "package.json",
+        "additions": 50,
+        "deletions": 5,
+        "status": "modified"
+      },
+      {
+        "filename": "src/gates/cogni/ml-quality-gate.js",
+        "additions": 50,
+        "deletions": 7,
+        "status": "added"
+      }
+    ]
+  },
+  "spec": {
+    "intent": {
+      "goals": [
+        "Enforce deterministic, machine-checkable PR hygiene via a single required check run",
+        "Deliver fast tri-state verdicts (success|failure|neutral) with fail-safe neutral on errors"
+      ],
+      "non_goals": [
+        "Re-implementing mature OSS scanners, linters, or policy managers",
+        "Long-running or heavy in-process analysis that degrades PR latency",
+        "Subjective style enforcement beyond explicit repo rules/policies"
+      ]
+    }
+  },
+  "expected_result": {
+    "verdict": "failure",
+    "alignment_score": 0.2,
+    "violations": [
+      {
+        "type": "non_goal_violation",
+        "severity": "error",
+        "finding": "Introduces complex ML-based analysis which directly contradicts non-goal about avoiding heavy in-process analysis",
+        "violated_non_goals": ["Long-running or heavy in-process analysis that degrades PR latency"],
+        "suggested_action": "Consider integrating existing mature analysis tools instead of implementing custom ML solution"
+      },
+      {
+        "type": "scope_violation", 
+        "severity": "warning",
+        "finding": "Adding ML capabilities significantly expands scope beyond current PR hygiene focus",
+        "affected_goals": [],
+        "suggested_action": "Update repository goals to explicitly include ML-based analysis or remove ML components"
+      }
+    ],
+    "summary": "PR introduces complex ML analysis that violates non-goals about heavy processing and scope boundaries"
+  }
+}

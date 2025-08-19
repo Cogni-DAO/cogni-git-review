@@ -1,12 +1,30 @@
-# Cogni Configuration Directory
+# .cogni Directory - Repository Policy Configuration
 
-## What Goes Here
-Repository-specific YAML configuration that defines which gates the bot runs.
+## Purpose
+Configuration directory for repository-specific PR evaluation policies. Defines goals, gates, and AI rules using declarative YAML files.
 
-- `repo-spec.yaml` - Active configuration for this repository
-- `repo-spec-template.yaml` - Reference template for new repositories
+Everything within this directory is DOGFOODING. This is what a 3rd party would use, if cogni-git-review was installed into their own repository.
 
-## Template Maintenance  
-Template updates must be done carefully - inspect all YAML parsing in gate runners.
+## Directory Structure
+```
+.cogni/
+├── repo-spec.yaml         # Gate configuration and repository intent
+├── rules/                 # AI evaluation rules (YAML)
+└── prompts/               # LLM prompt templates
+```
 
-**MVP Status**: Template format expected to change frequently.
+## Adding AI Rules
+1. Create rule YAML in `rules/` with ID and prompt template
+2. Create prompt template in `prompts/` requesting score (0-1)
+3. Enable rule in `repo-spec.yaml` rules gate
+4. Test on PR
+
+## Configuration
+- **repo-spec.yaml**: Gates, goals, non-goals
+- **rules/*.yaml**: Rule definitions with score thresholds
+- **prompts/*.md**: LLM templates with variable substitution
+
+## Constraints
+- Rules cannot be created at runtime
+- Each repository's `.cogni/` directory is isolated
+- All changes tracked in git history

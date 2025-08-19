@@ -12,7 +12,11 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
 
-**Note**: Current architecture is MVP implementation. Future design (work item `8f01ab04-922d-478f-ba1a-5bc1eca8b529`) targets unified async execution for all gates.
+### Key Resources
+- [Probot Framework Docs](https://probot.github.io/docs/)
+- [GitHub Checks API](https://docs.github.com/en/rest/checks)
+- **[Architecture Design](docs/DESIGN.md)** - Core extensible AI rules system
+- Architecture details in AGENTS.md files throughout the repository
 
 ## Context Architecture
 
@@ -102,13 +106,12 @@ npm start  # Local development with webhook proxy
 npm test   # Run tests (several integration tests currently skipped due to mocking issues)
 ```
 
-### Key Resources
-- [Probot Framework Docs](https://probot.github.io/docs/)
-- [GitHub Checks API](https://docs.github.com/en/rest/checks)
-- Architecture details in AGENTS.md files throughout the repository
 
 ## Integration Strategy
 
 **V0.2 Direction:** Integrate with OpenSSF Allstar for repository policies and GitHub Actions for standard CI checks (linting, builds, tests) rather than reimplementing these tools.
 
-**Reference:** Cogni Memory Project for Allstar integration, id: `f09702dd-0bc5-4a19-9a67-255f69fccb26`
+## Notes
+**MVP Gate Implementation**: Current architecture is MVP implementation. Future design (work item `8f01ab04-922d-478f-ba1a-5bc1eca8b529`) targets unified async execution for all gates.
+
+**Future Enforcement of Github Action Repo-rules:** Cogni Memory Project for Allstar integration, id: `f09702dd-0bc5-4a19-9a67-255f69fccb26`

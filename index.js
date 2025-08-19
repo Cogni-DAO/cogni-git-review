@@ -6,12 +6,6 @@ import { runAllGates } from './src/gates/index.js';
 
 const PR_REVIEW_NAME = "Cogni Git PR Review";
 
-// In-memory check state management for MVP
-// Maps head_sha -> { checkId, spec } for idempotent updates with consistent spec
-const checkStateMap = new Map();
-
-// Export for testing cleanup
-global.checkStateMap = checkStateMap;
 
 /**
  * This is the main entrypoint to your Probot app
@@ -72,63 +66,6 @@ export default (app) => {
     return checkResult;
   }
 
-  async function evaluateAndCreateCheck(context, pull_request, workflowRunId = null) {
-    const startTime = new Date();
-    try {
-      const { spec, source } = await loadRepoSpec(context);
-      console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
-
-      const runResult = await runAllGates(context, pull_request, spec, { 
-        workflowRunId,
-        deadlineMs: 30000 // Standard timeout for all gates
-      });
-      
-      // Map tri-state to GitHub check conclusions
-      const conclusion = mapStatusToConclusion(runResult.overall_status);
-      
-      // Generate summary and text from gate results
-      const { summary, text } = formatGateResults(runResult);
-
-      return context.octokit.checks.create(context.repo({
-        name: PR_REVIEW_NAME,
-        head_sha: pull_request.head.sha,
-        status: "completed",
-        started_at: startTime,
-        conclusion,
-        completed_at: new Date(),
-        output: {
-          title: PR_REVIEW_NAME,
-          summary,
-          text
-        }
-      }));
-    } catch (error) {
-      console.error(`📄 Spec load failed for PR #${pull_request.number}:`, error);
-
-      const isMissing = error?.code === 'SPEC_MISSING';
-      const isInvalid = error?.code === 'SPEC_INVALID';
-
-      const conclusion = (isMissing || isInvalid) ? 'failure' : 'neutral';
-      const summary = isMissing
-        ? 'No .cogni/repo-spec.yaml found'
-        : (isInvalid ? 'Invalid .cogni/repo-spec.yaml' : 'Spec could not be loaded (transient error)');
-      const text = isMissing
-        ? 'Add `.cogni/repo-spec.yaml` to configure this required check.'
-        : (isInvalid
-            ? `Repository spec validation failed: ${error.message || 'Unknown error'}`
-            : 'GitHub API/network issue while loading the spec. Re-run the check or try again.');
-
-      return context.octokit.checks.create(context.repo({
-        name: PR_REVIEW_NAME,
-        head_sha: pull_request.head.sha,
-        status: "completed",
-        started_at: startTime,
-        conclusion,
-        completed_at: new Date(),
-        output: { title: PR_REVIEW_NAME, summary, text }
-      }));
-    }
-  }
 
   /**
    * Map tri-state status to GitHub check conclusion
@@ -220,38 +157,19 @@ export default (app) => {
     // Create check with in_progress status, skip external gates
     const startTime = new Date();
     try {
-      const { spec, source } = await loadRepoSpec(context);
-      console.log(`📄 Spec loaded from ${source} for PR #${pr.number}`);
-
-      // Run all gates
-      const runResult = await runAllGates(context, pr, spec);
-      
-      if (runResult.pendingExternalGates?.length > 0) {
-        // Has external gates - Subscribe & Wait pattern
-        const checkResult = await context.octokit.checks.create(context.repo({
-          name: PR_REVIEW_NAME,
-          head_sha: pr.head.sha,
-          status: "in_progress",
-          started_at: startTime,
-          output: {
-            title: PR_REVIEW_NAME,
-            summary: 'Evaluating gates...',
-            text: `Running ${spec.gates?.length || 0} gates. Waiting for external workflow completion.`
-          }
-        }));
-
-        // Store check_id AND spec for later updates  
-        checkStateMap.set(pr.head.sha, { 
-          checkId: checkResult.data.id,
-          spec: spec
-        });
-        console.log(`📝 Created in_progress check ${checkResult.data.id} for SHA ${pr.head.sha} (pending: ${runResult.pendingExternalGates.join(', ')})`);
-        
-        return checkResult;
-      } else {
-        // Internal only - immediate completion
-        return createCompletedCheck(context, runResult, pr.head.sha, startTime);
+      const result = await loadRepoSpec(context);
+      if (!result.ok) {
+        // Convert error to thrown format for existing error handling
+        const error = new Error(`Spec loading failed: ${result.error.code}`);
+        error.code = result.error.code;
+        throw error;
       }
+      const spec = result.spec;
+      console.log(`📄 Spec loaded from probot_config for PR #${pr.number}`);
+
+      // Run all gates and create completed check
+      const runResult = await runAllGates(context, pr, spec);
+      return createCompletedCheck(context, runResult, pr.head.sha, startTime);
       
     } catch (error) {
       console.error(`📄 Spec load failed for PR #${pr.number}:`, error);
@@ -287,7 +205,7 @@ export default (app) => {
 
     console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
 
-    // Get PR number from check_suite.pull_requests, then fetch full PR data
+    // Get PR number from check_suite.pull_requests
     const prRef = checkSuite.pull_requests?.find(pr => pr.state === 'open') || 
                   checkSuite.pull_requests?.[0];
 
@@ -310,7 +228,14 @@ export default (app) => {
       );
       
       console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
-      return evaluateAndCreateCheck(context, fullPR); // Rerun with all gates
+      
+      // Enhance context to look like a PR event (following context enhancement pattern)
+      context.payload.pull_request = fullPR;
+      context.payload.action = 'rerequested';
+      
+      // Delegate to existing PR handler - it already has all the logic we need
+      return handlePullRequest(context);
+      
     } catch (error) {
       console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
       return createCheckOnSha(context, {

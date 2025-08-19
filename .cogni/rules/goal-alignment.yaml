@@ -1,0 +1,11 @@
+id: goal-alignment
+schema_version: '0.1'
+blocking: true
+
+prompt:
+  template: .cogni/prompts/goal-alignment.md
+  variables: [goals, non_goals, pr_title, pr_body, diff_summary]
+
+success_criteria:
+  metric: score
+  threshold: 0.7

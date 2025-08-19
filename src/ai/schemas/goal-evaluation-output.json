@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "goal-evaluation-output.json",
+  "title": "Goal Evaluation Output Schema",
+  "description": "Schema for validating AI provider review() function output",
+  "type": "object",
+  "required": ["verdict", "alignment_score", "violations", "summary"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["success", "failure", "neutral"],
+      "description": "Overall evaluation result"
+    },
+    "alignment_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Alignment score from 0.0 (misaligned) to 1.0 (perfectly aligned)"
+    },
+    "violations": {
+      "type": "array",
+      "description": "Array of detected violations or concerns",
+      "items": {
+        "type": "object",
+        "required": ["type", "severity", "finding"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "scope_violation",
+              "non_goal_violation", 
+              "missing_docs",
+              "missing_tests",
+              "goal_ambiguity",
+              "architecture_drift"
+            ],
+            "description": "Category of violation"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "notice"],
+            "description": "Severity level of the violation"
+          },
+          "finding": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500,
+            "description": "Specific description of the issue"
+          },
+          "affected_goals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository goals affected by this violation"
+          },
+          "violated_non_goals": {
+            "type": "array", 
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository non-goals violated by this change"
+          },
+          "suggested_action": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Recommended action to resolve the violation"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 200,
+      "description": "Brief overall assessment of the PR"
+    }
+  },
+  "additionalProperties": false
+}

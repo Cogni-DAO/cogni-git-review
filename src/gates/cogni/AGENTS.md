@@ -1,38 +1,38 @@
 # Cogni Gates Directory
 
-## Current Gates
-Individual gate implementations that evaluate PR compliance. 
+Gates are implemented by cogni-git-review. The .cogni/repo-spec.yml in a repository that has installed cogni-git-review can choose to enable+configure them.
 
-- **review_limits**: File count and diff size validation against configured limits
-- **goal_declaration**: Ensures repository spec declares project goals  
-- **forbidden_scopes**: Ensures repository spec declares non-goals/scope boundaries
+## Implementation Principles
+- **Self-contained**: No dependencies on other gates
+- **Safe execution**: Handle missing/malformed config gracefully
+- **Auto-discovery**: Export `id` and function matching `evaluate + PascalCase(id)` pattern
 
-## Implementing New Gates
-Follow these patterns from existing gates:
+## Built-in Gates
+- **review_limits**: File count and diff size validation
+- **goal_declaration**: Ensures repository goals declared  
+- **forbidden_scopes**: Ensures repository non-goals declared
+- **rules**: AI-powered evaluation using declarative rules. This is the most configurable gate, allowing for multiple different rules files to be defined. see src/rules/AGENTS.md
 
-### 1. Gate Module Structure
+## Gate Implementation Pattern
 ```javascript
-// Export gate ID for registry discovery
-export const id = 'your_gate_name';
+export const id = 'gate_name';
 
-// Main gate function - matching spec gate.id
-export async function evaluateYourGateName(context, pr, config) {
-  // Gate logic here
+export async function evaluateGateName(context, spec) {
   return {
-    violations: [...],  // Array of violation objects
-    stats: {...},      // Gate execution metadata  
-    oversize: boolean  // Optional: triggers neutral if true
+    id: 'gate_name',
+    conclusion: 'success'|'failure'|'neutral',
+    title: 'Gate Title',
+    summary: 'Brief result summary',
+    text: 'Detailed markdown output',
+    annotations: [],
+    duration_ms: 123
   };
 }
 ```
 
-### 2. Implementation Principles
-- **Self-contained**: No dependencies on other gates
-- **Tri-state result**: violations determine pass/fail, oversize → neutral
-- **Safe execution**: Handle missing/malformed config gracefully
-- **Rich stats**: Include useful metadata for debugging
-
-### 3. Registry Auto-Discovery
-- Export `id` and gate function - registry finds it automatically
-- Function name should match: `evaluate + PascalCase(id)`
-- Update `.cogni/repo-spec-template.yaml` with configuration options
+## Rules Gate
+The `rules` gate loads YAML rules and calls AI provider:
+- Loads rules from `.cogni/rules/*.yaml`
+- Calls `src/ai/provider.js` for evaluation
+- Decides pass/fail based on score vs threshold
+- Returns structured check result
