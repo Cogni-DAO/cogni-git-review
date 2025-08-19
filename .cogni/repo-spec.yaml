@@ -1,4 +1,4 @@
-schema_version: '0.1.2'
+schema_version: '0.1.3'
 
 intent:
   name: cogni-git-review
@@ -29,5 +29,4 @@ gates:
   - id: forbidden_scopes
   - id: rules
     with:
-      rules_dir: .cogni/rules
-      enable: [goal-alignment.yaml]
+      rule_file: goal-alignment.yaml
