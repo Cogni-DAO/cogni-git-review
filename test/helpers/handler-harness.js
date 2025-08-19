@@ -136,7 +136,8 @@ export async function testEventHandler(options) {
           return { data: { id: 1 } };
         }
       },
-      ...extraOctokit
+      ...extraOctokit,
+      __debug_extra: extraOctokit
     }
   };
   

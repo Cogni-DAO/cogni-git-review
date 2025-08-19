@@ -205,12 +205,15 @@ export default (app) => {
 
     console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
 
-    // Get PR number from check_suite.pull_requests
-    const prRef = checkSuite.pull_requests?.find(pr => pr.state === 'open') || 
-                  checkSuite.pull_requests?.[0];
+    // Rerun does NOT have PR information, just the head SHA. 
+    // Find associated PR(s) for this commit SHA using GitHub API
+    const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+      context.repo({ commit_sha: headSha })
+    );
+    const prRef = assoc.find(pr => pr.state === 'open') || assoc[0];
 
     if (!prRef) {
-      console.log(`🔄 RERUN: No PRs found in check_suite.pull_requests`);
+      console.log(`🔄 RERUN: No associated PR found for SHA ${headSha}`);
       return createCheckOnSha(context, {
         sha: headSha,
         conclusion: 'failure',
