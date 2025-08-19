@@ -6,9 +6,8 @@
 ## Directory Structure
 ```
 src/ai/
-├── provider.js           # Single AI entrypoint - review() function
+├── provider.js           # Single AI entrypoint - review() function (MVP STUB)
 ├── workflows/            # LangGraph workflows (called by provider only)
-├── prompts/             # LLM prompt templates
 └── schemas/             # JSON Schema validation
 ```
 

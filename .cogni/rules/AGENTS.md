@@ -1,30 +1,44 @@
-# Rules Directory - AI Evaluation Rules
+# AI Rule Definitions
 
 ## Purpose
-YAML rule definitions for AI-powered PR evaluation. Rules define evaluation criteria and success thresholds.
+This directory contains YAML rule definitions for AI-powered PR evaluation. Each rule specifies evaluation criteria, prompts, and success thresholds.
 
-## Rule Format
+## Current Implementation  
+- **Single rule per gate**: Each `rules` gate loads exactly one rule file
+- **Universal application**: Rules apply to all PRs (no selectors)
+- **AI provider**: Currently a stub for MVP testing
+
+## Rule Schema
 ```yaml
-id: goal-alignment
-schema_version: '0.1'
-blocking: true
+id: rule-name                    # Unique identifier
+schema_version: '0.1'            # Schema version
+blocking: true                   # Whether failure blocks PR
 prompt:
-  template: .cogni/prompts/goal-alignment.md
+  template: .cogni/prompts/rule-name.md
   variables: [goals, non_goals, pr_title, pr_body, diff_summary]
 success_criteria:
-  metric: score
-  threshold: 0.7
+  metric: score                  # Only 'score' supported
+  threshold: 0.7                 # Pass threshold (0-1)
 ```
 
-## Available Variables
-- `goals`: Repository goals from repo-spec.yaml
-- `non_goals`: Repository non-goals from repo-spec.yaml  
-- `pr_title`: PR title text
-- `pr_body`: PR description text
-- `diff_summary`: Generated summary of changes
+## Evidence Variables
+Rules receive these variables from the gate:
+- `goals`: Repository goals from spec.intent.goals
+- `non_goals`: Repository non-goals from spec.intent.non_goals
+- `pr_title`: Pull request title
+- `pr_body`: Pull request description  
+- `diff_summary`: Auto-generated change summary
 
-## Constraints
-- Rules apply to all PRs (no selectors in MVP)
-- Prompts must request `score` (0-1) not `verdict`
-- Only supported variables allowed in schema
-- Rule failures respect `blocking` flag
+## Gate Integration
+Repository configures rules in `.cogni/repo-spec.yaml`:
+```yaml
+gates:
+  - id: rules
+    with:
+      rule_file: goal-alignment.yaml
+```
+
+## Prompt Requirements
+- Must return JSON with `score` field (0-1 range)
+- Score compared against `success_criteria.threshold`
+- score >= threshold → pass, else fail
