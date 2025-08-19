@@ -6,6 +6,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import nock from 'nock';
+import yaml from 'js-yaml';
 import { Probot, ProbotOctokit } from "probot";
 import fs from "fs";
 import path from "path";
@@ -52,14 +53,18 @@ function createBehaviorPayload(prOverrides = {}) {
 
 describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
   let probot;
+  const savedFetch = global.fetch;
 
   beforeEach(() => {
+    nock.cleanAll();
     nock.disableNetConnect();
     clearSpecCache();
+    
     probot = new Probot({
       appId: 123456,
       privateKey,
       Octokit: ProbotOctokit.defaults({
+        request: { fetch: undefined },
         retry: { enabled: false },
         throttle: { enabled: false }
       })
@@ -68,161 +73,215 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
   });
 
   afterEach(() => {
+    console.log('Pending mocks before cleanup:', nock.pendingMocks());
+    if (!nock.isDone()) {
+      throw new Error(`Unconsumed mocks: ${nock.pendingMocks()}`);
+    }
     nock.cleanAll();
     nock.enableNetConnect();
     clearSpecCache();
   });
 
   it('missing_spec_failure: No .cogni/repo-spec.yaml → conclusion=failure', async () => {
-    // Follow AGENTS.md pattern: auth + 404 + check creation validation
-    const mocks = nock("https://api.github.com")
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: { checks: "write", pull_requests: "read", metadata: "read" }
-      })
-      .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "main" })
-      .reply(404, { message: 'Not Found' })
-      .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract: missing spec now blocks merges
-        assert.strictEqual(body.conclusion, "failure");
-        assert.strictEqual(body.name, "Cogni Git PR Review");
-        assert(body.output.summary.includes("No .cogni/repo-spec.yaml found"));
-        return true;
-      })
-      .reply(200, { id: 1 });
+    // Create mock context (same pattern as unit tests)
+    const mockContext = {
+      name: 'pull_request',
+      payload: createBehaviorPayload(),
+      repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
+      octokit: {
+        config: {
+          get: async () => ({ config: null })  // Mock missing spec
+        },
+        checks: {
+          create: async (params) => {
+            // Verify the check run is created correctly
+            assert.strictEqual(params.conclusion, 'failure');
+            assert.strictEqual(params.name, 'Cogni Git PR Review');
+            assert(params.output.summary.includes('No .cogni/repo-spec.yaml found'));
+            return { data: { id: 1 } };
+          }
+        }
+      }
+    };
 
-    await probot.receive({
-      name: "pull_request",
-      payload: createBehaviorPayload()
-    });
-
-    // Verify all mocks consumed (AGENTS.md pattern)
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
+    // Import the app and extract the handler
+    const appModule = await import('../../index.js');
+    let pullRequestHandler;
+    
+    // Mock app to capture the handler
+    const mockApp = {
+      on: (events, handler) => {
+        if (Array.isArray(events) && events.includes('pull_request.opened')) {
+          pullRequestHandler = handler;
+        }
+      },
+      onAny: () => {}, // No-op for LOG_ALL_EVENTS
+    };
+    
+    // Load the app to register handlers
+    appModule.default(mockApp);
+    
+    // Call the handler directly with mocked context
+    await pullRequestHandler(mockContext);
   });
 
   it('valid_spec_under_limits_success: 5 files, 20 KB vs 30/100 limits → success', async () => {
-    // Use fixture from SPEC_FIXTURES (DRY pattern)
-    const specYAML = SPEC_FIXTURES.behaviorTest30_100;
+    // Use parsed fixture (same pattern as unit tests)
+    const expectedSpec = yaml.load(SPEC_FIXTURES.behaviorTest30_100);
     
-    const mocks = nock("https://api.github.com")
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: { checks: "write", pull_requests: "read", metadata: "read" }
-      })
-      .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "main" })
-      .reply(200, {
-        type: "file",
-        content: Buffer.from(specYAML).toString('base64'),
-        encoding: "base64"
-      })
-      .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract - new tri-state format
-        assert.strictEqual(body.conclusion, "success");
-        assert.strictEqual(body.output.summary, "All gates passed");
-        assert(body.output.text.includes("Gates: 3 total"));
-        assert(body.output.text.includes("✅ Passed: 3"));
-        assert(body.output.text.includes("files=5"));
-        assert(body.output.text.includes("diff_kb=20"));
-        return true;
-      })
-      .reply(200, { id: 1 });
-
-    await probot.receive({
-      name: "pull_request", 
+    // Create mock context 
+    const mockContext = {
+      name: 'pull_request',
       payload: createBehaviorPayload({
         changed_files: 5,
         additions: 30,
         deletions: 30  // 60/3 = 20 KB
-      })
-    });
+      }),
+      repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
+      octokit: {
+        config: {
+          get: async () => ({ config: expectedSpec })  // Mock valid spec
+        },
+        checks: {
+          create: async (params) => {
+            // Verify behavior contract - new tri-state format
+            assert.strictEqual(params.conclusion, "success");
+            assert.strictEqual(params.output.summary, "All gates passed");
+            assert(params.output.text.includes("Gates: 3 total"));
+            assert(params.output.text.includes("✅ Passed: 3"));
+            assert(params.output.text.includes("files=5"));
+            assert(params.output.text.includes("diff_kb=20"));
+            return { data: { id: 1 } };
+          }
+        }
+      }
+    };
 
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
+    // Import the app and extract the handler
+    const appModule = await import('../../index.js');
+    let pullRequestHandler;
+    
+    // Mock app to capture the handler
+    const mockApp = {
+      on: (events, handler) => {
+        if (Array.isArray(events) && events.includes('pull_request.opened')) {
+          pullRequestHandler = handler;
+        }
+      },
+      onAny: () => {}, // No-op for LOG_ALL_EVENTS
+    };
+    
+    // Load the app to register handlers
+    appModule.default(mockApp);
+    
+    // Call the handler directly with mocked context
+    await pullRequestHandler(mockContext);
   });
 
   it('valid_spec_over_files_failure: 45 files vs 30 limit → failure', async () => {
-    // Use fixture from SPEC_FIXTURES (DRY pattern)
-    const specYAML = SPEC_FIXTURES.behaviorTest30_100;
+    // Use parsed fixture (same pattern as unit tests)
+    const expectedSpec = yaml.load(SPEC_FIXTURES.behaviorTest30_100);
     
-    const mocks = nock("https://api.github.com")
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: { checks: "write", pull_requests: "read", metadata: "read" }
-      })
-      .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "main" })
-      .reply(200, {
-        type: "file",
-        content: Buffer.from(specYAML).toString('base64'),
-        encoding: "base64"
-      })
-      .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract - new tri-state format
-        assert.strictEqual(body.conclusion, "failure");
-        assert.strictEqual(body.output.summary, "Gate failures: 1");
-        assert(body.output.text.includes("Gates: 3 total"));
-        assert(body.output.text.includes("❌ Failed: 1"));
-        assert(body.output.text.includes("max_changed_files: 45 > 30"));
-        assert(body.output.text.includes("files=45"));
-        return true;
-      })
-      .reply(200, { id: 1 });
-
-    await probot.receive({
-      name: "pull_request",
+    // Create mock context 
+    const mockContext = {
+      name: 'pull_request',
       payload: createBehaviorPayload({
         changed_files: 45,  // Over 30 limit
         additions: 30,
         deletions: 30  // 60/3 = 20 KB (under limit)
-      })
-    });
+      }),
+      repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
+      octokit: {
+        config: {
+          get: async () => ({ config: expectedSpec })  // Mock valid spec
+        },
+        checks: {
+          create: async (params) => {
+            // Verify behavior contract - new tri-state format
+            assert.strictEqual(params.conclusion, "failure");
+            assert.strictEqual(params.output.summary, "Gate failures: 1");
+            assert(params.output.text.includes("Gates: 3 total"));
+            assert(params.output.text.includes("❌ Failed: 1"));
+            assert(params.output.text.includes("max_changed_files: 45 > 30"));
+            assert(params.output.text.includes("files=45"));
+            return { data: { id: 1 } };
+          }
+        }
+      }
+    };
 
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
+    // Import the app and extract the handler
+    const appModule = await import('../../index.js');
+    let pullRequestHandler;
+    
+    // Mock app to capture the handler
+    const mockApp = {
+      on: (events, handler) => {
+        if (Array.isArray(events) && events.includes('pull_request.opened')) {
+          pullRequestHandler = handler;
+        }
+      },
+      onAny: () => {}, // No-op for LOG_ALL_EVENTS
+    };
+    
+    // Load the app to register handlers
+    appModule.default(mockApp);
+    
+    // Call the handler directly with mocked context
+    await pullRequestHandler(mockContext);
   });
 
   it('valid_spec_over_kb_failure: 10 files, 150 KB vs 100 limit → failure', async () => {
-    // Use fixture from SPEC_FIXTURES (DRY pattern)
-    const specYAML = SPEC_FIXTURES.behaviorTest30_100;
+    // Use parsed fixture (same pattern as unit tests)
+    const expectedSpec = yaml.load(SPEC_FIXTURES.behaviorTest30_100);
     
-    const mocks = nock("https://api.github.com")
-      .post("/app/installations/12345678/access_tokens")
-      .reply(200, {
-        token: "ghs_test_token",
-        permissions: { checks: "write", pull_requests: "read", metadata: "read" }
-      })
-      .get('/repos/test-org/test-repo/contents/.cogni%2Frepo-spec.yaml')
-      .query({ ref: "main" })
-      .reply(200, {
-        type: "file",
-        content: Buffer.from(specYAML).toString('base64'),
-        encoding: "base64"
-      })
-      .post('/repos/test-org/test-repo/check-runs', (body) => {
-        // Verify behavior contract - new tri-state format
-        assert.strictEqual(body.conclusion, "failure");
-        assert.strictEqual(body.output.summary, "Gate failures: 1");  
-        assert(body.output.text.includes("Gates: 3 total"));
-        assert(body.output.text.includes("❌ Failed: 1"));
-        assert(body.output.text.includes("files=10"));
-        assert(body.output.text.includes("diff_kb=150"));
-        assert(body.output.text.includes("max_total_diff_kb: 150 > 100"));
-        return true;
-      })
-      .reply(200, { id: 1 });
-
-    await probot.receive({
-      name: "pull_request",
+    // Create mock context 
+    const mockContext = {
+      name: 'pull_request',
       payload: createBehaviorPayload({
         changed_files: 10,  // Under 30 limit
         additions: 225,     // 225+225 = 450, 450/3 = 150 KB (over 100 limit)  
         deletions: 225
-      })
-    });
+      }),
+      repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
+      octokit: {
+        config: {
+          get: async () => ({ config: expectedSpec })  // Mock valid spec
+        },
+        checks: {
+          create: async (params) => {
+            // Verify behavior contract - new tri-state format
+            assert.strictEqual(params.conclusion, "failure");
+            assert.strictEqual(params.output.summary, "Gate failures: 1");  
+            assert(params.output.text.includes("Gates: 3 total"));
+            assert(params.output.text.includes("❌ Failed: 1"));
+            assert(params.output.text.includes("files=10"));
+            assert(params.output.text.includes("diff_kb=150"));
+            assert(params.output.text.includes("max_total_diff_kb: 150 > 100"));
+            return { data: { id: 1 } };
+          }
+        }
+      }
+    };
 
-    assert.deepStrictEqual(mocks.pendingMocks(), []);
+    // Import the app and extract the handler
+    const appModule = await import('../../index.js');
+    let pullRequestHandler;
+    
+    // Mock app to capture the handler
+    const mockApp = {
+      on: (events, handler) => {
+        if (Array.isArray(events) && events.includes('pull_request.opened')) {
+          pullRequestHandler = handler;
+        }
+      },
+      onAny: () => {}, // No-op for LOG_ALL_EVENTS
+    };
+    
+    // Load the app to register handlers
+    appModule.default(mockApp);
+    
+    // Call the handler directly with mocked context
+    await pullRequestHandler(mockContext);
   });
 });

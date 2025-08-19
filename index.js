@@ -72,12 +72,9 @@ export default (app) => {
     return checkResult;
   }
 
-  async function evaluateAndCreateCheck(context, pull_request, workflowRunId = null) {
+  async function evaluateAndCreateCheck(context, pull_request, spec, workflowRunId = null) {
     const startTime = new Date();
     try {
-      const { spec, source } = await loadRepoSpec(context);
-      console.log(`📄 Spec loaded from ${source} for PR #${pull_request.number}`);
-
       const runResult = await runAllGates(context, pull_request, spec, { 
         workflowRunId,
         deadlineMs: 30000 // Standard timeout for all gates
@@ -220,8 +217,15 @@ export default (app) => {
     // Create check with in_progress status, skip external gates
     const startTime = new Date();
     try {
-      const { spec, source } = await loadRepoSpec(context);
-      console.log(`📄 Spec loaded from ${source} for PR #${pr.number}`);
+      const result = await loadRepoSpec(context);
+      if (!result.ok) {
+        // Convert error to thrown format for existing error handling
+        const error = new Error(`Spec loading failed: ${result.error.code}`);
+        error.code = result.error.code;
+        throw error;
+      }
+      const spec = result.spec;
+      console.log(`📄 Spec loaded from probot_config for PR #${pr.number}`);
 
       // Run all gates
       const runResult = await runAllGates(context, pr, spec);
@@ -310,7 +314,14 @@ export default (app) => {
       );
       
       console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
-      return evaluateAndCreateCheck(context, fullPR); // Rerun with all gates
+      
+      // Retrieve stored spec from checkStateMap
+      const storedState = checkStateMap.get(headSha);
+      if (!storedState?.spec) {
+        throw new Error('No stored spec found for rerun');
+      }
+      
+      return evaluateAndCreateCheck(context, fullPR, storedState.spec); // Rerun with all gates
     } catch (error) {
       console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
       return createCheckOnSha(context, {
