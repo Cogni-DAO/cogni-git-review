@@ -29,5 +29,4 @@ gates:
   - id: forbidden_scopes
   - id: rules
     with:
-      rules_dir: .cogni/rules
-      enable: [goal-alignment.yaml]
+      rule_file: goal-alignment.yaml

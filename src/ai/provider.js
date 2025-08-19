@@ -1,111 +1,83 @@
 /**
- * AI Provider - SINGLE AI ENTRYPOINT
+ * AI Provider - SINGLE AI ENTRYPOINT (MVP STUB)
  * 
  * CRITICAL: This is the ONLY module that makes LLM calls in the entire codebase.
- * All AI functionality flows through the review() function.
  * 
- * ⚠️  DUMB PIPE TO LLMs - NO BUSINESS LOGIC! ⚠️
- * 
- * This module:
- * • Loads prompt templates
- * • Substitutes variables 
- * • Calls LLM with temperature=0
- * • Validates JSON schema output
- * • Returns structured results
- * 
- * This module does NOT:
- * • Make business decisions
- * • Implement rule logic
- * • Do heuristic analysis
- * • Apply scoring/thresholds
+ * MVP: This is currently a STUB that returns hardcoded responses for testing.
+ * Future: Will call LangGraph.js workflows for actual AI evaluation.
  */
-
-import { createGoalAlignmentWorkflow } from './workflows/goal-alignment.js';
 
 /**
  * Single AI entrypoint for all gate evaluations
- * Pure LLM interface - receives structured input, returns structured output
  * 
  * @param {Object} input - Standardized input format
  * @param {Array} input.goals - Repository goals from spec.intent.goals
  * @param {Array} input.non_goals - Repository non-goals from spec.intent.non_goals
- * @param {Object} input.pr - Pull request data
- * @param {string} input.diffSummary - Summary of PR changes
- * @param {Array} input.snippets - Code snippets from changed files
- * @param {Object} input.rule - Rule configuration (id, severity, success_criteria)
+ * @param {string} input.pr_title - Pull request title
+ * @param {string} input.pr_body - Pull request body
+ * @param {string} input.diff_summary - Summary of PR changes
+ * @param {Object} input.rule - Rule configuration with success_criteria
  * @param {Object} options - Configuration options
- * @param {number} options.timeoutMs - Timeout in milliseconds (default: 180000)
- * @returns {Promise<Object>} { verdict: 'success'|'failure'|'neutral', annotations: [], violations: [], provenance: {} }
+ * @param {number} options.timeoutMs - Timeout in milliseconds (default: 60000)
+ * @returns {Promise<Object>} { score: number, violations: [], annotations: [], provenance: {} }
  */
-export async function review(input, { timeoutMs = 180000 } = {}) {
+export async function review(input, { timeoutMs = 60000 } = {}) {
   const startTime = Date.now();
   
   try {
-    // Input validation (structural only - no business logic)
+    // Input validation
     if (!input || !input.rule) {
       return createErrorResponse('invalid_input', 'Missing required input: rule configuration', startTime);
     }
 
-    // Set up timeout handling
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
-
-    try {
-      // Load and execute LangGraph workflow (ONLY place that calls LLMs)
-      const workflow = await createGoalAlignmentWorkflow();
-      const result = await workflow.invoke(input, { 
-        signal: abortController.signal 
-      });
-
-      clearTimeout(timeoutId);
-
-      // Return structured result (no business logic applied here)
-      return {
-        score: result.score || 0,  // CRITICAL: Include score for gate evaluation
-        verdict: result.verdict || 'neutral',
-        annotations: result.annotations || [],
-        violations: result.violations || [],
-        provenance: {
-          model: result.model || process.env.AI_MODEL || 'unknown',
-          runId: generateRunId(),
-          durationMs: Date.now() - startTime,
-          providerVersion: '1.0.0'
-        }
-      };
-
-    } catch (workflowError) {
-      clearTimeout(timeoutId);
-      
-      if (workflowError.name === 'AbortError') {
-        return createTimeoutResponse(startTime);
-      }
-      
-      throw workflowError;
+    // MVP STUB: Return hardcoded response for testing
+    // TODO: Replace with actual LangGraph.js workflow call
+    const mockScore = calculateMockScore(input);
+    
+    // Validate score is in valid range
+    if (typeof mockScore !== 'number' || !isFinite(mockScore) || mockScore < 0 || mockScore > 1) {
+      return createErrorResponse('invalid_output', `Invalid score: ${mockScore} (must be finite number 0-1)`, startTime);
     }
+
+    return {
+      score: mockScore,
+      violations: mockScore < 0.7 ? [`Goal alignment concern (score: ${mockScore.toFixed(2)})`] : [],
+      annotations: [],
+      provenance: {
+        model: 'stub-model',
+        runId: generateRunId(),
+        durationMs: Date.now() - startTime,
+        providerVersion: '1.0.0-stub'
+      }
+    };
     
   } catch (error) {
     console.error('AI Provider error:', error.message);
-    
-    // Respect AI_NEUTRAL_ON_ERROR policy
-    const neutralOnError = process.env.AI_NEUTRAL_ON_ERROR !== 'false';
-    
-    return {
-      verdict: neutralOnError ? 'neutral' : 'failure',
-      annotations: [],
-      violations: [{
-        code: 'ai_provider_error',
-        message: `AI evaluation failed: ${error.message}`,
-        path: null,
-        meta: { error: error.message, neutralOnError }
-      }],
-      provenance: {
-        model: null,
-        runId: generateRunId(),
-        durationMs: Date.now() - startTime,
-        providerVersion: '1.0.0'
-      }
-    };
+    return createErrorResponse('ai_provider_error', `AI evaluation failed: ${error.message}`, startTime);
   }
+}
+
+/**
+ * MVP STUB: Calculate mock score for testing
+ * TODO: Remove when LangGraph.js integration is complete
+ */
+function calculateMockScore(input) {
+  // Simple heuristic for testing: score based on PR title/body content
+  const content = `${input.pr_title} ${input.pr_body}`.toLowerCase();
+  
+  // Higher scores for goal-related keywords
+  const goalKeywords = ['fix', 'improve', 'add', 'update', 'feature', 'enhance'];
+  const hasGoalKeywords = goalKeywords.some(keyword => content.includes(keyword));
+  
+  // Lower scores for concerning keywords  
+  const concernKeywords = ['hack', 'temporary', 'todo', 'fixme', 'broken'];
+  const hasConcernKeywords = concernKeywords.some(keyword => content.includes(keyword));
+  
+  let score = 0.75; // Default neutral score
+  if (hasGoalKeywords) score += 0.15;
+  if (hasConcernKeywords) score -= 0.3;
+  
+  return Math.max(0, Math.min(1, score));
 }
 
 /**
@@ -113,43 +85,19 @@ export async function review(input, { timeoutMs = 180000 } = {}) {
  */
 function createErrorResponse(code, message, startTime) {
   return {
-    verdict: 'neutral',
-    annotations: [],
+    score: null,
     violations: [{
       code,
       message,
       path: null,
       meta: {}
     }],
-    provenance: {
-      model: null,
-      runId: generateRunId(),
-      durationMs: Date.now() - startTime,
-      providerVersion: '1.0.0'
-    }
-  };
-}
-
-/**
- * Create standardized timeout response
- */
-function createTimeoutResponse(startTime) {
-  const neutralOnError = process.env.AI_NEUTRAL_ON_ERROR !== 'false';
-  
-  return {
-    verdict: neutralOnError ? 'neutral' : 'failure',
     annotations: [],
-    violations: [{
-      code: 'ai_provider_timeout',
-      message: 'AI evaluation timed out',
-      path: null,
-      meta: { timeoutMs: Date.now() - startTime }
-    }],
     provenance: {
       model: null,
       runId: generateRunId(),
       durationMs: Date.now() - startTime,
-      providerVersion: '1.0.0'
+      providerVersion: '1.0.0-stub'
     }
   };
 }
@@ -158,5 +106,5 @@ function createTimeoutResponse(startTime) {
  * Generate unique run identifier
  */
 function generateRunId() {
-  return `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `ai-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
