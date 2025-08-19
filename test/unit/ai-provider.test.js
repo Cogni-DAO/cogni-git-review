@@ -28,8 +28,9 @@ describe('AI Provider Contract Tests', () => {
       const input = {
         goals: prAligned.spec.intent.goals,
         non_goals: prAligned.spec.intent.non_goals,
-        pr: prAligned.pr,
-        diffSummary: `${prAligned.pr.changed_files.length} files changed`,
+        pr_title: prAligned.pr.title,
+        pr_body: prAligned.pr.body,
+        diff_summary: `${prAligned.pr.changed_files.length} files changed`,
         rule: { id: 'goal-alignment', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
       };
 
@@ -37,8 +38,8 @@ describe('AI Provider Contract Tests', () => {
 
       // Contract validation
       assert(result, 'Result should be defined');
-      assert.strictEqual(typeof result.verdict, 'string');
-      assert(['success', 'failure', 'neutral'].includes(result.verdict));
+      assert.strictEqual(typeof result.score, 'number');
+      assert(result.score >= 0 && result.score <= 1, 'Score should be between 0 and 1');
       assert(Array.isArray(result.annotations));
       assert(Array.isArray(result.violations));
       assert.strictEqual(typeof result.provenance, 'object');
@@ -50,16 +51,16 @@ describe('AI Provider Contract Tests', () => {
       const input = {
         goals: prScopeCreep.spec.intent.goals,
         non_goals: prScopeCreep.spec.intent.non_goals,
-        pr: prScopeCreep.pr,
-        diffSummary: `${prScopeCreep.pr.changed_files.length} files changed, ML components added`,
+        pr_title: prScopeCreep.pr.title,
+        pr_body: prScopeCreep.pr.body,
+        diff_summary: `${prScopeCreep.pr.changed_files.length} files changed, ML components added`,
         rule: { id: 'goal-alignment', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
       };
 
       const result = await aiProvider.review(input);
 
-      // Provider is now a dumb pipe - LangGraph workflow determines verdict
-      // With mock workflow, expect neutral or any valid verdict
-      assert(['success', 'failure', 'neutral'].includes(result.verdict));
+      // Provider returns score, not verdict - gates handle verdict determination
+      assert(typeof result.score === 'number' && result.score >= 0 && result.score <= 1);
       assert(Array.isArray(result.violations));
       assert(result.provenance.runId.startsWith('ai-'));
     });
@@ -68,8 +69,9 @@ describe('AI Provider Contract Tests', () => {
       const input = {
         goals: prAligned.spec.intent.goals,
         non_goals: prAligned.spec.intent.non_goals,
-        pr: prAligned.pr,
-        diffSummary: 'deterministic test input',
+        pr_title: 'deterministic test input',
+        pr_body: 'test body',
+        diff_summary: 'deterministic test input',
         rule: { id: 'goal-alignment', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
       };
 
@@ -77,9 +79,9 @@ describe('AI Provider Contract Tests', () => {
       const result2 = await aiProvider.review(input);
 
       // Results should be structurally similar (allowing for different runIds)
-      assert.strictEqual(result1.verdict, result2.verdict);
+      assert.strictEqual(result1.score, result2.score);
       assert.strictEqual(result1.violations.length, result2.violations.length);
-      if (result1.violations.length > 0) {
+      if (result1.violations.length > 0 && result1.violations[0].code) {
         assert.strictEqual(result1.violations[0].code, result2.violations[0].code);
       }
     });
@@ -88,15 +90,16 @@ describe('AI Provider Contract Tests', () => {
       const input = {
         goals: ['test goal'],
         non_goals: [],
-        pr: { title: 'test', body: 'test', changed_files: [] },
-        diffSummary: 'test',
+        pr_title: 'test',
+        pr_body: 'test',
+        diff_summary: 'test',
         rule: { id: 'test', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
       };
 
       const result = await aiProvider.review(input, { timeoutMs: 1 }); // Very short timeout
 
-      // Should return valid verdict, not crash (mock workflow completes quickly)
-      assert(['success', 'neutral', 'failure'].includes(result.verdict));
+      // Should return valid score, not crash (stub completes quickly)
+      assert(typeof result.score === 'number' && result.score >= 0 && result.score <= 1);
       assert.strictEqual(typeof result.provenance.durationMs, 'number');
       assert(result.provenance.durationMs >= 0);
     });
@@ -107,7 +110,7 @@ describe('AI Provider Contract Tests', () => {
       const result3 = await aiProvider.review({ goals: [] });
 
       [result1, result2, result3].forEach(result => {
-        assert.strictEqual(result.verdict, 'neutral');
+        assert.strictEqual(result.score, null);
         assert(result.violations.length > 0);
         assert.strictEqual(result.violations[0].code, 'invalid_input');
       });
@@ -119,11 +122,11 @@ describe('AI Provider Contract Tests', () => {
       // Force an error condition
       const result = await aiProvider.review({
         goals: null, // Invalid input
-        pr: null
+        rule: null
       });
 
-      // With AI_NEUTRAL_ON_ERROR=false, should still be neutral for invalid input
-      assert.strictEqual(result.verdict, 'neutral');
+      // With AI_NEUTRAL_ON_ERROR=false, should still return null score for invalid input
+      assert.strictEqual(result.score, null);
       assert.strictEqual(result.violations[0].code, 'invalid_input');
     });
   });

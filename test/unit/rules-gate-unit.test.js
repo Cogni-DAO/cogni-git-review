@@ -15,13 +15,15 @@ describe('AI Rules Gate Unit Tests', () => {
 
   test('ai_rules_gate_loads_and_selects_rules', async () => {
     const context = createAIRulesContext('authFeaturePR');
-    const spec = yaml.load(SPEC_FIXTURES.rulesMvpIntegration);
+    const spec = yaml.load(SPEC_FIXTURES.rulesSingleFile);
+    context.spec = spec;
 
     // This test validates the rule loading and selection logic
-    // We expect it to find the goal-alignment rule and determine it applies to src/** changes
+    // We expect it to find the goal-alignment rule and apply it to the PR
     
     try {
-      const result = await runRulesGate(context, spec);
+      const gateConfig = spec.gates.find(g => g.id === 'rules');
+      const result = await runRulesGate(context, gateConfig);
       
       // Basic result structure validation - registry format
       assert.ok(result, 'Gate should return a result');
@@ -56,49 +58,29 @@ describe('AI Rules Gate Unit Tests', () => {
     }
   });
 
-  test('ai_rules_gate_handles_no_applicable_rules', async () => {
-    const context = createAIRulesContext('configOnlyPR'); // Use config-only fixture
-    const spec = yaml.load(SPEC_FIXTURES.rulesMvpIntegration);
+  test('ai_rules_gate_handles_no_rule_file', async () => {
+    const context = createAIRulesContext('authFeaturePR');
+    const spec = yaml.load(SPEC_FIXTURES.rulesNoRuleFile);
+    context.spec = spec;
 
-    try {
-      // MVP applies rule to ALL PRs, so this will always find applicable rules
-      const result = await runRulesGate(context, spec);
-      
-      // MVP behavior: rule applies to all PRs, validates registry format
-      assert.ok(['pass', 'fail', 'neutral'].includes(result.status), 'Should have valid status');
-      assert.ok(result.stats && typeof result.stats === 'object', 'Should have stats object');
-      
-    } catch (error) {
-      console.log('Integration error in no-applicable test:', error.message);
-      // Still validate the error is not from our core logic
-      assert.ok(
-        error.message.includes('not found') || 
-        error.message.includes('provider'),
-        'Should fail on external dependencies, not selection logic'
-      );
-    }
+    const gateConfig = spec.gates.find(g => g.id === 'rules');
+    const result = await runRulesGate(context, gateConfig);
+    
+    // Missing rule_file should return NEUTRAL with specific reason
+    assert.strictEqual(result.status, 'neutral', 'Missing rule_file should result in neutral');
+    assert.strictEqual(result.neutral_reason, 'no_rule_file', 'Should have no_rule_file reason');
   });
 
-  test('ai_rules_gate_handles_zero_valid_rules', async () => {
+  test('ai_rules_gate_handles_invalid_rule_file', async () => {
     const context = createAIRulesContext('authFeaturePR');
-    const spec = yaml.load(SPEC_FIXTURES.rulesMvpNoValidRules);
+    const spec = yaml.load(SPEC_FIXTURES.rulesInvalidFile);
+    context.spec = spec;
 
-    const result = await runRulesGate(context, spec);
+    const gateConfig = spec.gates.find(g => g.id === 'rules');
+    const result = await runRulesGate(context, gateConfig);
     
-    // Zero valid rules should return NEUTRAL per user requirement
-    assert.strictEqual(result.status, 'neutral', 'Zero valid rules should result in neutral');
-    assert.ok(result.neutral_reason === 'no_rules' || result.neutral_reason === 'load_errors', 'Should have neutral reason');
-  });
-
-  test('ai_rules_gate_error_handling', async () => {
-    const context = createAIRulesContext('authFeaturePR');
-    // Use existing invalid directory fixture - FOLLOWS DRY PRINCIPLE
-    const spec = yaml.load(SPEC_FIXTURES.rulesMvpInvalidDir);
-
-    const result = await runRulesGate(context, spec);
-    
-    // Should handle errors gracefully with neutral result
-    assert.ok(['neutral', 'fail'].includes(result.status), 'Error should result in neutral or fail');
-    assert.ok(Array.isArray(result.violations), 'Should have violations array');
+    // Invalid rule file should return NEUTRAL
+    assert.strictEqual(result.status, 'neutral', 'Invalid rule file should result in neutral');
+    assert.strictEqual(result.neutral_reason, 'rule_missing', 'Should have rule_missing reason');
   });
 });

@@ -226,11 +226,12 @@ gates:
     max_changed_files: 40
     max_total_diff_kb: 1500`,
 
-  // AI Rules integration test spec
-  aiRulesIntegration: `schema_version: '0.2.1'
+
+  // NEW: Single Rule File Format (current MVP design)
+  rulesSingleFile: `schema_version: '0.1.2'
 
 intent:
-  name: ai-rules-test-project
+  name: rules-single-file-project
   goals:
     - Build secure authentication system
     - Maintain good documentation
@@ -239,115 +240,45 @@ intent:
     - Unsecured endpoints
 
 gates:
-  - id: ai_rules
+  - id: review_limits
     with:
-      rules_dir: .cogni/rules
-      enable: [goal-alignment.yaml]
-      model: gpt-4o-mini
-      timeout_ms: 90000
-      neutral_on_error: true
-      blocking_default: true
-      snippet_window: 20`,
+      max_changed_files: 40
+      max_total_diff_kb: 1500
+  - id: goal_declaration
+  - id: forbidden_scopes
+  - id: rules
+    with:
+      rule_file: goal-alignment.yaml`,
 
-  // AI Rules with non-existent rule (for testing zero valid rules)
-  aiRulesNoValidRules: `schema_version: '0.2.1'
+  // Test fixtures for new single-rule design
+  rulesNoRuleFile: `schema_version: '0.1.2'
 
 intent:
-  name: ai-rules-no-rules-project
+  name: rules-no-file-test
   goals:
-    - Test zero valid rules handling
+    - Test missing rule_file parameter
   non_goals:
-    - Any rules that actually exist
-
-gates:
-  - id: ai_rules
-    with:
-      rules_dir: .cogni/rules
-      enable: [nonexistent-rule.yaml]
-      model: gpt-4o-mini
-      timeout_ms: 90000
-      neutral_on_error: true
-      blocking_default: true`,
-
-  // AI Rules with invalid directory (for error handling)
-  aiRulesInvalidDir: `schema_version: '0.2.1'
-
-intent:
-  name: ai-rules-invalid-dir-project  
-  goals:
-    - Test error handling
-  non_goals:
-    - Working directories
-
-gates:
-  - id: ai_rules
-    with:
-      rules_dir: /does/not/exist
-      enable: [goal-alignment.yaml]
-      model: gpt-4o-mini
-      timeout_ms: 90000
-      neutral_on_error: true
-      blocking_default: true`,
-
-  // MVP Rules Gate test spec (uses 'rules' gate id)
-  rulesMvpIntegration: `schema_version: '0.2.1'
-
-intent:
-  name: rules-mvp-test-project
-  goals:
-    - Build secure authentication system
-    - Maintain good documentation
-  non_goals:
-    - Complex legacy integration
-    - Unsecured endpoints
+    - Valid configurations
 
 gates:
   - id: rules
     with:
-      engine: ai
       rules_dir: .cogni/rules
-      enable: [goal-alignment.yaml]
-      model: gpt-4o-mini
-      timeout_ms: 60000
-      neutral_on_error: true
-      blocking_default: true`,
+      # Missing rule_file parameter`,
 
-  // MVP Rules Gate with no valid rules
-  rulesMvpNoValidRules: `schema_version: '0.2.1'
+  rulesInvalidFile: `schema_version: '0.1.2'
 
 intent:
-  name: rules-mvp-no-rules-project
+  name: rules-invalid-file-test  
   goals:
-    - Test zero valid rules handling
+    - Test nonexistent rule file
   non_goals:
-    - Any rules that actually exist
+    - Valid rule files
 
 gates:
   - id: rules
     with:
-      engine: ai
-      rules_dir: .cogni/rules
-      enable: [nonexistent-rule.yaml]
-      model: gpt-4o-mini
-      timeout_ms: 60000
-      neutral_on_error: true
-      blocking_default: true`,
-
-  // MVP Rules Gate with invalid directory (for error handling)
-  rulesMvpInvalidDir: `schema_version: '0.2.1'
-
-intent:
-  name: rules-mvp-invalid-dir-project
-  goals:
-    - Test error handling
-  non_goals:
-    - Working directories
-
-gates:
-  - id: rules
-    with:
-      rules_dir: /does/not/exist
-      enable: [goal-alignment.yaml]`
+      rule_file: nonexistent-rule.yaml`
 };
 
 // Helper for accessing specs by key  
@@ -549,6 +480,31 @@ export const PR_FIXTURES = {
 // Factory for creating full AI Rules gate contexts
 export function createAIRulesContext(prFixtureKey = 'authFeaturePR') {
   return {
-    pr: PR_FIXTURES[prFixtureKey]
+    pr: PR_FIXTURES[prFixtureKey],
+    repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+    octokit: {
+      config: {
+        get: async ({ path }) => {
+          if (path === '.cogni/rules/goal-alignment.yaml') {
+            // Mock rule file
+            return {
+              config: {
+                id: 'goal-alignment',
+                schema_version: '0.1',
+                success_criteria: {
+                  metric: 'score',
+                  threshold: 0.7
+                },
+                prompt: {
+                  template: '.cogni/prompts/goal-alignment.md',
+                  variables: ['goals', 'non_goals', 'pr_title', 'pr_body', 'diff_summary']
+                }
+              }
+            };
+          }
+          return { config: null };
+        }
+      }
+    }
   };
 }
