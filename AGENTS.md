@@ -48,13 +48,16 @@ context.payload = {
 }
 ```
 
-### Context Enhancement Pattern
-When bridging between event types (e.g., workflow → PR gates), enhance context:
+### Rerun Event Handling
+`check_suite.rerequested` events lack PR association data. The rerun handler:
 ```javascript
-// Add missing data to workflow context
-context.payload.pull_request = prData;
-context.storedSpec = spec;
-// Now context has everything gates need
+// Use GitHub API to find PR associated with commit SHA
+const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+  context.repo({ commit_sha: headSha })
+);
+const pr = assoc.find(pr => pr.state === 'open') || assoc[0];
+// Enhance context and delegate to PR handler
+context.payload.pull_request = pr;
 ```
 
 
@@ -67,8 +70,8 @@ context.storedSpec = spec;
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
-│   ├── integration/           # End-to-end tests (→ AGENTS.md)
-│   ├── mock-integration/      # Webhook handler tests (→ AGENTS.md)
+│   ├── contract/              # End-to-end tests, using test harness without HTTP (→ AGENTS.md)
+│   ├── helpers/               # Test utilities and harnesses (→ AGENTS.md)
 │   └── unit/                  # Isolated component tests (→ AGENTS.md)
 └── .cogni/
     ├── repo-spec.yaml         # This repository's quality gates
@@ -86,6 +89,10 @@ gates:
       max_total_diff_kb: 100
   - id: goal_declaration
   - id: forbidden_scopes
+  - id: rules
+    with:
+      rule_file: goal-alignment.yaml
+  
   
 ```
 **Principle**: Only gates listed in the spec execute ("presence = enabled")
