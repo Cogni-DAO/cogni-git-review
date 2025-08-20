@@ -25,15 +25,26 @@ export async function run(ctx, gateConfig) {
       blockingDefault: config.blocking_default !== false
     });
     
+    // Step 2: Validate rule loading
     if (!ruleResult.ok) {
       return createNeutralResult(ruleResult.error.code.toLowerCase(), 
         getErrorMessage(ruleResult.error), startTime);
     }
     
     const rule = ruleResult.rule;
-    const pr = ctx.pr;
     
-    // Debug PR data
+    // Step 3: Validate rule structure
+    const statement = rule['evaluation-statement'];
+    if (!statement || statement.trim() === '') {
+      return createNeutralResult('missing_statement', 'Rule has no evaluation-statement defined', startTime);
+    }
+    
+    if (!rule.success_criteria?.threshold) {
+      return createNeutralResult('missing_threshold', 'No threshold specified in rule success criteria', startTime);
+    }
+    
+    // Step 4: Build PR context
+    const pr = ctx.pr;
     console.log('🔍 PR Data Debug:', {
       title: pr?.title,
       body: pr?.body?.substring(0, 100),
@@ -42,18 +53,11 @@ export async function run(ctx, gateConfig) {
       deletions: pr?.deletions
     });
     
-    // Step 2: Build PR context directly
     const fileCount = pr?.changed_files || 0;
     const totalAdditions = pr?.additions || 0;
     const totalDeletions = pr?.deletions || 0;
     
-    // Step 3: Validate statement exists
-    const statement = rule['evaluation-statement'];
-    if (!statement || statement.trim() === '') {
-      return createNeutralResult('missing_statement', 'Rule has no evaluation-statement defined', startTime);
-    }
-    
-    // Step 4: Call AI provider with statement from rule
+    // Step 5: Call AI provider with statement from rule
     const providerInput = {
       statement: statement,
       pr_title: pr?.title || '',
@@ -72,14 +76,16 @@ export async function run(ctx, gateConfig) {
     console.error('Rules gate error:', error);
     
     const shouldBeNeutral = config.neutral_on_error !== false;
-    
-    return {
-      status: shouldBeNeutral ? 'neutral' : 'fail',
-      neutral_reason: shouldBeNeutral ? 'internal_error' : undefined,
-      annotations: shouldBeNeutral ? [] : [error.message],
-      stats: { error: error.message },
-      duration_ms: Date.now() - startTime
-    };
+    if (shouldBeNeutral) {
+      return createNeutralResult('internal_error', error.message, startTime);
+    } else {
+      return {
+        status: 'fail',
+        annotations: [error.message],
+        stats: { error: error.message },
+        duration_ms: Date.now() - startTime
+      };
+    }
   }
 }
 
