@@ -36,9 +36,9 @@ export async function buildRegistry(logger) {
         const fileUrl = pathToFileURL(filePath).href;
         const module = await import(fileUrl);
 
-        // Register cogni gates by their 'id' export
-        if (kind === 'cogni' && module.id && typeof module.run === 'function') {
-          registry.cogni.set(module.id, module.run);
+        // Register cogni gates by their 'type' export
+        if (kind === 'cogni' && module.type && typeof module.run === 'function') {
+          registry.cogni.set(module.type, module.run);
         }
 
       } catch (error) {
@@ -70,6 +70,6 @@ export async function buildRegistry(logger) {
  * @returns {Function|null} Gate handler function or null if not found
  */
 export function resolveHandler(registry, gate) {
-  // All gates are cogni gates - use 'id' field
-  return registry.cogni.get(gate.id) ?? null;
+  // All gates are cogni gates - use 'type' field
+  return registry.cogni.get(gate.type) ?? null;
 }

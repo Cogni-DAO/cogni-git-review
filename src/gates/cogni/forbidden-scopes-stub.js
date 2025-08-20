@@ -4,7 +4,7 @@
  */
 
 // Gate registry contract exports
-export const id = 'forbidden_scopes';
+export const type = 'forbidden-scopes';
 
 /**
  * Evaluate forbidden scopes requirement - STUB VERSION

@@ -8,7 +8,7 @@
 import { loadSingleRule } from '../../spec-loader.js';
 import * as aiProvider from '../../ai/provider.js';
 
-export const id = 'rules';
+export const type = 'ai-rule';
 
 /**
  * Evaluate PR against the first enabled AI rule

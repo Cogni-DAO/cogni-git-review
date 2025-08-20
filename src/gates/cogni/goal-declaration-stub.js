@@ -4,7 +4,7 @@
  */
 
 // Gate registry contract exports  
-export const id = 'goal_declaration';  // spec uses goal_declaration
+export const type = 'goal-declaration';
 
 /**
  * Evaluate goal declaration requirement - STUB VERSION

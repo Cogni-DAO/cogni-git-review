@@ -139,9 +139,9 @@ describe('Hardened Launcher Integration Tests', () => {
           non_goals: ['Test non-goal']
         },
         gates: [
-          { id: 'review_limits', with: { max_changed_files: 10 } },
-          { id: 'nonexistent_gate_12345' },  // Unknown gate
-          { id: 'goal_declaration' }  // Real gate
+          { type: 'review-limits', id: 'review_limits', with: { max_changed_files: 10 } },
+          { type: 'nonexistent_gate_12345', id: 'nonexistent_gate_12345' },  // Unknown gate
+          { type: 'goal-declaration', id: 'goal_declaration' }  // Real gate
         ]
       };
 
@@ -195,7 +195,7 @@ describe('Hardened Launcher Integration Tests', () => {
           goals: ['Test ID normalization']
         },
         gates: [
-          { id: 'review_limits', with: { max_changed_files: 100 } }
+          { type: 'review-limits', id: 'review_limits', with: { max_changed_files: 100 } }
         ]
       };
 
@@ -234,7 +234,7 @@ describe('Hardened Launcher Integration Tests', () => {
           goals: ['Test malformed output handling']
         },
         gates: [
-          { id: 'unknown_malformed_gate' }  // Will trigger unimplemented path
+          { type: 'unknown_malformed_gate', id: 'unknown_malformed_gate' }  // Will trigger unimplemented path
         ]
       };
 
@@ -270,9 +270,9 @@ describe('Hardened Launcher Integration Tests', () => {
           goals: ['Test goal']
         },
         gates: [
-          { id: 'unknown_gate_1' },
-          { id: 'unknown_gate_2' },
-          { id: 'unknown_gate_3' }
+          { type: 'unknown_gate_1', id: 'unknown_gate_1' },
+          { type: 'unknown_gate_2', id: 'unknown_gate_2' },
+          { type: 'unknown_gate_3', id: 'unknown_gate_3' }
         ]
       };
 
@@ -301,7 +301,7 @@ describe('Hardened Launcher Integration Tests', () => {
     it('mixed real and unknown gates preserve order and types', async () => {
       // Use full spec fixture and add unknown gate
       const spec = yaml.load(SPEC_FIXTURES.full);
-      spec.gates.push({ id: 'mystery_gate_xyz' });
+      spec.gates.push({ type: 'mystery_gate_xyz', id: 'mystery_gate_xyz' });
 
       const runCtx = {
         spec,
@@ -335,60 +335,34 @@ describe('Hardened Launcher Integration Tests', () => {
       assert.strictEqual(results[3].neutral_reason, 'unimplemented_gate');
     });
 
-    it('duplicate gates in spec run in order and appear as separate results', async () => {
-      // Test spec with duplicate review_limits gates with different configs
+    it('duplicate gate IDs are properly detected and rejected', async () => {
+      // Test spec with duplicate gate IDs (new validation behavior)
       const testSpec = {
         schema_version: '0.2.1',
         intent: {
           name: 'duplicate-gates-project',
-          goals: ['Test duplicate gate handling']
+          goals: ['Test duplicate gate ID validation']
         },
         gates: [
-          { id: 'review_limits', with: { max_changed_files: 100, max_total_diff_kb: 500 } },
-          { id: 'goal_declaration' },
-          { id: 'review_limits', with: { max_changed_files: 10, max_total_diff_kb: 50 } }  // Duplicate with stricter limits
+          { type: 'review-limits', id: 'review_limits', with: { max_changed_files: 100 } },
+          { type: 'goal-declaration', id: 'goal_declaration' },
+          { type: 'review-limits', id: 'review_limits', with: { max_changed_files: 10 } }  // Duplicate ID
         ]
       };
 
       const runCtx = {
         spec: testSpec,
-        pr: { 
-          changed_files: 15,  // Will pass first review_limits (100 limit) but fail second (10 limit)
-          additions: 75,      // Will pass both KB limits 
-          deletions: 25 
-        },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-        octokit: {
-          pulls: {
-            get: () => ({ data: { changed_files: 15 } })
-          }
-        }
+        pr: { changed_files: 15 },
+        log: { error: () => {} }
       };
 
-      const launcherResult = await runConfiguredGates(runCtx);
-      const results = launcherResult.results;
-      
-      // Should have 3 results: review_limits (pass), goal_declaration, review_limits (fail)
-      assert.strictEqual(results.length, 3);
-      
-      // First review_limits should pass (100 file limit)
-      assert.strictEqual(results[0].id, 'review_limits');
-      assert.strictEqual(results[0].status, 'pass');
-      
-      // Middle result should be goal_declaration
-      assert.strictEqual(results[1].id, 'goal_declaration');
-      
-      // Second review_limits should fail (10 file limit exceeded)
-      assert.strictEqual(results[2].id, 'review_limits');
-      assert.strictEqual(results[2].status, 'fail');
-      
-      // Both review_limits should have proper structure
-      results.filter(r => r.id === 'review_limits').forEach(result => {
-        assert(typeof result.duration_ms === 'number');
-        assert(result.duration_ms >= 0);
-        assert(Array.isArray(result.violations));
-        assert(typeof result.stats === 'object');
-      });
+      // Should throw error for duplicate IDs (new validation behavior)
+      try {
+        await runConfiguredGates(runCtx);
+        assert.fail('Should have thrown duplicate ID error');
+      } catch (error) {
+        assert.strictEqual(error.message, 'Duplicate gate ID: review_limits');
+      }
     });
   });
 
