@@ -2,6 +2,7 @@
 import js from '@eslint/js';
 import globals from 'globals';
 import promise from 'eslint-plugin-promise';
+import eslintPluginYml from 'eslint-plugin-yml';
 // import n from 'eslint-plugin-n';  // Intentionally disabled: generates false positives about Node.js test runner being "experimental"
 
 export default [
@@ -16,6 +17,7 @@ export default [
   js.configs.recommended,
   // n.configs['flat/recommended'],  // Re-enable later with selective rules once plugin data catches up
   promise.configs['flat/recommended'],
+  ...eslintPluginYml.configs['flat/recommended'],
 
   // Project rules
   {
