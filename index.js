@@ -147,6 +147,12 @@ export default (app) => {
       text += `**Stats:** files=${reviewGate.stats.changed_files || 0} | diff_kb=${reviewGate.stats.total_diff_kb || 0}`;
     }
     
+    // Add AI score if available. Temporary, only functional when only 1 AI rule. gate output needs refactoring. 
+    const rulesGate = gates.find(g => g.id === 'rules');
+    if (rulesGate?.stats?.score !== undefined) {
+      text += reviewGate?.stats ? ` | AI score=${rulesGate.stats.score}` : `**Stats:** AI score=${rulesGate.stats.score}`;
+    }
+    
     return { summary, text };
   }
 
