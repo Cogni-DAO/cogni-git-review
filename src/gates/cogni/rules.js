@@ -1,12 +1,11 @@
 /**
- * Rules Gate - Minimal MVP Implementation
+ * Rules Gate - One Rule Per Gate Instance
  * 
- * Loads ONE rule, applies to ALL PRs (ignores selectors), 
- * builds simple evidence (pr_title, pr_body, diff_summary only),
- * calls AI provider once, returns single check result.
+ * Each gate instance loads exactly one rule file, enabling parallel execution
+ * and individual pass/fail results per AI rule in GitHub UI.
  */
 
-import { loadRules } from '../../rules/loader.js';
+import { loadSingleRule } from '../../spec-loader.js';
 import * as aiProvider from '../../ai/provider.js';
 
 export const id = 'rules';
@@ -14,81 +13,70 @@ export const id = 'rules';
 /**
  * Evaluate PR against the first enabled AI rule
  */
-export async function run(context, spec) {
+export async function run(ctx, gateConfig) {
   const startTime = Date.now();
-  const gateConfig = spec.gates?.find(g => g.id === 'rules')?.with || {};
-  console.log(`🔍 Rules: Gate config:`, JSON.stringify(gateConfig, null, 2));
-  console.log(`🔍 Rules: Full spec.gates:`, JSON.stringify(spec.gates, null, 2));
+  const config = gateConfig.with || gateConfig; // Handle both formats
   
   try {
-    // Step 1: Load only the first enabled rule (MVP)
-    const { rules, diagnostics } = await loadRules({
-      rules_dir: gateConfig.rules_dir || '.cogni/rules',
-      enabled: gateConfig.enable ? [gateConfig.enable[0]] : [], // Just first rule
-      blocking_default: gateConfig.blocking_default !== false
+    // Step 1: Load single rule for this gate instance
+    const ruleResult = await loadSingleRule(ctx, {
+      rulesDir: config.rules_dir || '.cogni/rules',
+      ruleFile: config.rule_file,
+      blockingDefault: config.blocking_default !== false
     });
     
-    // Handle no rules case
-    if (rules.length === 0) {
-      const errorCount = diagnostics.filter(d => d.severity === 'error').length;
-      return {
-        status: 'neutral',
-        neutral_reason: errorCount > 0 ? 'load_errors' : 'no_rules',
-        violations: [],
-        stats: { diagnostics: diagnostics.length, enabled_rules: gateConfig.enable?.length || 0 },
-        duration_ms: Date.now() - startTime
-      };
+    if (!ruleResult.ok) {
+      return createNeutralResult(ruleResult.error.code.toLowerCase(), 
+        getErrorMessage(ruleResult.error), startTime);
     }
     
-    const rule = rules[0]; // Use first rule only
+    const rule = ruleResult.rule;
+    const pr = ctx.pr;
     
-    // Step 2: Build minimal evidence (MVP - no selectors, no file snippets)
-    const evidence = buildMinimalEvidence(context, spec);
+    // Debug PR data
+    console.log('🔍 PR Data Debug:', {
+      title: pr?.title,
+      body: pr?.body?.substring(0, 100),
+      changed_files: pr?.changed_files,
+      additions: pr?.additions,
+      deletions: pr?.deletions
+    });
     
-    // Step 3: Call AI provider once
+    // Step 2: Build PR context directly
+    const fileCount = pr?.changed_files || 0;
+    const totalAdditions = pr?.additions || 0;
+    const totalDeletions = pr?.deletions || 0;
+    
+    // Step 3: Validate statement exists
+    const statement = rule['evaluation-statement'];
+    if (!statement || statement.trim() === '') {
+      return createNeutralResult('missing_statement', 'Rule has no evaluation-statement defined', startTime);
+    }
+    
+    // Step 4: Call AI provider with statement from rule
     const providerInput = {
-      goals: spec.intent?.goals || [],
-      non_goals: spec.intent?.non_goals || [],
-      pr_title: evidence.pr_title,
-      pr_body: evidence.pr_body,
-      diff_summary: evidence.diff_summary,
-      rule: {
-        id: rule.rule_key,
-        blocking: rule.blocking,
-        success_criteria: rule.success_criteria
-      }
+      statement: statement,
+      pr_title: pr?.title || '',
+      pr_body: pr?.body || '',
+      diff_summary: `PR "${pr?.title || 'Untitled'}" modifies ${fileCount} file${fileCount === 1 ? '' : 's'} (+${totalAdditions} -${totalDeletions} lines)`
     };
     
     const providerResult = await aiProvider.review(providerInput, {
-      timeoutMs: gateConfig.timeout_ms || 60000,
-      model: gateConfig.model || process.env.AI_MODEL || 'gpt-4o-mini'
+      timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
     });
     
-    // Step 4: Determine final conclusion and convert to registry format
-    const conclusion = determineConclusion(providerResult, rule);
-    const status = conclusion === 'success' ? 'pass' : conclusion === 'failure' ? 'fail' : 'neutral';
-    
-    return {
-      status,
-      neutral_reason: status === 'neutral' ? 'ai_result' : undefined,
-      violations: status === 'fail' ? [`Goal alignment failed (score: ${(providerResult.score || 0).toFixed(2)})`] : [],
-      stats: {
-        rule_id: rule.rule_key,
-        score: providerResult.score || 0,
-        threshold: rule.success_criteria?.threshold || 0.7
-      },
-      duration_ms: Date.now() - startTime
-    };
+    // Step 5: Make gate decision based on provider output
+    return makeGateDecision(providerResult, rule, startTime);
     
   } catch (error) {
     console.error('Rules gate error:', error);
     
-    const errorStatus = gateConfig.neutral_on_error !== false ? 'neutral' : 'fail';
+    const shouldBeNeutral = config.neutral_on_error !== false;
     
     return {
-      status: errorStatus,
-      neutral_reason: errorStatus === 'neutral' ? 'internal_error' : undefined,
-      violations: errorStatus === 'fail' ? [error.message] : [],
+      status: shouldBeNeutral ? 'neutral' : 'fail',
+      neutral_reason: shouldBeNeutral ? 'internal_error' : undefined,
+      annotations: shouldBeNeutral ? [] : [error.message],
       stats: { error: error.message },
       duration_ms: Date.now() - startTime
     };
@@ -96,95 +84,60 @@ export async function run(context, spec) {
 }
 
 /**
- * Build minimal evidence for MVP (no file snippets, no selectors)
+ * Make gate decision based on AI provider output
  */
-function buildMinimalEvidence(context, spec) {
-  const { pr } = context;
-  const changedFiles = pr.changed_files || [];
+function makeGateDecision(providerResult, rule, startTime) {
+  const score = providerResult.score;
   
-  // Simple diff summary
-  const fileCount = changedFiles.length;
-  const totalAdditions = changedFiles.reduce((sum, f) => sum + (f.additions || 0), 0);
-  const totalDeletions = changedFiles.reduce((sum, f) => sum + (f.deletions || 0), 0);
+  if (score === null || score === undefined || typeof score !== 'number') {
+    return createNeutralResult('missing_score', 'AI provider did not return a score', startTime);
+  }
   
-  const diffSummary = `PR "${pr.title || 'Untitled'}" modifies ${fileCount} file${fileCount === 1 ? '' : 's'} (+${totalAdditions} -${totalDeletions} lines)`;
+  if (!rule.success_criteria?.threshold) {
+    return createNeutralResult('missing_threshold', 'No threshold specified in rule success criteria', startTime);
+  }
+  
+  const threshold = Number(rule.success_criteria.threshold);
+  
+  console.log(`Evaluating against threshold ${threshold} with score ${score}`);
+  const status = score >= threshold ? 'pass' : 'fail';
   
   return {
-    pr_title: pr.title || '',
-    pr_body: pr.body || '',
-    diff_summary: diffSummary
+    status,
+    annotations: providerResult.annotations || [],
+    stats: {
+      score,
+      threshold,
+      rule_id: rule.id,
+      statement: rule['evaluation-statement']
+    },
+    duration_ms: Date.now() - startTime
   };
 }
 
 /**
- * Determine final gate conclusion from provider result
- * CRITICAL: Gate decides pass/fail based on score vs threshold, NOT LLM verdict
+ * Create neutral result for error conditions
  */
-function determineConclusion(providerResult, rule) {
-  const score = providerResult.score || 0;
-  const threshold = rule.success_criteria.threshold || 0.7;
-  
-  if (score >= threshold) {
-    return 'success'; // Score meets threshold
-  } else if (rule.blocking) {
-    return 'failure'; // Below threshold + blocking rule
-  } else {
-    return 'neutral'; // Below threshold + non-blocking rule
-  }
+function createNeutralResult(reason, message, startTime) {
+  return {
+    status: 'neutral',
+    neutral_reason: reason,
+    annotations: [],
+    stats: { error: message },
+    duration_ms: Date.now() - startTime
+  };
 }
 
 /**
- * Build result text from provider output
+ * Get human-readable error message
  */
-function buildResultText(providerResult, rule) {
-  const score = providerResult.score || 0;
-  const threshold = rule.success_criteria.threshold || 0.7;
-  const verdict = score >= threshold ? 'PASS' : 'FAIL';
-  
-  const sections = [
-    '## AI Rules Evaluation',
-    '',
-    `**Rule**: ${rule.rule_key}`,
-    `**Score**: ${score.toFixed(2)} (threshold: ${threshold})`,
-    `**Verdict**: ${verdict}`,
-    `**Blocking**: ${rule.blocking ? 'Yes' : 'No'}`,
-    ''
-  ];
-  
-  if (providerResult.summary) {
-    sections.push('**AI Summary**:', providerResult.summary, '');
-  }
-  
-  if (providerResult.reasons && providerResult.reasons.length > 0) {
-    sections.push('**Reasons**:');
-    providerResult.reasons.forEach(reason => {
-      sections.push(`- ${reason}`);
-    });
-  }
-  
-  return sections.join('\n');
+function getErrorMessage(error) {
+  const messages = {
+    'NO_RULE_FILE': 'No rule_file specified in gate config',
+    'RULE_MISSING': 'Rule file not found', 
+    'RULE_INVALID': 'Invalid rule file',
+    'RULE_LOAD_FAILED': error.message || 'Load failed'
+  };
+  return messages[error.code] || `Unknown error: ${error.code}`;
 }
 
-/**
- * Build diagnostics text for no rules case
- */
-function buildDiagnosticsText(diagnostics, enabledFiles) {
-  const sections = [
-    '## AI Rules Configuration',
-    '',
-    `**Enabled Files**: ${enabledFiles?.join(', ') || 'none'}`,
-    `**Valid Rules Loaded**: 0`,
-    ''
-  ];
-  
-  if (diagnostics.length > 0) {
-    sections.push('**Diagnostics**:');
-    diagnostics.forEach(d => {
-      sections.push(`- **${d.type}** (${d.severity}): ${d.message}`);
-    });
-  } else {
-    sections.push('No rule files were enabled in the gate configuration.');
-  }
-  
-  return sections.join('\n');
-}

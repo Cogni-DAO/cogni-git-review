@@ -2,35 +2,12 @@ id: goal-alignment
 schema_version: "0.1"
 blocking: true
 
-prompt:
-  # MVP: inline prompt text, no separate .md fetch needed
-  inline: |
-    # Goal Alignment Evaluation
+evaluation-statement: Does NOT Re-implementing mature OSS tools or libraries.
 
-    You are evaluating whether a pull request aligns with the repository's stated goals and avoids its non-goals.
-
-    ## Repository Context
-    **Goals**: {{goals}}
-    **Non-Goals**: {{non_goals}}
-
-    ## Pull Request to Evaluate
-    **Title**: {{pr_title}}
-    **Description**: {{pr_body}}
-    **Changes Summary**: {{diff_summary}}
-
-    ## Required Output Format
-    Return ONLY this JSON object:
-    {
-      "score": 0.85,
-      "violations": [],
-      "summary": "Brief assessment of goal alignment"
-    }
-
-    - The "score" must be a number between 0 and 1.
-    - Use temperature=0. Do not include extra text.
-
-  # Optional; if omitted, provider uses the default full set below
-  variables: [goals, non_goals, pr_title, pr_body, diff_summary]
+# Unused for MVP. provider assumes this
+rule-schema-id: statement-alignment-evaluation
+# Present, but totally unused for now.
+variables: [pr_title, pr_body, diff_summary]
 
 success_criteria:
   metric: score

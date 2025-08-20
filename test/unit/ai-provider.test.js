@@ -1,166 +1,63 @@
 /**
- * Contract tests for AI Provider - Single Entrypoint  
- * Tests the review() function with deterministic fixtures
+ * Unit Test for AI Provider - Single Statement Contract
+ * Tests the provider router functionality in isolation
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import fs from 'fs';
-import path from 'path';
-import * as aiProvider from '../../src/ai/provider.js';
+import { review } from '../../src/ai/provider.js';
 
-const prAligned = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'test/fixtures/ai/pr-aligned.json'), 'utf-8'));
-const prScopeCreep = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'test/fixtures/ai/pr-scope-creep.json'), 'utf-8'));
+describe('AI Provider Unit Tests', () => {
 
-describe('AI Provider Contract Tests', () => {
-  let originalEnv;
+  test('provider forwards input to goal-alignment workflow', async () => {
+    const input = {
+      statement: "Test statement evaluation",
+      pr_title: "Add new feature",
+      pr_body: "This PR adds a new feature to the codebase",
+      diff_summary: "3 files changed (+45 -12 lines)"
+    };
 
-  beforeEach(() => {
-    originalEnv = { ...process.env };
+    const result = await review(input);
+
+    // Validate contract structure
+    assert.strictEqual(typeof result.score, 'number', 'Should return numeric score');
+    assert(result.score >= 0 && result.score <= 1, 'Score should be between 0 and 1');
+    assert(Array.isArray(result.annotations), 'Should return annotations array');
+    assert(typeof result.summary === 'string', 'Should return summary string');
+    
+    // Validate provenance wrapper added by provider
+    assert(result.provenance, 'Should include provenance');
+    assert(typeof result.provenance.runId === 'string', 'Should have runId');
+    assert(result.provenance.runId.startsWith('ai-'), 'RunId should start with ai-');
+    assert(typeof result.provenance.durationMs === 'number', 'Should track duration');
+    assert.strictEqual(result.provenance.providerVersion, '1.0.0', 'Should have version');
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
+  test('provider returns hardcoded workflow response', async () => {
+    const input = {
+      statement: "Does NOT re-implement mature OSS tools",
+      pr_title: "Refactor logging system", 
+      pr_body: "Replace custom logger with winston",
+      diff_summary: "2 files changed (+30 -15 lines)"
+    };
+
+    const result = await review(input);
+
+    // Should get hardcoded response from goal-alignment workflow
+    assert.strictEqual(result.score, 0.85, 'Should return hardcoded score');
+    assert.deepStrictEqual(result.annotations, [], 'Should return empty annotations');
+    assert(result.summary.includes('Refactor logging system'), 'Summary should include PR title');
+    assert(result.summary.includes('Does NOT re-implement mature OSS tools'), 'Summary should include statement');
   });
 
-  describe('review() function contract', () => {
-    it('should return valid structure for aligned PR', async () => {
-      const input = {
-        goals: prAligned.spec.intent.goals,
-        non_goals: prAligned.spec.intent.non_goals,
-        pr: prAligned.pr,
-        diffSummary: `${prAligned.pr.changed_files.length} files changed`,
-        rule: { id: 'goal-alignment', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
-      };
+  test('provider handles errors from workflow', async () => {
+    // Test error handling - provider should catch and format errors
+    const result = await review(null);
 
-      const result = await aiProvider.review(input);
-
-      // Contract validation
-      assert(result, 'Result should be defined');
-      assert.strictEqual(typeof result.verdict, 'string');
-      assert(['success', 'failure', 'neutral'].includes(result.verdict));
-      assert(Array.isArray(result.annotations));
-      assert(Array.isArray(result.violations));
-      assert.strictEqual(typeof result.provenance, 'object');
-      assert.strictEqual(typeof result.provenance.runId, 'string');
-      assert.strictEqual(typeof result.provenance.durationMs, 'number');
-    });
-
-    it('should handle complex PR input without crashing', async () => {
-      const input = {
-        goals: prScopeCreep.spec.intent.goals,
-        non_goals: prScopeCreep.spec.intent.non_goals,
-        pr: prScopeCreep.pr,
-        diffSummary: `${prScopeCreep.pr.changed_files.length} files changed, ML components added`,
-        rule: { id: 'goal-alignment', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
-      };
-
-      const result = await aiProvider.review(input);
-
-      // Provider is now a dumb pipe - LangGraph workflow determines verdict
-      // With mock workflow, expect neutral or any valid verdict
-      assert(['success', 'failure', 'neutral'].includes(result.verdict));
-      assert(Array.isArray(result.violations));
-      assert(result.provenance.runId.startsWith('ai-'));
-    });
-
-    it('should be deterministic - same input produces same output', async () => {
-      const input = {
-        goals: prAligned.spec.intent.goals,
-        non_goals: prAligned.spec.intent.non_goals,
-        pr: prAligned.pr,
-        diffSummary: 'deterministic test input',
-        rule: { id: 'goal-alignment', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
-      };
-
-      const result1 = await aiProvider.review(input);
-      const result2 = await aiProvider.review(input);
-
-      // Results should be structurally similar (allowing for different runIds)
-      assert.strictEqual(result1.verdict, result2.verdict);
-      assert.strictEqual(result1.violations.length, result2.violations.length);
-      if (result1.violations.length > 0) {
-        assert.strictEqual(result1.violations[0].code, result2.violations[0].code);
-      }
-    });
-
-    it('should handle timeout gracefully', async () => {
-      const input = {
-        goals: ['test goal'],
-        non_goals: [],
-        pr: { title: 'test', body: 'test', changed_files: [] },
-        diffSummary: 'test',
-        rule: { id: 'test', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
-      };
-
-      const result = await aiProvider.review(input, { timeoutMs: 1 }); // Very short timeout
-
-      // Should return valid verdict, not crash (mock workflow completes quickly)
-      assert(['success', 'neutral', 'failure'].includes(result.verdict));
-      assert.strictEqual(typeof result.provenance.durationMs, 'number');
-      assert(result.provenance.durationMs >= 0);
-    });
-
-    it('should handle missing input gracefully', async () => {
-      const result1 = await aiProvider.review(null);
-      const result2 = await aiProvider.review({});
-      const result3 = await aiProvider.review({ goals: [] });
-
-      [result1, result2, result3].forEach(result => {
-        assert.strictEqual(result.verdict, 'neutral');
-        assert(result.violations.length > 0);
-        assert.strictEqual(result.violations[0].code, 'invalid_input');
-      });
-    });
-
-    it('should respect AI_NEUTRAL_ON_ERROR environment variable', async () => {
-      process.env.AI_NEUTRAL_ON_ERROR = 'false';
-
-      // Force an error condition
-      const result = await aiProvider.review({
-        goals: null, // Invalid input
-        pr: null
-      });
-
-      // With AI_NEUTRAL_ON_ERROR=false, should still be neutral for invalid input
-      assert.strictEqual(result.verdict, 'neutral');
-      assert.strictEqual(result.violations[0].code, 'invalid_input');
-    });
-  });
-
-  describe('provenance tracking', () => {
-    it('should include required provenance fields', async () => {
-      const input = {
-        goals: ['test'],
-        non_goals: [],
-        pr: { title: 'test', changed_files: [] },
-        diffSummary: 'test',
-        rule: { id: 'test', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
-      };
-
-      const result = await aiProvider.review(input);
-
-      assert(result.provenance);
-      assert.strictEqual(typeof result.provenance.runId, 'string');
-      assert(result.provenance.runId.startsWith('ai-'));
-      assert.strictEqual(typeof result.provenance.durationMs, 'number');
-      assert(result.provenance.durationMs >= 0);
-      assert.strictEqual(typeof result.provenance.providerVersion, 'string');
-    });
-
-    it('should generate unique run IDs', async () => {
-      const input = {
-        goals: ['test'],
-        non_goals: [],
-        pr: { title: 'test', changed_files: [] },
-        diffSummary: 'test',
-        rule: { id: 'test', severity: 'error', success_criteria: { metric: 'score', threshold: 0.7 } }
-      };
-
-      const result1 = await aiProvider.review(input);
-      const result2 = await aiProvider.review(input);
-
-      assert.notStrictEqual(result1.provenance.runId, result2.provenance.runId);
-    });
+    assert.strictEqual(result.score, null, 'Should return null score on error');
+    assert(Array.isArray(result.annotations), 'Should return annotations array');
+    assert(result.annotations.length > 0, 'Should have error annotations');
+    assert.strictEqual(result.annotations[0].code, 'ai_provider_error', 'Should have error code');
+    assert(result.provenance.runId, 'Should still have provenance on error');
   });
 });

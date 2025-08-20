@@ -35,7 +35,7 @@ describe('Rules Gate Contract Tests', () => {
   test('rules gate enabled → creates check', async () => {
     await testPullRequestHandler({
       payload: payload(),
-      spec: 'rulesMvpIntegration',
+      spec: 'rulesSingleFile',
       expectCheck: (params) => {
         // Minimal contract assertions
         assert.strictEqual(params.name, 'Cogni Git PR Review');
@@ -49,15 +49,11 @@ describe('Rules Gate Contract Tests', () => {
     });
   });
 
-  test('missing rules dir → handles gracefully', async () => {
-    const broken = SPEC_FIXTURES.rulesMvpIntegration.replace(
-      'rules_dir: .cogni/rules',
-      'rules_dir: /nonexistent/rules'
-    );
-
+  test('invalid rule file → handles gracefully', async () => {
+    // Use rulesInvalidFile fixture which has nonexistent-rule.yaml
     await testPullRequestHandler({
       payload: payload(),
-      spec: yaml.load(broken),
+      spec: 'rulesInvalidFile',
       expectCheck: (params) => {
         assert.strictEqual(params.name, 'Cogni Git PR Review');
         assert.strictEqual(params.status, 'completed');

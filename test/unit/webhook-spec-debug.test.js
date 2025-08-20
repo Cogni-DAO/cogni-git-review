@@ -36,9 +36,9 @@ describe('Webhook Spec Debug Tests', () => {
     // They should be identical
     assert.deepStrictEqual(filesystemConfig, githubApiConfig, 'Configs should be identical');
     
-    // Both should have enable
-    assert.ok(filesystemConfig.enable, 'Filesystem config should have enable');
-    assert.ok(githubApiConfig.enable, 'GitHub API config should have enable');
+    // Both should have rule_file (current format)
+    assert.ok(filesystemConfig.rule_file, 'Filesystem config should have rule_file');
+    assert.ok(githubApiConfig.rule_file, 'GitHub API config should have rule_file');
   });
 
   test('test_gate_with_simulated_webhook_spec', async () => {
@@ -51,9 +51,13 @@ describe('Webhook Spec Debug Tests', () => {
     console.log('🔍 TEST: Webhook spec structure:', Object.keys(webhookSpec));
     
     const context = createAIRulesContext('authFeaturePR');
+    context.spec = webhookSpec; // Add spec to context like the real flow
+    
+    // Extract the rules gate config from the spec
+    const rulesGateConfig = webhookSpec.gates?.find(g => g.id === 'rules');
     
     try {
-      const result = await runRulesGate(context, webhookSpec);
+      const result = await runRulesGate(context, rulesGateConfig);
       
       console.log('🔍 TEST: Gate result with webhook spec:', JSON.stringify({
         status: result.status,
@@ -84,16 +88,16 @@ describe('Webhook Spec Debug Tests', () => {
     const bufferedConfig = bufferedParse.gates?.find(g => g.id === 'rules')?.with || {};
     const base64Config = base64Parse.gates?.find(g => g.id === 'rules')?.with || {};
     
-    console.log('🔍 TEST: Direct parse enable:', directConfig.enable);
-    console.log('🔍 TEST: Buffered parse enable:', bufferedConfig.enable);
-    console.log('🔍 TEST: Base64 parse enable:', base64Config.enable);
+    console.log('🔍 TEST: Direct parse rule_file:', directConfig.rule_file);
+    console.log('🔍 TEST: Buffered parse rule_file:', bufferedConfig.rule_file);
+    console.log('🔍 TEST: Base64 parse rule_file:', base64Config.rule_file);
     
-    // All should have the same enable field
-    assert.deepStrictEqual(directConfig.enable, bufferedConfig.enable, 'Direct vs buffered should match');
-    assert.deepStrictEqual(directConfig.enable, base64Config.enable, 'Direct vs base64 should match');
+    // All should have the same rule_file field
+    assert.deepStrictEqual(directConfig.rule_file, bufferedConfig.rule_file, 'Direct vs buffered should match');
+    assert.deepStrictEqual(directConfig.rule_file, base64Config.rule_file, 'Direct vs base64 should match');
     
-    assert.ok(directConfig.enable, 'Direct parse should have enable');
-    assert.ok(bufferedConfig.enable, 'Buffered parse should have enable');
-    assert.ok(base64Config.enable, 'Base64 parse should have enable');
+    assert.ok(directConfig.rule_file, 'Direct parse should have rule_file');
+    assert.ok(bufferedConfig.rule_file, 'Buffered parse should have rule_file');
+    assert.ok(base64Config.rule_file, 'Base64 parse should have rule_file');
   });
 });

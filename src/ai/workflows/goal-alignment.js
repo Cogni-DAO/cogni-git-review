@@ -1,154 +1,71 @@
 /**
- * Goal Alignment Workflow - LangGraph Implementation
- * 
- * 3-node workflow: AnalyzePR → EvaluateAlignment → FormatViolations
- * Called ONLY by src/ai/provider.js - never directly by gates
+ * Goal Alignment Workflow - ReAct Agent with Structured Output
+ * Called ONLY by src/ai/provider.js
  */
 
-// TODO: Install @langchain/langgraph dependency
-// npm install @langchain/langgraph @langchain/openai
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { ChatOpenAI } from "@langchain/openai";
+import { HumanMessage } from "@langchain/core/messages";
+import { z } from "zod";
 
-/**
- * Create LangGraph workflow for goal alignment evaluation
- * @returns {Promise<Object>} Compiled LangGraph workflow
- */
-export async function createGoalAlignmentWorkflow() {
-  // For now, return a simple mock workflow structure
-  // TODO: Replace with actual LangGraph implementation when dependency is added
-  
-  return {
-    async invoke(input, _options = {}) {
-      // Mock workflow execution
-      const startTime = Date.now();
-      
-      try {
-        // Simulate workflow steps
-        const analyzed = await mockAnalyzePR(input);
-        const evaluated = await mockEvaluateAlignment(analyzed, input);
-        const formatted = await mockFormatViolations(evaluated);
-        
-        return {
-          score: formatted.score,  // CRITICAL: Include score in workflow result
-          violations: formatted.violations,
-          verdict: formatted.verdict,
-          annotations: formatted.annotations,
-          durationMs: Date.now() - startTime
-        };
-        
-      } catch (error) {
-        return {
-          violations: [{
-            code: 'workflow_error',
-            message: `Workflow execution failed: ${error.message}`,
-            path: null,
-            meta: { error: error.message }
-          }],
-          verdict: 'neutral',
-          annotations: [],
-          durationMs: Date.now() - startTime
-        };
-      }
-    }
-  };
-}
+// Schema for structured output
+const EvaluationSchema = z.object({
+  score: z.number().min(0).max(1).describe("Alignment score between 0 and 1"),
+  annotations: z.array(z.string()).describe("List of specific observations or issues"),
+  summary: z.string().describe("Brief explanation of the evaluation")
+});
 
-/**
- * Node 1: Analyze PR changes and extract intent
- */
-async function mockAnalyzePR(input) {
-  // TODO: Replace with actual LLM call to analyze PR
-  return {
-    changes: input.diff_summary || 'No changes detected',
-    intent: 'Unknown intent',
-    scope: input.pr_title?.includes('refactor') ? 'expansion' : 'focused',
-    files_changed: 0  // MVP doesn't pass file count
-  };
-}
-
-/**
- * Node 2: Evaluate alignment against goals and non-goals
- */
-async function mockEvaluateAlignment(analyzed, input) {
-  // TODO: Replace with actual LLM call for alignment evaluation
-  const violations = [];
-  
-  // Simple heuristic: flag scope expansion if non-goals exist
-  if (analyzed.scope === 'expansion' && input.non_goals?.length > 0) {
-    violations.push({
-      type: 'scope_violation',
-      severity: 'warning',
-      finding: 'PR may expand scope beyond defined boundaries',
-      affected_goals: [],
-      violated_non_goals: input.non_goals.slice(0, 2) // Show first 2
-    });
+// Create ReAct agent with structured output
+const agent = createReactAgent({
+  llm: new ChatOpenAI({ 
+    model: "gpt-4o-mini", 
+    temperature: 1 
+  }),
+  tools: [], // No tools - pure reasoning
+  responseFormat: {
+    prompt: "Evaluate if the <PR Information> aligns with the given <criteria>.",
+    schema: EvaluationSchema
   }
-  
-  return {
-    ...analyzed,
-    violations,
-    score: violations.length === 0 ? 0.9 : 0.3  // Fixed: use 'score' not 'alignment_score'
-  };
-}
+});
 
 /**
- * Node 3: Format violations for gate consumption
+ * Evaluate PR against statement using ReAct agent
+ * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
+ * @returns {Promise<Object>} { score, annotations, summary }
  */
-async function mockFormatViolations(evaluated) {
-  const violations = evaluated.violations.map(v => ({
-    code: v.type || 'alignment_issue',
-    message: v.finding || 'Alignment concern detected',
-    path: null, // Goal violations are typically not file-specific
-    meta: {
-      severity: v.severity,
-      score: evaluated.score,  // Fixed: use 'score' not 'alignment_score'
-      affected_goals: v.affected_goals,
-      violated_non_goals: v.violated_non_goals
-    }
-  }));
+export async function evaluate(input) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY environment variable is missing or empty');
+  }
+
+  const startTime = Date.now();
+
+  const promptText = `You are an expert in analyzeing code pull requests against a given set of criteria. Here is the current PR you are evaluating:
+
+<PR Information>
+<PR Title> ${input.pr_title} </PR Title>
+
+<PR Body> ${input.pr_body} </PR Body>
+
+<Diff Summary> ${input.diff_summary} </Diff Summary>
+
+</PR Information>
+
+Now, evaluate this PR against the following criteria:
+<criteria> ${input.statement} </criteria>
+
+Provide a score from 0.0-1.0, with 1.0 being the best score. 
+Provide a short list (1-5) of concise annotations that justify the score.`;
+
+
+  const message = new HumanMessage(promptText);
   
-  return {
-    score: evaluated.score,  // CRITICAL: Pass score to provider
-    violations,
-    verdict: violations.length === 0 ? 'success' : 'failure',
-    annotations: violations.map(v => ({
-      level: v.meta.severity === 'error' ? 'failure' : 'warning',
-      message: v.message,
-      path: v.path
-    }))
-  };
-}
-
-/* TODO: Actual LangGraph implementation structure:
-
-import { StateGraph } from '@langchain/langgraph';
-import { ChatOpenAI } from '@langchain/openai';
-
-export async function createGoalAlignmentWorkflow() {
-  const model = new ChatOpenAI({
-    modelName: process.env.AI_MODEL || 'gpt-4o-mini',
-    temperature: 0, // Deterministic output
-    timeout: 90000
+  console.log('🤖 LangGraph: Prompt input:', promptText);
+  console.log('🤖 LangGraph: Invoking agent...');
+  const result = await agent.invoke({
+    messages: [message]
   });
-
-  const workflow = new StateGraph({
-    channels: {
-      goals: { reducer: (x, y) => y },
-      non_goals: { reducer: (x, y) => y },
-      pr_data: { reducer: (x, y) => y },
-      analysis: { reducer: (x, y) => y },
-      evaluation: { reducer: (x, y) => y },
-      result: { reducer: (x, y) => y }
-    }
-  });
-
-  workflow.addNode("analyzePR", analyzePRNode);
-  workflow.addNode("evaluateAlignment", evaluateAlignmentNode);
-  workflow.addNode("formatViolations", formatViolationsNode);
-
-  workflow.addEdge("analyzePR", "evaluateAlignment");
-  workflow.addEdge("evaluateAlignment", "formatViolations");
-
-  return workflow.compile();
+  
+  console.log(`🤖 LangGraph: Completed in ${Date.now() - startTime}ms`, result.structuredResponse);
+  return result.structuredResponse;
 }
-
-*/

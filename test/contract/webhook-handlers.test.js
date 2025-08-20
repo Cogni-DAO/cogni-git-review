@@ -123,6 +123,17 @@ describe("GitHub Webhook Handler Contract Tests", () => {
             deletions: 0
           }
         })
+      },
+      repos: {
+        listPullRequestsAssociatedWithCommit: async () => ({
+          data: [{
+            number: 12,
+            state: 'open',
+            changed_files: 3,
+            additions: 11,
+            deletions: 0
+          }]
+        })
       }
     };
 

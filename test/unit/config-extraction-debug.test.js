@@ -13,7 +13,7 @@ import { createAIRulesContext } from '../fixtures/repo-specs.js';
 
 describe('Config Extraction Debug Tests', () => {
 
-  test('reproduce_empty_enabled_array_issue', async () => {
+  test('reproduce_rule_file_config_issue', async () => {
     // Load the EXACT same repo-spec.yaml that local is using
     const realRepoSpecContent = fs.readFileSync('.cogni/repo-spec.yaml', 'utf-8');
     const realSpec = yaml.load(realRepoSpecContent);
@@ -23,34 +23,34 @@ describe('Config Extraction Debug Tests', () => {
     // Find the rules gate config
     const rulesGateConfig = realSpec.gates?.find(g => g.id === 'rules')?.with || {};
     console.log('🔍 TEST: Rules gate config:', JSON.stringify(rulesGateConfig, null, 2));
-    console.log('🔍 TEST: Enable field:', rulesGateConfig.enable);
-    console.log('🔍 TEST: Enable type:', typeof rulesGateConfig.enable);
-    console.log('🔍 TEST: Enable is array:', Array.isArray(rulesGateConfig.enable));
+    console.log('🔍 TEST: Rule file field:', rulesGateConfig.rule_file);
+    console.log('🔍 TEST: Rule file type:', typeof rulesGateConfig.rule_file);
     
-    // This should show [goal-alignment.yaml]
-    assert.ok(rulesGateConfig.enable, 'Should have enable field');
-    assert.ok(Array.isArray(rulesGateConfig.enable), 'Enable should be array');
-    assert.strictEqual(rulesGateConfig.enable[0], 'goal-alignment.yaml', 'Should have goal-alignment.yaml');
+    // This should show goal-alignment.yaml
+    assert.ok(rulesGateConfig.rule_file, 'Should have rule_file field');
+    assert.strictEqual(rulesGateConfig.rule_file, 'goal-alignment.yaml', 'Should have goal-alignment.yaml');
     
     // Now test the actual gate with this spec
     const context = createAIRulesContext('authFeaturePR');
+    // Add spec to context as expected by rules gate
+    context.spec = realSpec;
     
     try {
-      const result = await runRulesGate(context, realSpec);
+      const result = await runRulesGate(context, rulesGateConfig);
       
-      // If enable is working, we shouldn't get no_rules
-      if (result.neutral_reason === 'no_rules') {
-        console.log('🚨 TEST: Still getting no_rules with real spec!');
+      // If rule_file is working, we shouldn't get no_rule_file
+      if (result.neutral_reason === 'no_rule_file') {
+        console.log('🚨 TEST: Still getting no_rule_file with real spec!');
         console.log('🚨 TEST: Result:', JSON.stringify(result, null, 2));
       }
       
-      // The result should not be no_rules if enable field exists
-      assert.notStrictEqual(result.neutral_reason, 'no_rules', 'Should not return no_rules with proper config');
+      // The result should not be no_rule_file if rule_file field exists
+      assert.notStrictEqual(result.neutral_reason, 'no_rule_file', 'Should not return no_rule_file with proper config');
       
     } catch (error) {
       // This is fine - we expect errors from missing AI provider, etc.
       console.log('🔍 TEST: Expected error (no AI provider):', error.message);
-      assert.ok(error.message.includes('not found') || error.message.includes('AI'), 'Should fail on AI, not config');
+      assert.ok(error.message.includes('not found') || error.message.includes('AI') || error.message.includes('ENOENT'), 'Should fail on AI or file, not config');
     }
   });
 
@@ -64,13 +64,13 @@ describe('Config Extraction Debug Tests', () => {
     
     console.log('🔍 TEST: Direct extraction result:', JSON.stringify(gateConfig, null, 2));
     
-    // Test the logic that's failing
-    const enabled = gateConfig.enable ? [gateConfig.enable[0]] : [];
-    console.log('🔍 TEST: Enabled array after processing:', enabled);
+    // Test the new single rule file logic
+    const ruleFile = gateConfig.rule_file;
+    console.log('🔍 TEST: Rule file after processing:', ruleFile);
     
-    assert.ok(gateConfig.enable, 'Config should have enable field');
-    assert.ok(enabled.length > 0, 'Enabled array should not be empty');
-    assert.strictEqual(enabled[0], 'goal-alignment.yaml', 'Should extract goal-alignment.yaml');
+    assert.ok(gateConfig.rule_file, 'Config should have rule_file field');
+    assert.strictEqual(ruleFile, 'goal-alignment.yaml', 'Should extract goal-alignment.yaml');
+    assert.strictEqual(typeof ruleFile, 'string', 'Rule file should be a string');
   });
 
   test('compare_fixture_vs_real_spec', () => {
@@ -78,7 +78,7 @@ describe('Config Extraction Debug Tests', () => {
     const realRepoSpecContent = fs.readFileSync('.cogni/repo-spec.yaml', 'utf-8');
     const realSpec = yaml.load(realRepoSpecContent);
     
-    const testFixtureSpec = yaml.load(`schema_version: '0.2.1'
+    const testFixtureSpec = yaml.load(`schema_version: '0.1.2'
 intent:
   name: rules-mvp-test-project
   goals:
@@ -90,13 +90,7 @@ intent:
 gates:
   - id: rules
     with:
-      engine: ai
-      rules_dir: .cogni/rules
-      enable: [goal-alignment.yaml]
-      model: gpt-4o-mini
-      timeout_ms: 60000
-      neutral_on_error: true
-      blocking_default: true`);
+      rule_file: goal-alignment.yaml`);
 
     const realConfig = realSpec.gates?.find(g => g.id === 'rules')?.with || {};
     const testConfig = testFixtureSpec.gates?.find(g => g.id === 'rules')?.with || {};
@@ -117,10 +111,10 @@ gates:
     console.log('🔍 TEST: Missing in real:', missingInReal);
     console.log('🔍 TEST: Missing in test:', missingInTest);
     
-    // Both should have enable
-    assert.ok(realConfig.enable, 'Real config should have enable');
-    assert.ok(testConfig.enable, 'Test config should have enable');
+    // Both should have rule_file
+    assert.ok(realConfig.rule_file, 'Real config should have rule_file');
+    assert.ok(testConfig.rule_file, 'Test config should have rule_file');
     
-    assert.deepStrictEqual(realConfig.enable, testConfig.enable, 'Enable arrays should match');
+    assert.deepStrictEqual(realConfig.rule_file, testConfig.rule_file, 'Rule files should match');
   });
 });

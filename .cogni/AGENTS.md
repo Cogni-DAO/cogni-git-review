@@ -1,30 +1,31 @@
-# .cogni Directory - Repository Policy Configuration
+# Repository Quality Configuration
 
-## Purpose
-Configuration directory for repository-specific PR evaluation policies. Defines goals, gates, and AI rules using declarative YAML files.
-
-Everything within this directory is DOGFOODING. This is what a 3rd party would use, if cogni-git-review was installed into their own repository.
-
-## Directory Structure
+## Current Structure
 ```
 .cogni/
-├── repo-spec.yaml         # Gate configuration and repository intent
-├── rules/                 # AI evaluation rules (YAML)
-└── prompts/               # LLM prompt templates
+├── repo-spec.yaml         # Quality gates and repository intent  
+└── rules/                 # AI rule definitions (YAML)
 ```
 
-## Adding AI Rules
-1. Create rule YAML in `rules/` with ID and prompt template
-2. Create prompt template in `prompts/` requesting score (0-1)
-3. Enable rule in `repo-spec.yaml` rules gate
-4. Test on PR
-
 ## Configuration
-- **repo-spec.yaml**: Gates, goals, non-goals
-- **rules/*.yaml**: Rule definitions with score thresholds
-- **prompts/*.md**: LLM templates with variable substitution
 
-## Constraints
-- Rules cannot be created at runtime
-- Each repository's `.cogni/` directory is isolated
-- All changes tracked in git history
+**repo-spec.yaml**: Defines gates and repository goals
+```yaml
+gates:
+  - id: rules
+    with:
+      rule_file: goal-alignment.yaml
+```
+
+**rules/goal-alignment.yaml**: AI evaluation rule
+```yaml
+id: goal-alignment
+threshold: 0.7
+# Prompt inline in rule spec for MVP
+```
+
+## AI Gate Flow
+1. `rules` gate loads single rule file
+2. Builds evidence: PR title/body + diff summary + repo goals
+3. Calls AI provider (MVP stub)
+4. Applies threshold: score >= 0.7 → pass, else fail

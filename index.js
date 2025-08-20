@@ -147,6 +147,12 @@ export default (app) => {
       text += `**Stats:** files=${reviewGate.stats.changed_files || 0} | diff_kb=${reviewGate.stats.total_diff_kb || 0}`;
     }
     
+    // Add AI score if available. Temporary, only functional when only 1 AI rule. gate output needs refactoring. 
+    const rulesGate = gates.find(g => g.id === 'rules');
+    if (rulesGate?.stats?.score !== undefined) {
+      text += reviewGate?.stats ? ` | AI score=${rulesGate.stats.score}` : `**Stats:** AI score=${rulesGate.stats.score}`;
+    }
+    
     return { summary, text };
   }
 
@@ -205,12 +211,15 @@ export default (app) => {
 
     console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
 
-    // Get PR number from check_suite.pull_requests
-    const prRef = checkSuite.pull_requests?.find(pr => pr.state === 'open') || 
-                  checkSuite.pull_requests?.[0];
+    // Rerun does NOT have PR information, just the head SHA. 
+    // Find associated PR(s) for this commit SHA using GitHub API
+    const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+      context.repo({ commit_sha: headSha })
+    );
+    const prRef = assoc.find(pr => pr.state === 'open') || assoc[0];
 
     if (!prRef) {
-      console.log(`🔄 RERUN: No PRs found in check_suite.pull_requests`);
+      console.log(`🔄 RERUN: No associated PR found for SHA ${headSha}`);
       return createCheckOnSha(context, {
         sha: headSha,
         conclusion: 'failure',

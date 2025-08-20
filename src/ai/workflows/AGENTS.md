@@ -3,28 +3,23 @@
 ## Purpose
 LangGraph workflow implementations called only by `src/ai/provider.js`. Contains AI reasoning logic.
 
-## Current State
-- **goal-alignment.js**: Mock implementation returning score 0.9 or 0.3
-- TODO: Replace mocks with actual LangGraph + LLM calls
+## Single Statement Contract
+Each workflow evaluates PR against one statement/requirement.
 
-## Workflow Contract
 ```javascript
 const workflow = await createGoalAlignmentWorkflow();
 const result = await workflow.invoke({
-  goals: ['goal'],
-  non_goals: ['non-goal'],
-  pr_title: 'title',
-  pr_body: 'body',
-  diff_summary: 'summary'
+  statement: "Deliver AI-powered advisory review to keep repo aligned",
+  pr_title: 'Add LangGraph integration', 
+  pr_body: 'This PR implements...',
+  diff_summary: '3 files changed (+45 -12)'
 });
 
-// Returns: { score: 0.9, violations: [], annotations: [] }
+// Returns: { score: 0.85, annotations: [], summary: "Brief assessment" }
 ```
 
-## Current Mock Logic
-- Returns score 0.9 (success) if no violations detected
-- Returns score 0.3 (failure) if scope expansion flagged
-- Scope expansion = PR title contains "refactor" + non-goals exist
+## Current State
+- **goal-alignment.js**: Mock implementation (TODO: Replace with LangGraph + LLM)
 
 ## Constraints
 - Only called by provider.js
