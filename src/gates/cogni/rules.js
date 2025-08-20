@@ -72,13 +72,19 @@ export async function run(ctx, gateConfig) {
  * Make gate decision based on AI provider output
  */
 function makeGateDecision(providerResult, rule, startTime) {
-  const threshold = Number(rule.success_criteria?.threshold ?? 0.7);
   const score = providerResult.score;
   
-  if (score === null || typeof score !== 'number') {
-    return createNeutralResult('invalid_score', 'AI provider returned invalid score', startTime);
+  if (score === null || score === undefined || typeof score !== 'number') {
+    return createNeutralResult('missing_score', 'AI provider did not return a score', startTime);
   }
   
+  if (!rule.success_criteria?.threshold) {
+    return createNeutralResult('missing_threshold', 'No threshold specified in rule success criteria', startTime);
+  }
+  
+  const threshold = Number(rule.success_criteria.threshold);
+  
+  console.log(`Evaluating against threshold ${threshold} with score ${score}`);
   const status = score >= threshold ? 'pass' : 'fail';
   
   return {

@@ -11,7 +11,7 @@
 export async function evaluate(input) {
   // Hardcoded response matching new I/O contract
   return {
-    score: 0.9,
+    score: 0.85,
     annotations: [],
     summary: `PR "${input.pr_title}" aligns with statement: "${input.statement}"`
   };
