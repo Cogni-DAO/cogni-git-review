@@ -1,7 +1,7 @@
 # Cogni Git Review Repository Specification Template
 # Copy this file to .cogni/repo-spec.yaml and customize for your repository
 
-schema_version: '0.1.2'
+schema_version: '0.1.3'
 
 intent:
   name: my-project
@@ -17,6 +17,10 @@ gates:
     with:
       max_changed_files: 30
       max_total_diff_kb: 100
+    
+  - id: rules
+    with:
+      rule_file: goal-alignment.yaml
 
   # - id: goal_declaration
   # - id: forbidden_scopes
