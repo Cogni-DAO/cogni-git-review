@@ -12,10 +12,13 @@ src/gates/
     └── forbidden-scopes-stub.js
 ```
 
-## Available Gates
-- **Gates** execute immediately: `review_limits`, `goal_declaration`, `forbidden_scopes`
+## Available Gate Types
+- **review-limits**: File count and diff size validation
+- **goal-declaration**: Repository goals validation  
+- **forbidden-scopes**: Repository non-goals validation
+- **ai-rule**: AI-powered evaluation using declarative rules
 
-**Important**: Only gates configured in `spec.gates[]` will execute.
+**Important**: Only gates configured in `spec.gates[]` will execute. Multiple instances of the same gate type are supported.
 
 ## Root Contract
 `runAllGates()` returns:
@@ -29,17 +32,18 @@ src/gates/
 
 ## Dynamic Gate Launcher
 The launcher (`run-configured.js`) provides:
-- **Registry-based discovery**: Gates auto-discovered from filesystem
+- **Registry-based discovery**: Gates auto-discovered by `type` from filesystem
+- **Multiple instances**: Same gate type can run multiple times with different configurations
+- **Instance ID derivation**: Auto-derive IDs from `rule_file` for ai-rule, explicit IDs for clarity
+- **Duplicate detection**: Error on duplicate instance IDs, no silent suffixing
 - **Timeout handling**: AbortController integration with partial results
-- **ID normalization**: Spec gate IDs always override gate-provided IDs  
-- **Robust error handling**: Gates crashes become neutral results
-- **Partial execution**: Returns results for completed gates when timeout occurs
+- **Robust error handling**: Gate crashes become neutral results
 
 ## Gate Contract
-Individual gates return `GateResult` (or `null` if not configured):
+Individual gates return `GateResult`:
 ```javascript
 {
-  id: "string",
+  id: "string",  // Instance identifier (derived or explicit)
   status: "pass" | "fail" | "neutral",
   neutral_reason?: "oversize_diff" | "internal_error" | "unimplemented_gate" | ...,
   violations: [{code, message, path?, meta?}],
@@ -47,16 +51,18 @@ Individual gates return `GateResult` (or `null` if not configured):
   duration_ms: number
 }
 ```
+
 ## Registry-Based Discovery
-Gates are automatically discovered by scanning filesystem:
+Gates are automatically discovered by `type` from filesystem:
 ```javascript
-// Registry scans src/gates/cogni/
+// Registry scans src/gates/cogni/ for modules with 'type' export
 const registry = await buildRegistry(logger);
 const handler = resolveHandler(registry, gateConfig);
 
-// Spec gates are resolved dynamically:
+// Spec gates resolved by type:
 for (const gate of spec.gates) {
-  const handler = resolveHandler(registry, gate);
+  const handler = resolveHandler(registry, gate);  // Uses gate.type
+  const instanceId = deriveGateId(gate);           // Derives unique ID
   // Gate executes with parameters from gate.with
 }
 ```
@@ -68,7 +74,25 @@ for (const gate of spec.gates) {
 - **Overall status**: Partial + aborted = neutral, otherwise fail > neutral > pass
 
 ## Adding New Gates
-1. Create `src/gates/cogni/new-gate.js` with tri-state contract
-2. Export gate function - registry auto-discovers it
-3. Add gate to spec template and test fixtures  
+1. Create `src/gates/cogni/new-gate.js` with gate implementation:
+   ```javascript
+   export const type = 'new-gate-type';
+   export async function run(ctx, gateConfig) {
+     // Implementation returns GateResult
+   }
+   ```
+2. Registry auto-discovers gates by `type` export
+3. Add gate to spec template using `type` + optional `id`
 4. Add tests using `SPEC_FIXTURES` and hardened launcher patterns
+
+## Gate Instance Configuration
+```yaml
+# Explicit type + id
+- type: new-gate-type
+  id: custom_name
+  with: { param: value }
+
+# Auto-derived ID (for ai-rule only)  
+- type: ai-rule
+  with: { rule_file: my-rule.yaml }  # id = "my-rule"
+```
