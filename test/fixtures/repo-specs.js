@@ -12,7 +12,8 @@ intent:
     - Complex features
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 100
       max_total_diff_kb: 500`,
@@ -29,12 +30,15 @@ intent:
     - What this project does not do
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 50
       max_total_diff_kb: 200
-  - id: goal_declaration
-  - id: forbidden_scopes`,
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes`,
 
 
   // Bootstrap mode spec - for gradual rollout
@@ -124,12 +128,15 @@ intent:
     - Complex features
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 30
       max_total_diff_kb: 100
-  - id: goal_declaration
-  - id: forbidden_scopes`,
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes`,
 
   behaviorTest10_50: `schema_version: '0.2.1'
 
@@ -141,7 +148,8 @@ intent:
     - Complex features
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 10
       max_total_diff_kb: 50`,
@@ -157,7 +165,8 @@ intent:
     - Multiple gates
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 30
       max_total_diff_kb: 100`,
@@ -172,11 +181,13 @@ intent:
     - Complete gate coverage
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 30
       max_total_diff_kb: 100
-  - id: goal_declaration`,
+  - type: goal-declaration
+    id: goal_declaration`,
 
   gateConsistency3Gates: `schema_version: '0.2.1'
 
@@ -188,12 +199,15 @@ intent:
     - Partial gate coverage
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 30
       max_total_diff_kb: 100
-  - id: goal_declaration
-  - id: forbidden_scopes`,
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes`,
 
   gateConsistency2GatesNoLimits: `schema_version: '0.2.1'
 
@@ -205,8 +219,10 @@ intent:
     - File or size limits
 
 gates:
-  - id: goal_declaration
-  - id: forbidden_scopes`,
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes`,
 
   // Legacy spec format (from main branch) - v0.2.1 with object-style gates
   // This should result in 0 gates running because dynamic registry can't discover gates
@@ -281,7 +297,40 @@ intent:
 gates:
   - type: ai-rule
     with:
-      rule_file: nonexistent-rule.yaml`
+      rule_file: nonexistent-rule.yaml`,
+
+  // NEW: Multiple AI Rules Integration Test Fixture (Phase 2)
+  multipleAIRules: `schema_version: '0.1.4'
+
+intent:
+  name: multiple-ai-rules-test-project
+  goals:
+    - Enforce deterministic, machine-checkable PR hygiene via a single required check run
+    - Seamlessly fit developer workflows and existing Repo management tools (Github Actions, Allstar, Checks API, etc.)
+    - Deliver AI-powered advisory review to keep repo aligned to repo goals, and avoid scope creep.
+    - Be dogfoodable on this repo and trivially adoptable via intallation and dropping .cogni/repo-spec.yaml in a repo.
+  non_goals:
+    - Re-implementing mature OSS scanners, linters, or policy managers. Strong preference towards integration over duplication
+    - Long-running or heavy in-process analysis that degrades PR latency (batch/offload instead)
+    - Subjective style enforcement beyond explicit repo rules/policies
+    - Vendor lock-in or proprietary-only integrations that block open-source contributors
+
+gates:
+  - type: review-limits
+    id: review_limits
+    with:
+      max_changed_files: 40
+      max_total_diff_kb: 1500
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes
+  - type: ai-rule
+    with:
+      rule_file: dont-rebuild-oss.yaml
+  - type: ai-rule
+    with:
+      rule_file: single-check-pr-verdict.yaml`
 };
 
 // Helper for accessing specs by key  

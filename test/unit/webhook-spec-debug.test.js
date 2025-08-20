@@ -26,9 +26,9 @@ describe('Webhook Spec Debug Tests', () => {
     console.log('🔍 TEST: Filesystem spec gates:', JSON.stringify(filesystemSpec.gates, null, 2));
     console.log('🔍 TEST: GitHub API spec gates:', JSON.stringify(githubApiSpec.gates, null, 2));
     
-    // Extract configs
-    const filesystemConfig = filesystemSpec.gates?.find(g => g.id === 'rules')?.with || {};
-    const githubApiConfig = githubApiSpec.gates?.find(g => g.id === 'rules')?.with || {};
+    // Extract configs (updated for new type+id system)
+    const filesystemConfig = filesystemSpec.gates?.find(g => g.type === 'ai-rule')?.with || {};
+    const githubApiConfig = githubApiSpec.gates?.find(g => g.type === 'ai-rule')?.with || {};
     
     console.log('🔍 TEST: Filesystem config:', JSON.stringify(filesystemConfig, null, 2));
     console.log('🔍 TEST: GitHub API config:', JSON.stringify(githubApiConfig, null, 2));
@@ -53,11 +53,11 @@ describe('Webhook Spec Debug Tests', () => {
     const context = createAIRulesContext('authFeaturePR');
     context.spec = webhookSpec; // Add spec to context like the real flow
     
-    // Extract the rules gate config from the spec
-    const rulesGateConfig = webhookSpec.gates?.find(g => g.id === 'rules');
+    // Extract the AI rule gate config from the spec (updated for new type+id system)
+    const aiRuleGateConfig = webhookSpec.gates?.find(g => g.type === 'ai-rule');
     
     try {
-      const result = await runRulesGate(context, rulesGateConfig);
+      const result = await runRulesGate(context, aiRuleGateConfig);
       
       console.log('🔍 TEST: Gate result with webhook spec:', JSON.stringify({
         status: result.status,
@@ -84,9 +84,9 @@ describe('Webhook Spec Debug Tests', () => {
     const bufferedParse = yaml.load(Buffer.from(filesystemContent).toString('utf8'));
     const base64Parse = yaml.load(Buffer.from(Buffer.from(filesystemContent).toString('base64'), 'base64').toString('utf8'));
     
-    const directConfig = directParse.gates?.find(g => g.id === 'rules')?.with || {};
-    const bufferedConfig = bufferedParse.gates?.find(g => g.id === 'rules')?.with || {};
-    const base64Config = base64Parse.gates?.find(g => g.id === 'rules')?.with || {};
+    const directConfig = directParse.gates?.find(g => g.type === 'ai-rule')?.with || {};
+    const bufferedConfig = bufferedParse.gates?.find(g => g.type === 'ai-rule')?.with || {};
+    const base64Config = base64Parse.gates?.find(g => g.type === 'ai-rule')?.with || {};
     
     console.log('🔍 TEST: Direct parse rule_file:', directConfig.rule_file);
     console.log('🔍 TEST: Buffered parse rule_file:', bufferedConfig.rule_file);
