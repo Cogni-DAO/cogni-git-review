@@ -13,14 +13,19 @@ import { runConfiguredGates } from './run-configured.js';
  * @param {object} opts - Options { deadlineMs: 8000 }
  * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
-export async function runAllGates(context, pr, spec, opts = { deadlineMs: 8000 }) {
+
+// hardcode 120s deadline for now, giving time for AI gate.
+export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000 }) {
   const started = Date.now();
   const abortCtl = new AbortController();
   
   // Add execution metadata to context
   // Note: pr parameter might be the same object as context.payload.pull_request for rerun events
+  // TODO - this PR context building is a hack for 'rerequested' events, we need to investigate a better way.
   context.pr = { 
     number: pr.number,
+    title: pr.title,
+    body: pr.body,
     head: {
       sha: pr.head?.sha || pr.head_sha,
       repo: { 

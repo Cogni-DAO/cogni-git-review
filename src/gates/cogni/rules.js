@@ -33,24 +33,39 @@ export async function run(ctx, gateConfig) {
     const rule = ruleResult.rule;
     const pr = ctx.pr;
     
+    // Debug PR data
+    console.log('🔍 PR Data Debug:', {
+      title: pr?.title,
+      body: pr?.body?.substring(0, 100),
+      changed_files: pr?.changed_files,
+      additions: pr?.additions,
+      deletions: pr?.deletions
+    });
+    
     // Step 2: Build PR context directly
     const fileCount = pr?.changed_files || 0;
     const totalAdditions = pr?.additions || 0;
     const totalDeletions = pr?.deletions || 0;
     
-    // Step 3: Call AI provider with statement from rule
+    // Step 3: Validate statement exists
+    const statement = rule['evaluation-statement'];
+    if (!statement || statement.trim() === '') {
+      return createNeutralResult('missing_statement', 'Rule has no evaluation-statement defined', startTime);
+    }
+    
+    // Step 4: Call AI provider with statement from rule
     const providerInput = {
-      statement: rule['evaluation-statement'] || 'No statement defined',
+      statement: statement,
       pr_title: pr?.title || '',
       pr_body: pr?.body || '',
       diff_summary: `PR "${pr?.title || 'Untitled'}" modifies ${fileCount} file${fileCount === 1 ? '' : 's'} (+${totalAdditions} -${totalDeletions} lines)`
     };
     
     const providerResult = await aiProvider.review(providerInput, {
-      timeoutMs: config.timeout_ms || 60000
+      timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
     });
     
-    // Step 4: Make gate decision based on provider output
+    // Step 5: Make gate decision based on provider output
     return makeGateDecision(providerResult, rule, startTime);
     
   } catch (error) {
