@@ -82,20 +82,33 @@ context.payload.pull_request = pr;
 Quality gates are configured in each repository's `.cogni/repo-spec.yaml`:
 ```yaml
 gates:
-  # Built-in gates (run directly)
-  - id: review_limits
+  # Built-in gates with explicit type + id
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 30
       max_total_diff_kb: 100
-  - id: goal_declaration
-  - id: forbidden_scopes
-  - id: rules
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes
+    
+  # AI rule with auto-derived ID
+  - type: ai-rule
     with:
-      rule_file: goal-alignment.yaml
-  
-  
+      rule_file: goal-alignment.yaml  # id auto-derives to "goal-alignment"
+      
+  # Multiple AI rules with explicit IDs
+  - type: ai-rule
+    id: scope_check
+    with:
+      rule_file: scope-creep-evaluation.yaml
 ```
-**Principle**: Only gates listed in the spec execute ("presence = enabled")
+**Principles**: 
+- Only gates listed in the spec execute ("presence = enabled")
+- `type` specifies which gate implementation to run
+- `id` identifies the gate instance (auto-derived from `rule_file` for ai-rule when omitted)
+- Multiple instances of the same gate type are supported
 
 ## Key Features
 - **Dynamic gate discovery**: Gates auto-discovered from filesystem
