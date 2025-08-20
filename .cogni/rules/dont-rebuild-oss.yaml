@@ -1,0 +1,12 @@
+id: dont-rebuild-oss
+schema_version: "0.1"
+blocking: true
+
+evaluation-statement: Does NOT Re-implement mature OSS tools or libraries.
+
+# Present, but totally unused for now.
+variables: [pr_title, pr_body, diff_summary]
+
+success_criteria:
+  metric: score
+  threshold: 0.8

@@ -32,4 +32,7 @@ gates:
     id: forbidden_scopes
   - type: ai-rule
     with:
-      rule_file: goal-alignment.yaml
+      rule_file: dont-rebuild-oss.yaml
+  - type: ai-rule
+    with:
+      rule_file: single-check-pr-verdict.yaml
