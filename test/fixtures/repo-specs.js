@@ -228,7 +228,7 @@ gates:
 
 
   // NEW: Single Rule File Format (current MVP design)
-  rulesSingleFile: `schema_version: '0.1.2'
+  rulesSingleFile: `schema_version: '0.1.4'
 
 intent:
   name: rules-single-file-project
@@ -240,18 +240,21 @@ intent:
     - Unsecured endpoints
 
 gates:
-  - id: review_limits
+  - type: review-limits
+    id: review_limits
     with:
       max_changed_files: 40
       max_total_diff_kb: 1500
-  - id: goal_declaration
-  - id: forbidden_scopes
-  - id: rules
+  - type: goal-declaration
+    id: goal_declaration
+  - type: forbidden-scopes
+    id: forbidden_scopes
+  - type: ai-rule
     with:
       rule_file: goal-alignment.yaml`,
 
   // Test fixtures for new single-rule design
-  rulesNoRuleFile: `schema_version: '0.1.2'
+  rulesNoRuleFile: `schema_version: '0.1.4'
 
 intent:
   name: rules-no-file-test
@@ -261,12 +264,12 @@ intent:
     - Valid configurations
 
 gates:
-  - id: rules
+  - type: ai-rule
     with:
       rules_dir: .cogni/rules
       # Missing rule_file parameter`,
 
-  rulesInvalidFile: `schema_version: '0.1.2'
+  rulesInvalidFile: `schema_version: '0.1.4'
 
 intent:
   name: rules-invalid-file-test  
@@ -276,7 +279,7 @@ intent:
     - Valid rule files
 
 gates:
-  - id: rules
+  - type: ai-rule
     with:
       rule_file: nonexistent-rule.yaml`
 };

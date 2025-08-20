@@ -4,7 +4,7 @@
  */
 
 // Gate registry contract exports
-export const id = 'review_limits';
+export const type = 'review-limits';
 
 /**
  * Evaluate review limits for a PR against configured limits
