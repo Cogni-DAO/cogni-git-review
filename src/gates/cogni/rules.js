@@ -16,7 +16,6 @@ export const id = 'rules';
 export async function run(ctx, gateConfig) {
   const startTime = Date.now();
   const config = gateConfig.with || gateConfig; // Handle both formats
-  const spec = ctx.spec; // Spec already loaded by index.js
   
   try {
     // Step 1: Load single rule for this gate instance
@@ -32,46 +31,27 @@ export async function run(ctx, gateConfig) {
     }
     
     const rule = ruleResult.rule;
+    const pr = ctx.pr;
     
-    // Step 2: Build evidence for AI evaluation (MVP scope)  
-    const evidence = buildMinimalEvidence(ctx);
+    // Step 2: Build PR context directly
+    const fileCount = pr?.changed_files || 0;
+    const totalAdditions = pr?.additions || 0;
+    const totalDeletions = pr?.deletions || 0;
     
-    // Step 3: Call AI provider
+    // Step 3: Call AI provider with statement from rule
     const providerInput = {
-      goals: spec.intent?.goals || [],
-      non_goals: spec.intent?.non_goals || [],
-      pr_title: evidence.pr_title,
-      pr_body: evidence.pr_body,
-      diff_summary: evidence.diff_summary,
-      rule: rule
+      statement: rule['evaluation-statement'] || 'No statement defined',
+      pr_title: pr?.title || '',
+      pr_body: pr?.body || '',
+      diff_summary: `PR "${pr?.title || 'Untitled'}" modifies ${fileCount} file${fileCount === 1 ? '' : 's'} (+${totalAdditions} -${totalDeletions} lines)`
     };
     
     const providerResult = await aiProvider.review(providerInput, {
       timeoutMs: config.timeout_ms || 60000
     });
     
-    // Step 4: Apply threshold logic (gate responsibility)
-    const threshold = Number(rule.success_criteria?.threshold ?? 0.7);
-    const score = providerResult.score;
-    
-    if (score === null || typeof score !== 'number') {
-      return createNeutralResult('invalid_score', 'AI provider returned invalid score', startTime);
-    }
-    
-    const status = score >= threshold ? 'pass' : 'fail';
-    
-    return {
-      status,
-      violations: status === 'fail' ? 
-        [`Goal alignment failed (score: ${score.toFixed(2)}, threshold: ${threshold})`] : 
-        [],
-      stats: {
-        score,
-        threshold,
-        rule_id: rule.id
-      },
-      duration_ms: Date.now() - startTime
-    };
+    // Step 4: Make gate decision based on provider output
+    return makeGateDecision(providerResult, rule, startTime);
     
   } catch (error) {
     console.error('Rules gate error:', error);
@@ -81,7 +61,7 @@ export async function run(ctx, gateConfig) {
     return {
       status: shouldBeNeutral ? 'neutral' : 'fail',
       neutral_reason: shouldBeNeutral ? 'internal_error' : undefined,
-      violations: shouldBeNeutral ? [] : [error.message],
+      annotations: shouldBeNeutral ? [] : [error.message],
       stats: { error: error.message },
       duration_ms: Date.now() - startTime
     };
@@ -89,22 +69,28 @@ export async function run(ctx, gateConfig) {
 }
 
 /**
- * Build minimal evidence for MVP
+ * Make gate decision based on AI provider output
  */
-function buildMinimalEvidence(ctx) {
-  const pr = ctx.pr;
-  if (!pr) {
-    return { pr_title: '', pr_body: '', diff_summary: 'No PR data available' };
+function makeGateDecision(providerResult, rule, startTime) {
+  const threshold = Number(rule.success_criteria?.threshold ?? 0.7);
+  const score = providerResult.score;
+  
+  if (score === null || typeof score !== 'number') {
+    return createNeutralResult('invalid_score', 'AI provider returned invalid score', startTime);
   }
   
-  const fileCount = pr.changed_files || 0;
-  const totalAdditions = pr.additions || 0;
-  const totalDeletions = pr.deletions || 0;
+  const status = score >= threshold ? 'pass' : 'fail';
   
   return {
-    pr_title: pr.title || '',
-    pr_body: pr.body || '',
-    diff_summary: `PR "${pr.title || 'Untitled'}" modifies ${fileCount} file${fileCount === 1 ? '' : 's'} (+${totalAdditions} -${totalDeletions} lines)`
+    status,
+    annotations: providerResult.annotations || [],
+    stats: {
+      score,
+      threshold,
+      rule_id: rule.id,
+      statement: rule['evaluation-statement']
+    },
+    duration_ms: Date.now() - startTime
   };
 }
 
@@ -115,7 +101,7 @@ function createNeutralResult(reason, message, startTime) {
   return {
     status: 'neutral',
     neutral_reason: reason,
-    violations: [],
+    annotations: [],
     stats: { error: message },
     duration_ms: Date.now() - startTime
   };
