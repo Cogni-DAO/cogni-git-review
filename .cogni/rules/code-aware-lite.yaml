@@ -1,0 +1,31 @@
+id: code-aware-lite
+schema_version: "0.1"
+blocking: false
+
+# Core rule configuration
+evaluation-statement: "Assess whether the code changes align with the stated PR goals and maintain code quality"
+
+success_criteria:
+  metric: score
+  threshold: 0.5
+
+# Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
+x_capabilities:
+  - diff_summary      # Enable enhanced diff summary with file stats
+  - file_patches      # Include actual patch content for analysis
+
+# Resource budgets to prevent excessive API usage
+x_budgets:
+  max_files: 25                    # Maximum files to analyze
+  max_patch_bytes_per_file: 16000  # Maximum patch bytes per file
+  max_patches: 3                   # Maximum patches to include in summary
+
+# Prompt configuration
+prompt:
+  template: ".cogni/prompts/code-aware-lite.md"
+  variables: ["pr_title", "pr_body", "diff_summary"]
+
+# Metadata
+created_by: "code-aware-enhancement"
+description: "Lightweight code-aware AI rule that analyzes actual file changes and patches to assess PR quality and goal alignment"
+version: "1.0.0"

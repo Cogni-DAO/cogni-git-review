@@ -25,7 +25,7 @@ gates:
     # with:  # Optional configuration
     #   code_patterns: ["src/**/*.js", "lib/**/*.ts"]  # Files that require doc updates
     #   doc_pattern: "AGENTS.md"                       # Documentation file to check
-    
+D    
   - type: ai-rule
     with:
       rule_file: goal-alignment.yaml
