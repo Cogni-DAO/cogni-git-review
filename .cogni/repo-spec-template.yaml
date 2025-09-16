@@ -18,6 +18,13 @@ gates:
     with:
       max_changed_files: 30
       max_total_diff_kb: 100
+
+  # Ensure AGENTS.md files are updated when code changes
+  - type: agents-md-sync
+    id: agents_md_sync
+    # with:  # Optional configuration
+    #   code_patterns: ["src/**/*.js", "lib/**/*.ts"]  # Files that require doc updates
+    #   doc_pattern: "AGENTS.md"                       # Documentation file to check
     
   - type: ai-rule
     with:

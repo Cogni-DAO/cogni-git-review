@@ -11,6 +11,7 @@ Gates are implemented by cogni-git-review. The .cogni/repo-spec.yml in a reposit
 - **review-limits**: File count and diff size validation
 - **goal-declaration**: Repository goals validation
 - **forbidden-scopes**: Repository non-goals validation  
+- **agents-md-sync**: Ensures AGENTS.md files are updated when code changes
 - **ai-rule**: AI-powered evaluation using declarative rules (supports multiple instances)
 
 ## Gate Implementation Pattern
@@ -26,6 +27,25 @@ export async function run(context, gateConfig) {
     duration_ms: 123
   };
 }
+```
+
+## AGENTS.md Sync Gate
+The `agents-md-sync` gate enforces documentation synchronization:
+- Analyzes PR file changes using GitHub API (`context.octokit.pulls.listFiles`)
+- When code files change in a directory, requires corresponding `AGENTS.md` to be updated
+- Configurable code patterns (default: `**/*.*`) and doc pattern (default: `AGENTS.md`)
+- Uses `micromatch` library for robust glob pattern matching
+- Excludes documentation files (.md, README, CHANGELOG) from triggering violations
+- Returns neutral status on GitHub API errors to avoid blocking PRs
+
+Configuration example:
+```yaml
+gates:
+  - type: agents-md-sync
+    id: agents_md_sync
+    with:
+      code_patterns: ["src/**/*.js", "lib/**/*.ts"]  # Optional
+      doc_pattern: "AGENTS.md"                       # Optional
 ```
 
 ## AI Rule Gate
