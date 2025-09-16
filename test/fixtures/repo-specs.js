@@ -330,7 +330,58 @@ gates:
       rule_file: dont-rebuild-oss.yaml
   - type: ai-rule
     with:
-      rule_file: single-check-pr-verdict.yaml`
+      rule_file: single-check-pr-verdict.yaml`,
+
+  // AGENTS.md Synchronization Gate Test Fixtures
+  agentsSync: `schema_version: '0.1.4'
+
+intent:
+  name: agents-md-sync-test-project
+  goals:
+    - Maintain synchronized AGENTS.md documentation
+    - Ensure code changes include documentation updates
+  non_goals:
+    - Allowing undocumented code changes
+
+gates:
+  - type: agents-md-sync
+    id: agents_sync`,
+
+  agentsSyncWithCustomConfig: `schema_version: '0.1.4'
+
+intent:
+  name: agents-sync-custom-test-project
+  goals:
+    - Test custom patterns for AGENTS.md synchronization
+  non_goals:
+    - Default file patterns
+
+gates:
+  - type: agents-md-sync
+    id: agents_sync
+    with:
+      code_patterns: ["custom/**/*.py", "scripts/*.sh"]
+      doc_pattern: "DOCUMENTATION.md"`,
+
+  agentsSyncWithOtherGates: `schema_version: '0.1.4'
+
+intent:
+  name: agents-sync-combined-test-project
+  goals:
+    - Test AGENTS.md sync with other quality gates
+  non_goals:
+    - Single gate testing
+
+gates:
+  - type: review-limits
+    id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - type: agents-md-sync
+    id: agents_sync
+  - type: goal-declaration
+    id: goal_declaration`
 };
 
 // Helper for accessing specs by key  
