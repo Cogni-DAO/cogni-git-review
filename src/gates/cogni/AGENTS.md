@@ -54,3 +54,36 @@ The `ai-rule` gate type supports multiple instances:
 - Calls `src/ai/provider.js` for LangGraph evaluation
 - Decides pass/fail based on AI score vs rule threshold
 - Instance ID auto-derives from `rule_file` basename (without .yaml)
+- **Recent Enhancement**: Added `gatherEvidence()` function for code-aware capabilities
+  - When rules specify `x_capabilities: ['diff_summary', 'file_patches']`, provides actual file changes to AI
+  - Uses GitHub API (`context.octokit.rest.pulls.listFiles`) to fetch file patches
+  - Applies resource budgets (`x_budgets`) to prevent token/cost overruns
+  - Maintains string-based `diff_summary` contract with AI providers
+
+### Code-Aware Evidence Gathering Details
+
+**Enhanced Diff Summary Format**:
+```
+File Changes Summary (2 files, 75 additions, 17 deletions):
+
+1. src/auth/oauth.js (modified, 45 additions, 12 deletions)
+   @@ -1,6 +1,12 @@
+   function authenticate() {
+   +  // Enhanced auth logic
+     return token;
+   }
+
+2. src/utils/helpers.js (modified, 30 additions, 5 deletions)
+   [Patch content when under budget limits]
+```
+
+**File Selection Algorithm**:
+- Deterministic sorting by change count (descending), then filename (ascending)
+- Respects `max_files` budget limit (default: 25)
+- Includes patch content for top `max_patches` files (default: 3)
+- Truncates patches exceeding `max_patch_bytes_per_file` (default: 16KB)
+
+**Backward Compatibility**:
+- Rules without `x_capabilities` receive simple diff_summary: "2 files changed, 75 additions, 17 deletions"
+- No breaking changes to existing provider contract (string-based evidence)
+- All existing rules continue working without modification
