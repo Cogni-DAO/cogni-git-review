@@ -1,0 +1,14 @@
+id: code-aware-lite
+schema_version: "0.1"
+blocking: false
+
+evaluation-statement: Assess whether the code changes in this PR align with the stated PR Summary. PR summary over-promising hurts score. PR summary not mentioning changes hurts score.
+
+# Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
+x_capabilities:
+  - diff_summary      # Enable enhanced diff summary with file stats
+  - file_patches      # Include actual patch content for analysis
+
+success_criteria:
+  metric: score
+  threshold: 0.5
