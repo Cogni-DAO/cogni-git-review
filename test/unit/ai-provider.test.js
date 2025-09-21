@@ -56,7 +56,7 @@ describe('AI Provider Unit Tests', () => {
 
     assert.strictEqual(result.score, null, 'Should return null score on error');
     assert(Array.isArray(result.observations), 'Should return observations array');
-    assert(result.Ws.length > 0, 'Should have error observations');
+    assert(result.observations.length > 0, 'Should have error observations');
     assert.strictEqual(result.observations[0].code, 'ai_provider_error', 'Should have error code');
     assert(result.provenance.runId, 'Should still have provenance on error');
   });
