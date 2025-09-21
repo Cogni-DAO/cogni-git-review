@@ -46,11 +46,14 @@ Individual gates return `GateResult`:
   id: "string",  // Instance identifier (derived or explicit)
   status: "pass" | "fail" | "neutral",
   neutral_reason?: "oversize_diff" | "internal_error" | "unimplemented_gate" | ...,
-  violations: [{code, message, path?, meta?}],
+  violations: [{code, message, path?, meta?}],  // Non-AI gates
+  observations: [string],                       // AI gates  
   stats: object,
   duration_ms: number
 }
 ```
+
+**Result Normalization**: The launcher preserves both `violations` (non-AI gates) and `observations` (AI gates) fields during result processing.
 
 ## Registry-Based Discovery
 Gates are automatically discovered by `type` from filesystem:
