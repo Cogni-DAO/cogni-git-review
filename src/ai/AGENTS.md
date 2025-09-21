@@ -21,7 +21,7 @@ const result = await provider.review({
   diff_summary: '3 files changed (+45 -12)'
 });
 
-// Returns: { score: 0.85, annotations: [], summary: "Brief assessment", provenance: {} }
+// Returns: { score: 0.85, observations: [], summary: "Brief assessment", provenance: {} }
 ```
 
 ## Environment Configuration

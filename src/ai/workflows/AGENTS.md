@@ -16,12 +16,12 @@ const result = await evaluate({
   diff_summary: '3 files changed (+45 -12)'
 });
 
-// Returns: { score: 0.85, annotations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
+// Returns: { score: 0.85, observations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
 ```
 
 ## Implementation Details
 - **Model**: gpt-4o-mini with temperature=0 for determinism
-- **Schema**: Zod validation for structured output (score, annotations, summary)
+- **Schema**: Zod validation for structured output (score, observations, summary)
 - **Prompt**: Hardcoded template in goal-alignment.js
 - **Requirements**: OPENAI_API_KEY environment variable
 

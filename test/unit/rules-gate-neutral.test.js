@@ -60,7 +60,7 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
     assert.strictEqual(result.status, 'neutral', 'Should return neutral status');
     assert.strictEqual(result.neutral_reason, 'missing_threshold', 'Should have missing_threshold reason');
     assert.strictEqual(result.stats.error, 'No threshold specified in rule success criteria', 'Should have correct error message');
-    assert.deepStrictEqual(result.annotations, [], 'Should have empty annotations');
+    assert.deepStrictEqual(result.observations, [], 'Should have empty observations');
     assert(typeof result.duration_ms === 'number', 'Should include duration');
   });
 

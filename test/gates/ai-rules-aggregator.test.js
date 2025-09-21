@@ -16,7 +16,7 @@ const mockEvaluateSingleRule = async (rule, verdict) => ({
   rule_key: rule.rule_key,
   verdict,
   violations: verdict === 'failure' ? [{ code: 'test_violation', message: 'Test failure' }] : [],
-  annotations: [],
+  observations: [],
   duration_ms: 100,
   blocking: rule.blocking,
   alignment_score: verdict === 'success' ? 0.8 : (verdict === 'failure' ? 0.2 : 0.5)
@@ -28,14 +28,14 @@ describe('AI Rules Aggregator - P0 Critical Tests', () => {
   function aggregateRuleResults(ruleResults, loadDiagnostics = [], startTime = Date.now() - 1000) {
     let overallConclusion = 'success';
     const allViolations = [];
-    const allAnnotations = [];
+    const allObservations = [];
     const ruleSummaries = [];
     
     // Process each rule result
     for (const result of ruleResults) {
-      // Collect violations and annotations
+      // Collect violations and observations
       allViolations.push(...result.violations);
-      allAnnotations.push(...result.annotations);
+      allObservations.push(...result.observations);
       
       // Rule-level summary
       ruleSummaries.push(`${result.rule_key}: ${result.verdict.toUpperCase()} (${result.duration_ms}ms)`);
@@ -63,7 +63,7 @@ describe('AI Rules Aggregator - P0 Critical Tests', () => {
       title: 'AI Rules',
       summary,
       text: ruleSummaries.join('\n'),
-      annotations: allAnnotations.slice(0, 50), // Hard cap for GitHub
+      observations: allObservations.slice(0, 50), // Hard cap for GitHub
       duration_ms: Date.now() - startTime
     };
   }

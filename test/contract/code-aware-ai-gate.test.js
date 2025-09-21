@@ -94,7 +94,7 @@ describe('Code-Aware AI Gate Integration Tests', () => {
         capturedInput = input;
         return {
           score: 0.75,
-          annotations: [],
+          observations: [],
           summary: 'Code changes look good with proper authentication implementation',
           provenance: {}
         };

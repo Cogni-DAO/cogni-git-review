@@ -11,7 +11,7 @@ import { z } from "zod";
 // Schema for structured output
 const EvaluationSchema = z.object({
   score: z.number().min(0).max(1).describe("Alignment score between 0 and 1"),
-  annotations: z.array(z.string()).describe("List of specific observations or issues"),
+  observations: z.array(z.string()).describe("List of specific observations or issues"),
   summary: z.string().describe("Brief explanation of the evaluation")
 });
 
@@ -31,7 +31,7 @@ const agent = createReactAgent({
 /**
  * Evaluate PR against statement using ReAct agent
  * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
- * @returns {Promise<Object>} { score, annotations, summary }
+ * @returns {Promise<Object>} { score, observations, summary }
  */
 export async function evaluate(input) {
   if (!process.env.OPENAI_API_KEY) {
@@ -55,7 +55,7 @@ Now, evaluate this PR against the following criteria:
 <criteria> ${input.statement} </criteria>
 
 Provide a score from 0.0-1.0, with 1.0 being the best score. 
-Provide a short list (1-5) of concise annotations that justify the score.`;
+Provide a short list (1-5) of concise observations that justify the score.`;
 
 
   const message = new HumanMessage(promptText);
