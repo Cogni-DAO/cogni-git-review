@@ -39,3 +39,6 @@ gates:
   - type: ai-rule
     with:
       rule_file: single-check-pr-verdict.yaml
+  - type: ai-rule
+    with:
+      rule_file: strict-pr-mapping.yaml
