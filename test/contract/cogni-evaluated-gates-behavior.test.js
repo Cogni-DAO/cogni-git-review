@@ -130,10 +130,15 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
             // Verify behavior contract - new tri-state format
             assert.strictEqual(params.conclusion, "success");
             assert.strictEqual(params.output.summary, "All gates passed");
-            assert(params.output.text.includes("Gates: 3 total"));
-            assert(params.output.text.includes("✅ Passed: 3"));
-            assert(params.output.text.includes("files=5"));
-            assert(params.output.text.includes("diff_kb=20"));
+            // New format validation - accept any gate counts that total 3
+            const match = params.output.text.match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+            assert(match, `Expected gate counts format in: ${params.output.text}`);
+            const total = parseInt(match[1]) + parseInt(match[2]) + parseInt(match[3]);
+            assert.strictEqual(total, 3, `Expected 3 total gates, got ${total}`);
+            assert(params.output.text.includes("✅ 3 passed"));
+            // Stats should be in review_limits gate section now (no more footer)
+            assert(params.output.text.includes("changed_files: 5"));
+            assert(params.output.text.includes("total_diff_kb: 20"));
             return { data: { id: 1 } };
           }
         }
@@ -183,10 +188,15 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
             // Verify behavior contract - new tri-state format
             assert.strictEqual(params.conclusion, "failure");
             assert.strictEqual(params.output.summary, "Gate failures: 1");
-            assert(params.output.text.includes("Gates: 3 total"));
-            assert(params.output.text.includes("❌ Failed: 1"));
+            // New format validation - accept any gate counts that total 3
+            const match = params.output.text.match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+            assert(match, `Expected gate counts format in: ${params.output.text}`);
+            const total = parseInt(match[1]) + parseInt(match[2]) + parseInt(match[3]);
+            assert.strictEqual(total, 3, `Expected 3 total gates, got ${total}`);
+            assert(params.output.text.includes("❌ 1 failed"));
             assert(params.output.text.includes("max_changed_files: 45 > 30"));
-            assert(params.output.text.includes("files=45"));
+            // Stats should be in review_limits gate section now (no more footer)
+            assert(params.output.text.includes("changed_files: 45"));
             return { data: { id: 1 } };
           }
         }
@@ -236,10 +246,15 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
             // Verify behavior contract - new tri-state format
             assert.strictEqual(params.conclusion, "failure");
             assert.strictEqual(params.output.summary, "Gate failures: 1");  
-            assert(params.output.text.includes("Gates: 3 total"));
-            assert(params.output.text.includes("❌ Failed: 1"));
-            assert(params.output.text.includes("files=10"));
-            assert(params.output.text.includes("diff_kb=150"));
+            // New format validation - accept any gate counts that total 3
+            const match = params.output.text.match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+            assert(match, `Expected gate counts format in: ${params.output.text}`);
+            const total = parseInt(match[1]) + parseInt(match[2]) + parseInt(match[3]);
+            assert.strictEqual(total, 3, `Expected 3 total gates, got ${total}`);
+            assert(params.output.text.includes("❌ 1 failed"));
+            // Stats should be in review_limits gate section now (no more footer)
+            assert(params.output.text.includes("changed_files: 10"));
+            assert(params.output.text.includes("total_diff_kb: 150"));
             assert(params.output.text.includes("max_total_diff_kb: 150 > 100"));
             return { data: { id: 1 } };
           }

@@ -44,7 +44,9 @@ describe('Rules Gate Contract Tests', () => {
         assert(['success', 'failure', 'neutral'].includes(params.conclusion));
         assert.strictEqual(typeof params.output, 'object');
         // Optional: assert gate summary line exists
-        assert.match(params.output.text || '', /\bGates:\s*\d+\s+total\b/);
+        // New format validation - accept any number of gates
+        const match = (params.output.text || '').match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+        assert(match, `Expected gate counts format in: ${params.output.text}`);
       }
     });
   });

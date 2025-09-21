@@ -3,6 +3,7 @@
 
 /**
  * Debug function: Format run result as JSON
+ * Future: add git gist url link with JSON output for Agents
  */
 function formatRunSummaryJSON(runResult) {
   const gates = Array.isArray(runResult?.gates) ? runResult.gates : [];
@@ -24,81 +25,152 @@ function formatRunSummaryJSON(runResult) {
 }
 
 /**
- * Format gate results into summary and text for GitHub check
- * (Original logic moved from index.js)
+ * Format gate results into detailed per-gate markdown report
  */
 function formatGateResults(runResult) {
-  const { gates, early_exit, duration_ms } = runResult;
+  const gates = Array.isArray(runResult?.gates) ? runResult.gates : [];
   
-  const failedGates = gates.filter(g => g.status === 'fail');
-  const neutralGates = gates.filter(g => g.status === 'neutral');
-  const passedGates = gates.filter(g => g.status === 'pass');
+  // Group gates by status and sort alphabetically within groups
+  const groups = { fail: [], pass: [], neutral: [] };
+  for (const g of gates) {
+    groups[g.status]?.push(g);
+  }
+  for (const k of Object.keys(groups)) {
+    groups[k].sort((a, b) => getLabel(a).localeCompare(getLabel(b)));
+  }
   
-  // Summary
+  // Calculate counts
+  const counts = {
+    fail: groups.fail.length,
+    pass: groups.pass.length, 
+    neutral: groups.neutral.length
+  };
+  
+  // Generate summary line
   let summary;
   if (gates.length === 0) {
     summary = 'No gates configured';
-  } else if (failedGates.length > 0) {
-    summary = `Gate failures: ${failedGates.length}`;
-  } else if (neutralGates.length > 0) {
-    const reasons = [...new Set(neutralGates.map(g => g.neutral_reason).filter(Boolean))];
-    summary = `Gates neutral: ${reasons.join(', ')}`;
+  } else if (counts.fail > 0) {
+    summary = `Gate failures: ${counts.fail}`;
+  } else if (counts.neutral > 0) {
+    summary = `Gates neutral: ${counts.neutral}`;
   } else {
     summary = 'All gates passed';
   }
   
-  if (early_exit) {
-    summary += ' (early exit)';
+  // Generate detailed text
+  let text = '';
+  
+  // Header with verdict, counts, duration
+  const verdict = runResult.overall_status === 'fail' ? '❌ FAIL' : 
+                  runResult.overall_status === 'pass' ? '✅ PASS' : '⚠️ NEUTRAL';
+  text += `**${verdict}**\n\n`;
+  text += `✅ ${counts.pass} passed | ❌ ${counts.fail} failed | ⚠️ ${counts.neutral} neutral`;
+  if (runResult.duration_ms) {
+    text += ` | ${runResult.duration_ms}ms`;
   }
+  text += '\n\n';
   
-  // Text - detailed breakdown
-  let text = `Gates: ${gates.length} total | Duration: ${duration_ms}ms\n\n`;
-  
-  // Show gate status breakdown
-  text += `✅ Passed: ${passedGates.length} | ❌ Failed: ${failedGates.length} | ⚠️ Neutral: ${neutralGates.length}\n\n`;
-  
-  // Show failed gates first
-  if (failedGates.length > 0) {
-    text += '**Failures:**\n';
-    failedGates.forEach(gate => {
-      text += `• **${gate.id}**: ${gate.violations.length} violation(s)\n`;
-      gate.violations.slice(0, 3).forEach(v => { // Limit violations shown
-        text += `  - ${v.code}: ${v.message}\n`;
-      });
-      if (gate.violations.length > 3) {
-        text += `  - ...and ${gate.violations.length - 3} more\n`;
-      }
-    });
-    text += '\n';
-  }
-  
-  // Show neutral gates
-  if (neutralGates.length > 0) {
-    text += '**Neutral:**\n';
-    neutralGates.forEach(gate => {
-      text += `• **${gate.id}**: ${gate.neutral_reason || 'reason unknown'}\n`;
-    });
-    text += '\n';
-  }
-  
-  // Show passed gates summary
-  if (passedGates.length > 0) {
-    text += `**Passed:** ${passedGates.map(g => g.id).join(', ')}\n\n`;
-  }
-  
-  // Add stats from review limits if available
-  const reviewGate = gates.find(g => g.id === 'review_limits');
-  if (reviewGate?.stats) {
-    text += `**Stats:** files=${reviewGate.stats.changed_files || 0} | diff_kb=${reviewGate.stats.total_diff_kb || 0}`;
-  }
-  
-  // Add AI score if available. Temporary, only functional when only 1 AI rule. gate output needs refactoring. 
-  const rulesGate = gates.find(g => g.id === 'rules');
-  if (rulesGate?.stats?.score !== undefined) {
-    text += reviewGate?.stats ? ` | AI score=${rulesGate.stats.score}` : `**Stats:** AI score=${rulesGate.stats.score}`;
+  // Render gates in order: fail, pass, neutral
+  for (const status of ['fail', 'pass', 'neutral']) {
+    for (const gate of groups[status]) {
+      text += renderGate(gate, status);
+    }
   }
   
   return { summary, text };
+}
+
+/**
+ * Get display label for a gate
+ */
+function getLabel(gate) {
+  if (gate.id) return gate.id;
+  if (gate.with?.rule_file) {
+    return gate.with.rule_file.replace(/\.[^/.]+$/, ''); // Remove extension
+  }
+  return 'unknown_gate';
+}
+
+/**
+ * Render a single gate section
+ */
+function renderGate(gate, status) {
+  // Title with big status emoji
+  const emoji = status === 'fail' ? '❌' : 
+                status === 'pass' ? '✅' : '⚠️';
+  let section = `### ${emoji} ${getLabel(gate)}\n\n`;
+  
+  // AI rule score/threshold/statement
+  if (isFinite(gate.stats?.score)) {
+    const score = gate.stats.score;
+    const threshold = gate.stats.threshold;
+    const ruleId = gate.stats.rule_id;
+    section += `- **Score:** ${score}/${threshold}`;
+    if (ruleId) section += ` (rule: ${ruleId})`;
+    section += '\n';
+    
+    if (gate.stats.statement) {
+      section += `- **Statement:** ${gate.stats.statement}\n`;
+    }
+  }
+  
+  // Violations
+  const violations = gate.violations || [];
+  if (violations.length > 0) {
+    section += `- **Violations (${violations.length}):**\n`;
+    for (const v of violations.slice(0, 20)) {
+      section += `  - ${v.code || 'ERROR'} — ${v.message || 'No message'}\n`;
+      if (v.path) section += `    - Path: ${v.path}\n`;
+      if (v.meta && Object.keys(v.meta).length > 0) {
+        section += `    - Meta: ${JSON.stringify(v.meta)}\n`;
+      }
+    }
+    if (violations.length > 20) {
+      section += `  - ...and ${violations.length - 20} more\n`;
+    }
+  }
+  
+  // Observations
+  const observations = gate.observations || gate.annotations || [];
+  if (observations.length > 0) {
+    section += `- **Observations:**\n`;
+    for (const obs of observations.slice(0, 20)) {
+      const obsText = typeof obs === 'string' ? obs : (obs.message || obs.code || String(obs));
+      const truncated = obsText.length > 1000 ? obsText.slice(0, 1000) + '...' : obsText;
+      section += `  - ${truncated}\n`;
+    }
+    if (observations.length > 20) {
+      section += `  - ...and ${observations.length - 20} more\n`;
+    }
+  }
+  
+  // Stats (exclude score/threshold already shown)
+  const stats = gate.stats || {};
+  const statsToShow = Object.entries(stats).filter(([key, value]) => {
+    return key !== 'score' && key !== 'threshold' && key !== 'rule_id' && key !== 'statement' &&
+           (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean');
+  });
+  
+  if (statsToShow.length > 0) {
+    section += `- **Stats:**\n`;
+    for (const [key, value] of statsToShow) {
+      section += `  - ${key}: ${value}\n`;
+    }
+  }
+  
+  // Duration
+  if (gate.duration_ms != null) {
+    section += `- **Duration:** ${gate.duration_ms}ms\n`;
+  }
+  
+  // Neutral reason
+  if (status === 'neutral' && gate.neutral_reason) {
+    section += `- **Reason:** ${gate.neutral_reason}\n`;
+  }
+  
+  section += '\n';
+  return section;
 }
 
 // Use the working formatter by default, keep JSON for debugging

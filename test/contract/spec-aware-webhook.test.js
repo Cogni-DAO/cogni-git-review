@@ -6,6 +6,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { testPullRequestHandler } from '../helpers/handler-harness.js';
+import { assertGateCountsFormat } from '../helpers/summary-format-validator.js';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 
 function payload(overrides = {}) {
@@ -65,7 +66,9 @@ describe('Spec-Aware Webhook Contract Tests', () => {
         assert.strictEqual(params.head_sha, 'abc123def456789012345678901234567890abcd');
         assert.strictEqual(params.status, 'completed');
         assert.strictEqual(params.conclusion, 'success');
-        assert.match(params.output.text, /\bGates:\s*\d+\s+total\b/);
+        // New format validation - accept any number of gates
+        const match = params.output.text.match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+        assert(match, `Expected gate counts format in: ${params.output.text}`);
       }
     });
   });

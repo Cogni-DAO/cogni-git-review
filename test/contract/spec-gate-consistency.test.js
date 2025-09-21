@@ -7,6 +7,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { testPullRequestHandler } from '../helpers/handler-harness.js';
+import { assertGateCountsFormat } from '../helpers/summary-format-validator.js';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' assert { type: 'json' };
 
 function payload() {
@@ -36,7 +37,7 @@ describe('Spec-Gate Consistency Contract Tests', () => {
       payload: payload(),
       spec: 'gateConsistency1Gate',
       expectCheck: (params) => {
-        assert.match(params.output.text, /Gates: 1 total/);
+        assertGateCountsFormat(params.output.text, 1);
       }
     });
   });
@@ -48,7 +49,7 @@ describe('Spec-Gate Consistency Contract Tests', () => {
       expectCheck: (params) => {
         assert.strictEqual(params.name, 'Cogni Git PR Review');
         assert.strictEqual(params.status, 'completed');
-        assert.match(params.output.text, /\bGates:\s*2\s+total\b/);
+        assertGateCountsFormat(params.output.text, 2);
       }
     });
   });
@@ -58,7 +59,7 @@ describe('Spec-Gate Consistency Contract Tests', () => {
       payload: payload(),
       spec: 'gateConsistency3Gates',
       expectCheck: (params) => {
-        assert.match(params.output.text, /Gates: 3 total/);
+        assertGateCountsFormat(params.output.text, 3);
       }
     });
   });
@@ -70,7 +71,7 @@ describe('Spec-Gate Consistency Contract Tests', () => {
       expectCheck: (params) => {
         assert.strictEqual(params.name, 'Cogni Git PR Review');
         assert.strictEqual(params.status, 'completed');
-        assert.match(params.output.text, /\bGates:\s*2\s+total\b/);
+        assertGateCountsFormat(params.output.text, 2);
       }
     });
   });
