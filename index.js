@@ -3,6 +3,7 @@
 
 import { loadRepoSpec } from './src/spec-loader.js';
 import { runAllGates } from './src/gates/index.js';
+import { postPRCommentWithGuards } from './src/pr-comment.js';
 
 const PR_REVIEW_NAME = "Cogni Git PR Review";
 
@@ -158,7 +159,8 @@ export default (app) => {
 
   async function handlePullRequest(context) {
     const pr = context.payload.pull_request;
-    console.log(`📝 PR Event: ${context.payload.action} for PR #${pr.number}, SHA: ${pr.head.sha}`);
+    const headShaStart = pr.head.sha;
+    console.log(`📝 PR Event: ${context.payload.action} for PR #${pr.number}, SHA: ${headShaStart}`);
     
     // Create check with in_progress status, skip external gates
     const startTime = new Date();
@@ -175,7 +177,15 @@ export default (app) => {
 
       // Run all gates and create completed check
       const runResult = await runAllGates(context, pr, spec);
-      return createCompletedCheck(context, runResult, pr.head.sha, startTime);
+      const checkResult = await createCompletedCheck(context, runResult, pr.head.sha, startTime);
+      
+      // Post PR comment if not neutral
+      const conclusion = mapStatusToConclusion(runResult.overall_status);
+      if (conclusion !== 'neutral') {
+        await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number);
+      }
+      
+      return checkResult;
       
     } catch (error) {
       console.error(`📄 Spec load failed for PR #${pr.number}:`, error);
