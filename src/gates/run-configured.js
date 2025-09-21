@@ -141,6 +141,7 @@ async function safeRunGate(handler, ctx, gate, gateId) {
       status: result.status ?? 'neutral',
       neutral_reason: result.neutral_reason,
       violations: result.violations ?? [],
+      observations: result.observations ?? [],
       stats: result.stats ?? {},
       duration_ms: Date.now() - startTime
     };
