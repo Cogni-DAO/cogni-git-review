@@ -22,7 +22,7 @@ describe('AI Provider Unit Tests', () => {
     // Validate contract structure
     assert.strictEqual(typeof result.score, 'number', 'Should return numeric score');
     assert(result.score >= 0 && result.score <= 1, 'Score should be between 0 and 1');
-    assert(Array.isArray(result.annotations), 'Should return annotations array');
+    assert(Array.isArray(result.observations), 'Should return observations array');
     assert(typeof result.summary === 'string', 'Should return summary string');
     
     // Validate provenance wrapper added by provider
@@ -45,7 +45,7 @@ describe('AI Provider Unit Tests', () => {
 
     // Should get hardcoded response from goal-alignment workflow
     assert.strictEqual(result.score, 0.85, 'Should return hardcoded score');
-    assert.deepStrictEqual(result.annotations, [], 'Should return empty annotations');
+    assert.deepStrictEqual(result.observations, [], 'Should return empty observations');
     assert(result.summary.includes('Refactor logging system'), 'Summary should include PR title');
     assert(result.summary.includes('Does NOT re-implement mature OSS tools'), 'Summary should include statement');
   });
@@ -55,9 +55,9 @@ describe('AI Provider Unit Tests', () => {
     const result = await review(null);
 
     assert.strictEqual(result.score, null, 'Should return null score on error');
-    assert(Array.isArray(result.annotations), 'Should return annotations array');
-    assert(result.annotations.length > 0, 'Should have error annotations');
-    assert.strictEqual(result.annotations[0].code, 'ai_provider_error', 'Should have error code');
+    assert(Array.isArray(result.observations), 'Should return observations array');
+    assert(result.observations.length > 0, 'Should have error observations');
+    assert.strictEqual(result.observations[0].code, 'ai_provider_error', 'Should have error code');
     assert(result.provenance.runId, 'Should still have provenance on error');
   });
 });

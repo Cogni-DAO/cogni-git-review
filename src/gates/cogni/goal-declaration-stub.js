@@ -27,7 +27,7 @@ export async function evaluateGoalDeclaration(context, pr, spec) {
         rule: 'repo_has_no_goals',
         actual: 'No goals in repo spec',
         limit: 'At least 1 goal required',
-        annotation: 'Repository specification must define at least one goal in intent.goals[]'
+        observation: 'Repository specification must define at least one goal in intent.goals[]'
       });
     }
     
@@ -66,7 +66,7 @@ export async function run(ctx, _gate) {
     neutral_reason: legacyResult.oversize ? 'internal_error' : undefined,
     violations: legacyResult.violations.map(v => ({
       code: v.rule,
-      message: v.annotation || v.actual,
+      message: v.observation || v.actual,
       path: null,
       meta: { actual: v.actual, limit: v.limit }
     })),

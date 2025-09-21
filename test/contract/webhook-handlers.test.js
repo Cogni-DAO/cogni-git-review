@@ -74,7 +74,9 @@ describe("GitHub Webhook Handler Contract Tests", () => {
         assert.strictEqual(params.conclusion, "success");
         assert.strictEqual(params.output.title, "Cogni Git PR Review");
         assert.strictEqual(params.output.summary, "All gates passed");
-        assert.match(params.output.text || '', /\bGates:\s*\d+\s+total\b/);
+        // New format validation - accept any number of gates
+        const match = (params.output.text || '').match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+        assert(match, `Expected gate counts format in: ${params.output.text}`);
       }
     });
   });
@@ -148,7 +150,8 @@ describe("GitHub Webhook Handler Contract Tests", () => {
         assert.strictEqual(params.conclusion, "success");
         assert.strictEqual(params.output.title, "Cogni Git PR Review");
         assert.strictEqual(params.output.summary, "All gates passed");
-        assert.match(params.output.text || '', /\bfiles=3\b/);
+        // Stats should be in gate sections now (no more footer)
+        assert(params.output.text.includes("changed_files: 3"));
       },
       extraOctokit
     });

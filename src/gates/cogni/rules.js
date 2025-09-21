@@ -170,7 +170,7 @@ export async function run(ctx, gateConfig) {
     } else {
       return {
         status: 'fail',
-        annotations: [error.message],
+        observations: [error.message],
         stats: { error: error.message },
         duration_ms: Date.now() - startTime
       };
@@ -199,7 +199,7 @@ function makeGateDecision(providerResult, rule, startTime) {
   
   return {
     status,
-    annotations: providerResult.annotations || [],
+    observations: providerResult.observations || [],
     stats: {
       score,
       threshold,
@@ -217,7 +217,7 @@ function createNeutralResult(reason, message, startTime) {
   return {
     status: 'neutral',
     neutral_reason: reason,
-    annotations: [],
+    observations: [],
     stats: { error: message },
     duration_ms: Date.now() - startTime
   };

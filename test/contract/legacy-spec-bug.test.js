@@ -56,7 +56,11 @@ describe("Legacy Spec Bug Tests", () => {
             assert.strictEqual(params.output.summary, "No gates configured", "Should say 'No gates configured' not 'All gates passed'");
             
             // Should indicate 0 gates in detailed text
-            assert(params.output.text.includes("Gates: 0 total"), "Should show Gates: 0 total");
+            // New format validation - should show 0 gates total
+            const match = params.output.text.match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
+            assert(match, `Expected gate counts format in: ${params.output.text}`);
+            const total = parseInt(match[1]) + parseInt(match[2]) + parseInt(match[3]);
+            assert.strictEqual(total, 0, "Should show 0 total gates");
             
             return { data: { id: 12345 } };
           }

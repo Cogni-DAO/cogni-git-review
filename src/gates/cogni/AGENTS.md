@@ -87,3 +87,10 @@ File Changes Summary (2 files, 75 additions, 17 deletions):
 - Rules without `x_capabilities` receive simple diff_summary: "2 files changed, 75 additions, 17 deletions"
 - No breaking changes to existing provider contract (string-based evidence)
 - All existing rules continue working without modification
+
+## Gate Output Fields
+
+**Standard Result Structure**:
+- **AI gates** (rules.js): Return `observations` array containing AI-generated insights
+- **Stub gates** (goal-declaration-stub.js, forbidden-scopes-stub.js): Return violations with `observation` messages
+- All gates return normalized `{status, violations[], stats, duration_ms}` format

@@ -27,7 +27,7 @@ export async function evaluateForbiddenScopes(context, pr, spec) {
         rule: 'repo_has_no_non_goals',
         actual: 'No non_goals in repo spec',
         limit: 'At least 1 non_goal required',
-        annotation: 'Repository specification must define at least one non_goal in intent.non_goals[]'
+        observation: 'Repository specification must define at least one non_goal in intent.non_goals[]'
       });
     }
     
@@ -66,7 +66,7 @@ export async function run(ctx, _gate) {
     neutral_reason: legacyResult.oversize ? 'internal_error' : undefined,
     violations: legacyResult.violations.map(v => ({
       code: v.rule,
-      message: v.annotation || v.actual,
+      message: v.observation || v.actual,
       path: null,
       meta: { actual: v.actual, limit: v.limit }
     })),

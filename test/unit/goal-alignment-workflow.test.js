@@ -21,8 +21,8 @@ describe('Goal Alignment Workflow Unit Tests', () => {
 
     // Validate hardcoded response structure
     assert.strictEqual(result.score, 0.85, 'Should return hardcoded score');
-    assert(Array.isArray(result.annotations), 'Should return annotations array');
-    assert.deepStrictEqual(result.annotations, [], 'Should return empty annotations for hardcoded response');
+    assert(Array.isArray(result.observations), 'Should return observations array');
+    assert.deepStrictEqual(result.observations, [], 'Should return empty observations for hardcoded response');
     assert(typeof result.summary === 'string', 'Should return summary string');
   });
 
@@ -53,7 +53,7 @@ describe('Goal Alignment Workflow Unit Tests', () => {
 
     // Should still return valid structure with empty inputs
     assert.strictEqual(result.score, 0.85, 'Should return consistent score');
-    assert.deepStrictEqual(result.annotations, [], 'Should return empty annotations');
+    assert.deepStrictEqual(result.observations, [], 'Should return empty observations');
     assert(typeof result.summary === 'string', 'Should return summary even with empty inputs');
   });
 });

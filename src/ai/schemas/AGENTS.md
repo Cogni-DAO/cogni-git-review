@@ -18,7 +18,7 @@ JSON schema definitions for AI evaluation rules and outputs. MVP implementation 
 ### goal-evaluation-output.json
 **JSON Schema for AI Provider Response Format**
 - Validates responses from AI providers evaluating pull requests
-- Ensures consistent output format with score, annotations, and summary fields
+- Ensures consistent output format with score, observations, and summary fields
 
 ## Current State
 This is MVP schema validation. The vendor-prefixed extension approach is a short-term solution for experimenting with code-aware capabilities while the overall AI rule system is in development.

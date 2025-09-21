@@ -62,7 +62,7 @@ export async function review(input, options = {}) {
   
   return {
     score: 0.75,
-    annotations: [],
+    observations: [],
     summary: 'Mock AI response',
     provenance: {}
   };

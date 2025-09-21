@@ -16,7 +16,7 @@ import { evaluate } from './workflows/goal-alignment.js';
  * @param {string} input.diff_summary - Summary of PR changes
  * @param {Object} options - Configuration options
  * @param {number} options.timeoutMs - Timeout in milliseconds (default: 60000)
- * @returns {Promise<Object>} { score: number, annotations: [], summary: string, provenance: {} }
+ * @returns {Promise<Object>} { score: number, observations: [], summary: string, provenance: {} }
  */
 export async function review(input, { timeoutMs = 60000 } = {}) {
   const startTime = Date.now();
@@ -49,7 +49,7 @@ export async function review(input, { timeoutMs = 60000 } = {}) {
 function createErrorResponse(code, message, startTime) {
   return {
     score: null,
-    annotations: [{
+    observations: [{
       code,
       message,
       path: null,

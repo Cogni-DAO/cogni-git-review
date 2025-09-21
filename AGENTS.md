@@ -134,4 +134,6 @@ npm test   # Run tests (several integration tests currently skipped due to mocki
 ## Notes
 **MVP Gate Implementation**: Current architecture is MVP implementation. Future design (work item `8f01ab04-922d-478f-ba1a-5bc1eca8b529`) targets unified async execution for all gates.
 
+**Check Summary Format**: GitHub check output uses detailed per-gate markdown reports with emoji status indicators and comprehensive violation/observation display.
+
 **Future Enforcement of Github Action Repo-rules:** Cogni Memory Project for Allstar integration, id: `f09702dd-0bc5-4a19-9a67-255f69fccb26`

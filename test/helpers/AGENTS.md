@@ -8,6 +8,15 @@ Shared utilities that eliminate duplication in test setup and execution.
 - **Mock factories**: Common GitHub API mock configurations
 - **Assertion utilities**: Shared validation helpers
 - **Test environment**: Setup and cleanup functions
+- **Summary format validators**: DRY assertions for detailed gate report format
+
+## Current Helpers
+
+### `summary-format-validator.js`
+DRY assertions for the new detailed gate report format that replaced "Gates: X total":
+- `assertGateCountsFormat(text, expectedTotal)` - Validates "✅ X passed | ❌ Y failed | ⚠️ Z neutral" format
+- Eliminates duplication across contract tests that verify check run output
+- Provides consistent format validation with clear error messages
 
 ## Principles
 - Extract common patterns from multiple test files
