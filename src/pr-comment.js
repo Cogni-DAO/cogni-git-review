@@ -61,23 +61,28 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
 }
 
 /**
- * Post PR comment with staleness guard
+ * Post PR comment with staleness and PR validation guards
  * @param {Object} context - Probot context
  * @param {Object} runResult - Gate execution results
  * @param {string} checkUrl - URL to GitHub check details
- * @param {string} headShaStart - Original PR head SHA
+ * @param {string} headShaStart - Original PR head SHA for staleness check
  * @param {number} prNumber - PR number
  */
 export async function postPRCommentWithGuards(context, runResult, checkUrl, headShaStart, prNumber) {
   try {
-    // Staleness guard - check if head SHA changed during run
-    const { data: latest } = await context.octokit.pulls.get(context.repo({ pull_number: prNumber }));
-    if (latest.head.sha === headShaStart) {
-      await postPRComment(context, runResult, checkUrl, headShaStart, prNumber);
-      console.log(`📝 Posted PR comment for PR #${prNumber}, SHA ${headShaStart.slice(0, 7)}`);
-    } else {
-      console.log(`📝 Skipping PR comment - head SHA changed during run (${headShaStart.slice(0, 7)} -> ${latest.head.sha.slice(0, 7)})`);
+    // PR validation guard - ensure we're commenting on the right PR
+    const { data: pr } = await context.octokit.pulls.get(context.repo({ pull_number: prNumber }));
+    
+    // Validate that the PR head SHA matches what we evaluated
+    if (pr.head.sha !== headShaStart) {
+      console.log(`📝 Skipping PR comment - PR #${prNumber} head SHA mismatch (expected: ${headShaStart.slice(0, 7)}, actual: ${pr.head.sha.slice(0, 7)})`);
+      return;
     }
+
+    // Post the comment since validation passed
+    await postPRComment(context, runResult, checkUrl, headShaStart, prNumber);
+    console.log(`📝 Posted PR comment for PR #${prNumber}, SHA ${headShaStart.slice(0, 7)}`);
+    
   } catch (error) {
     console.error('📝 Failed to post PR comment:', error);
   }

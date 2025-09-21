@@ -5,6 +5,7 @@ import { loadRepoSpec } from './src/spec-loader.js';
 import { runAllGates } from './src/gates/index.js';
 import { postPRCommentWithGuards } from './src/pr-comment.js';
 import { renderCheckSummary } from './src/summary-adapter.js';
+import { resolvePrRef, createNeutralCheckOnSha, handleCheckRunRerun } from './src/rerun-handlers.js';
 
 const PR_REVIEW_NAME = "Cogni Git PR Review";
 
@@ -34,6 +35,7 @@ export default (app) => {
   });
 
   app.on("check_suite.rerequested", handleCheckRerun);
+  app.on("check_run.rerequested", (context) => handleCheckRunRerun(context, handlePullRequest));
   app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], handlePullRequest);
 
   async function createCheckOnSha(context, options) {
@@ -140,27 +142,19 @@ export default (app) => {
     }
   }
 
+
   async function handleCheckRerun(context) {
     const checkSuite = context.payload.check_suite;
-    const { head_sha: headSha } = checkSuite;
+    const { head_sha: headSha, head_branch: headBranch } = checkSuite;
 
     console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
 
-    // Rerun does NOT have PR information, just the head SHA. 
-    // Find associated PR(s) for this commit SHA using GitHub API
-    const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
-      context.repo({ commit_sha: headSha })
-    );
-    const prRef = assoc.find(pr => pr.state === 'open') || assoc[0];
+    // Use deterministic PR resolution
+    const prRef = await resolvePrRef(context, { headSha, headBranch });
 
     if (!prRef) {
-      console.log(`🔄 RERUN: No associated PR found for SHA ${headSha}`);
-      return createCheckOnSha(context, {
-        sha: headSha,
-        conclusion: 'failure',
-        summary: 'No associated PR found',
-        text: 'This check only runs on PR commits. Ensure the commit belongs to an open pull request.'
-      });
+      console.log(`🔄 RERUN: Ambiguous PR resolution for SHA ${headSha} - marking neutral`);
+      return createNeutralCheckOnSha(context, headSha);
     }
 
     console.log(`🔄 RERUN: Found PR #${prRef.number} in check_suite, fetching full PR data`);
@@ -173,23 +167,19 @@ export default (app) => {
       
       console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
       
-      // Enhance context to look like a PR event (following context enhancement pattern)
+      // Enhance context to look like a PR event
       context.payload.pull_request = fullPR;
       context.payload.action = 'rerequested';
       
-      // Delegate to existing PR handler - it already has all the logic we need
+      // Delegate to existing PR handler
       return handlePullRequest(context);
       
     } catch (error) {
       console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
-      return createCheckOnSha(context, {
-        sha: headSha,
-        conclusion: 'neutral',
-        summary: 'Could not fetch PR data',
-        text: 'GitHub API issue while fetching PR details. Re-run the check or try again.'
-      });
+      return createNeutralCheckOnSha(context, headSha);
     }
   }
+
 
 
   // For more information on building apps:

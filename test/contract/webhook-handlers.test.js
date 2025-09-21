@@ -131,6 +131,10 @@ describe("GitHub Webhook Handler Contract Tests", () => {
           data: [{
             number: 12,
             state: 'open',
+            head: { 
+              sha: "e92817d301df48f3ea502537fbd0b3d9a3ef792a",
+              ref: "setup/claude" 
+            },
             changed_files: 3,
             additions: 11,
             deletions: 0
