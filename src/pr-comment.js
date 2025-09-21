@@ -27,9 +27,21 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
   if (failed.length > 0) {
     body += `**Blockers:**\n`;
     failed.slice(0, 3).forEach(gate => {
-      const msg = (gate.violations && gate.violations[0] && gate.violations[0].message) || 'Failed';
       const label = gate.id || (gate.with && gate.with.rule_file) || 'unknown_gate';
-      body += `- **${label}**: ${msg}\n`;
+      body += `- **${label}**:\n`;
+      
+      // Show all violations for this gate (limit to 5 to avoid spam)
+      const violations = gate.violations || [];
+      if (violations.length === 0) {
+        body += `  - Failed\n`;
+      } else {
+        violations.slice(0, 5).forEach(violation => {
+          body += `  - ${violation.code || 'ERROR'}: ${violation.message || 'No details'}\n`;
+        });
+        if (violations.length > 5) {
+          body += `  - ...and ${violations.length - 5} more\n`;
+        }
+      }
     });
     body += '\n';
   }
