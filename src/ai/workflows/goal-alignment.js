@@ -19,7 +19,7 @@ const EvaluationSchema = z.object({
 const agent = createReactAgent({
   llm: new ChatOpenAI({ 
     model: "gpt-4o-mini", 
-    temperature: 1 
+    temperature: 0 
   }),
   tools: [], // No tools - pure reasoning
   responseFormat: {
@@ -40,7 +40,7 @@ export async function evaluate(input) {
 
   const startTime = Date.now();
 
-  const promptText = `You are an expert in analyzeing code pull requests against a given set of criteria. Here is the current PR you are evaluating:
+  const promptText = `You are an expert in analyzing code pull requests against a given set of criteria. Here is the current PR you are evaluating:
 
 <PR Information>
 <PR Title> ${input.pr_title} </PR Title>
