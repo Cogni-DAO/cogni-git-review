@@ -106,9 +106,7 @@ function renderGate(gate, status) {
     const score = gate.stats.score;
     const threshold = gate.stats.threshold;
     const ruleId = gate.stats.rule_id;
-    section += `- **Score:** ${score}/${threshold}`;
-    if (ruleId) section += ` (rule: ${ruleId})`;
-    section += '\n';
+    section += `- **Score:** ${score}/${threshold}\n`;
     
     if (gate.stats.statement) {
       section += `- **Statement:** ${gate.stats.statement}\n`;

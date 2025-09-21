@@ -33,7 +33,12 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
       // Show all violations for this gate (limit to 5 to avoid spam)
       const violations = gate.violations || [];
       if (violations.length === 0) {
-        body += `  - Failed\n`;
+        // Check if this is an AI gate with score/threshold data
+        if (gate.stats?.score != null && gate.stats?.threshold != null) {
+          body += `  - Score: ${gate.stats.score}/${gate.stats.threshold}\n`;
+        } else {
+          body += `  - Failed\n`;
+        }
       } else {
         violations.slice(0, 5).forEach(violation => {
           body += `  - ${violation.code || 'ERROR'}: ${violation.message || 'No details'}\n`;
