@@ -1,0 +1,1 @@
+export const PR_REVIEW_NAME = "Cogni Git PR Review";

@@ -1,11 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PR_REVIEW_NAME } from '../constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const CHECK_CONTEXT_NAME = "Cogni Review";
 const TEMPLATE_PATH = "templates/repo-spec-template.yaml";
 const WELCOME_BRANCH_PREFIX = "cogni/welcome-setup-";
 const WELCOME_PR_TITLE = "chore(cogni): add minimal .cogni/repo-spec.yaml";
@@ -83,7 +82,7 @@ export async function createWelcomePR(context, repoInfo) {
     });
 
     // Create PR body
-    const prBody = createPRBody(owner, repo, CHECK_CONTEXT_NAME);
+    const prBody = createPRBody(owner, repo, PR_REVIEW_NAME);
 
     // Create PR
     const { data: pr } = await context.octokit.pulls.create({

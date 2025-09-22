@@ -6,8 +6,7 @@ import { runAllGates } from './src/gates/index.js';
 import { postPRCommentWithGuards } from './src/pr-comment.js';
 import { renderCheckSummary } from './src/summary-adapter.js';
 import { handleInstallationAdded } from './src/setup/installation-handler.js';
-
-const PR_REVIEW_NAME = "Cogni Git PR Review";
+import { PR_REVIEW_NAME } from './src/constants.js';
 
 
 /**
