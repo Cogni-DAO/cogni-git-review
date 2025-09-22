@@ -17,6 +17,7 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - [GitHub Checks API](https://docs.github.com/en/rest/checks)
 - **[Architecture Design](docs/DESIGN.md)** - Core extensible AI rules system
 - Architecture details in AGENTS.md files throughout the repository
+- README.md - basic overview and installation instructions for humans.
 
 ## Context Architecture
 
