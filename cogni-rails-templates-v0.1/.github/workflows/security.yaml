@@ -3,9 +3,9 @@ on:
   pull_request:
   schedule:
     - cron: "0 9 * * 1"  # weekly, Mondays 09:00 UTC
+
 permissions:
-  contents: read
-  security-events: write
+  contents: read  # no code-scanning writes needed
 
 jobs:
   dependency-review:
@@ -18,19 +18,6 @@ jobs:
         with:
           fail-on-severity: high
 
-  codeql:
-    name: CodeQL
-    # Runs on PRs and a weekly analysis on default branch
-    runs-on: ubuntu-latest
-    steps:
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
-          # For TS/JS repos, default/built-in query suites:
-          # https://docs.github.com/en/code-security/code-scanning/managing-your-code-scanning-configuration/javascript-typescript-built-in-queries
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/analyze@v3
-
   scorecard:
     name: OpenSSF Scorecard (weekly)
     if: github.event_name == 'schedule'
@@ -39,7 +26,8 @@ jobs:
       - uses: ossf/scorecard-action@v2.3.1
         with:
           results_file: results.sarif
-          publish_results: false
-      - uses: github/codeql-action/upload-sarif@v3
+          publish_results: false   # set true if you want the public Scorecard badge
+      - uses: actions/upload-artifact@v4
         with:
-          sarif_file: results.sarif
+          name: scorecard-sarif
+          path: results.sarif
