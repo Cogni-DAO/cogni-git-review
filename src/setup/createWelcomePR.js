@@ -81,35 +81,64 @@ export async function createWelcomePR(context, repoInfo) {
       ref: `heads/${defaultBranch}`
     });
     
-    await context.octokit.git.createRef({
-      owner,
-      repo,
-      ref: `refs/heads/${branchName}`,
-      sha: defaultRef.object.sha
-    });
+    try {
+      await context.octokit.git.createRef({
+        owner,
+        repo,
+        ref: `refs/heads/${branchName}`,
+        sha: defaultRef.object.sha
+      });
+    } catch (error) {
+      if (error.status !== 422) throw error;
+      // 422 means branch already exists - that's fine for idempotency
+    }
 
-    // Add repo-spec.yaml file
-    await context.octokit.repos.createOrUpdateFileContents({
-      owner,
-      repo,
-      path: '.cogni/repo-spec.yaml',
-      message: 'feat(cogni): add initial repo-spec configuration',
-      content: Buffer.from(customizedContent).toString('base64'),
-      branch: branchName
-    });
+    // Add repo-spec.yaml file (only if it doesn't exist)
+    try {
+      await context.octokit.repos.getContent({
+        owner,
+        repo,
+        path: '.cogni/repo-spec.yaml',
+        ref: branchName
+      });
+      // File exists, skip creation
+    } catch (error) {
+      if (error.status !== 404) throw error;
+      // File doesn't exist, create it
+      await context.octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path: '.cogni/repo-spec.yaml',
+        message: 'feat(cogni): add initial repo-spec configuration',
+        content: Buffer.from(customizedContent).toString('base64'),
+        branch: branchName
+      });
+    }
 
-    // Add AI rule template file
+    // Add AI rule template file (only if it doesn't exist)
     const aiRuleTemplatePath = path.join(__dirname, '..', '..', AI_RULE_TEMPLATE_PATH);
     const aiRuleContent = fs.readFileSync(aiRuleTemplatePath, 'utf8');
     
-    await context.octokit.repos.createOrUpdateFileContents({
-      owner,
-      repo,
-      path: '.cogni/rules/ai-rule-template.yaml',
-      message: 'feat(cogni): add AI rule template',
-      content: Buffer.from(aiRuleContent).toString('base64'),
-      branch: branchName
-    });
+    try {
+      await context.octokit.repos.getContent({
+        owner,
+        repo,
+        path: '.cogni/rules/ai-rule-template.yaml',
+        ref: branchName
+      });
+      // File exists, skip creation
+    } catch (error) {
+      if (error.status !== 404) throw error;
+      // File doesn't exist, create it
+      await context.octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path: '.cogni/rules/ai-rule-template.yaml',
+        message: 'feat(cogni): add AI rule template',
+        content: Buffer.from(aiRuleContent).toString('base64'),
+        branch: branchName
+      });
+    }
 
     // Create PR body
     const prBody = createPRBody(owner, repo, PR_REVIEW_NAME);
@@ -151,24 +180,34 @@ gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSO
 }
 JSON`;
 
-  return `# Welcome to Cogni Review
+  return `# Welcome to Cogni Git Review!
 
-This PR adds a minimal \`.cogni/repo-spec.yaml\` so Cogni can evaluate PRs deterministically.
+  This PR adds:
+  - a minimal \`.cogni/repo-spec.yaml\`. This is the defining policy for Cogni Git Review
+  - a minimal \`.cogni/rules/ai-rule-template.yaml\`. This is the template for a new AI powered gate.
 
-## Final step: Enable branch protection
+Note: Cogni Git Review will only load these files from the default branch.
 
-**For fresh repos (no existing branch protection):**
+## Do you want to require Cogni reviews pass? 
+Enable branch protections!
 
-\`\`\`bash
-${bash}
-\`\`\`
-
-**For repos with existing branch protection:**
+## **For repos with existing branch protection:**
 
 Go to: https://github.com/${owner}/${repo}/settings/branches
 1. Require a pull request to default branch before merging ✅
 2. Require status checks to pass ✅ 
 3. Add **${checkContextName}** to required status checks
+
+
+##**For fresh repos (no existing branch protection):**
+This bash script is the fastest way. 
+Copy this script, and paste it into your terminal. 
+
+Note: This assumes you have github cli installed and authenticated.
+
+\`\`\`bash
+${bash}
+\`\`\`
 
 After merging this PR, new PRs will be gated by **${checkContextName}**.
 
