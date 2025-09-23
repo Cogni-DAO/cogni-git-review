@@ -1,0 +1,66 @@
+{
+  "action": "added",
+  "installation": {
+    "id": 12345678,
+    "client_id": "Iv23liXZB0avFTzd2auo",
+    "account": {
+      "login": "derekg1729",
+      "id": 123456,
+      "node_id": "MDQ6VXNlcjEyMzQ1Ng==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/123456?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/derekg1729",
+      "html_url": "https://github.com/derekg1729",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "repository_selection": "selected",
+    "access_tokens_url": "https://api.github.com/app/installations/12345678/access_tokens",
+    "repositories_url": "https://api.github.com/installation/repositories",
+    "html_url": "https://github.com/settings/installations/12345678",
+    "app_id": 123456,
+    "app_slug": "cogni-git-review",
+    "target_id": 123456,
+    "target_type": "User",
+    "permissions": {
+      "actions": "read",
+      "checks": "write",
+      "contents": "write",
+      "metadata": "read",
+      "pull_requests": "write"
+    },
+    "events": ["check_run", "check_suite", "pull_request", "workflow_run"],
+    "created_at": "2024-01-10T15:20:00Z",
+    "updated_at": "2024-01-15T10:30:00Z",
+    "single_file_name": null,
+    "has_multiple_single_files": false,
+    "single_file_paths": [],
+    "suspended_by": null,
+    "suspended_at": null
+  },
+  "repository_selection": "selected",
+  "repositories_added": [
+    {
+      "id": 987654321,
+      "node_id": "R_kgDOOvE123",
+      "name": "cogni-git-review",
+      "full_name": "derekg1729/cogni-git-review",
+      "private": true
+    }
+  ],
+  "repositories_removed": [],
+  "requester": null,
+  "sender": {
+    "login": "derekg1729",
+    "id": 123456,
+    "node_id": "MDQ6VXNlcjEyMzQ1Ng==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/123456?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/derekg1729",
+    "html_url": "https://github.com/derekg1729",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  }
+}
