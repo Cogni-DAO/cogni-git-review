@@ -3,6 +3,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import promise from 'eslint-plugin-promise';
 import yml from 'eslint-plugin-yml';
+import { RAILS_TEMPLATE_PATH } from './src/constants.js';
 // import n from 'eslint-plugin-n'; // optional; see note below
 
 export default [
@@ -18,7 +19,7 @@ export default [
       'test/fixtures/**/*.json',
       '.venv/**',
       '.github/workflows/**', // <-- actionlint handles these
-      'cogni-rails-templates-v0.1/.github/workflows/**' // <-- template gith
+      `${RAILS_TEMPLATE_PATH}/.github/workflows/**` // <-- template workflows
     ]
   },
 
