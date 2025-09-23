@@ -11,7 +11,8 @@ export async function handleInstallationAdded(context) {
   
   for (const repo of repos) {
     try {
-      const repoInfo = { owner: repo.owner.login, repo: repo.name };
+      const [owner, name] = (repo.full_name || `${repo.owner?.login}/${repo.name}`).split('/');
+      const repoInfo = { owner, repo: name };
       console.log(`📦 Setting up repository: ${repo.full_name}`);
       
       await createWelcomePR(context, repoInfo);
