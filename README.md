@@ -20,29 +20,14 @@
    - Navigate to: https://github.com/apps/cogni-git-review
    - Install on your target repository
 
-2. **Add Repository Configuration**
-   - Create `.cogni/repo-spec.yaml` (copy from `repo-spec-template.yaml`)
-   - Customize: repository name, goals, non-goals, desired gates
-
-3. **Commit + Merge the repo-spec.yaml into Main branch**
-   - ⚠️ First Cogni-Git-Review check will fail on this pr (because no repo-spec.yaml exists in main yet) 
-
-4. **Configure Branch Protection**
-   - Go to repository Settings → Branches
-   - Add rule for main branch requiring "Cogni Git PR Review" status check
-   - Add rule for main branch: no direct pushes. Require a PR into main for all changes.
-
-5. **Configure First AI Rule**
-   - Create a .cogni/rules/ai-rule-file.yaml
-   - Add a reference to the ai-rule-file.yaml in your repo-spec.yaml.
-   - PR to main. Future PRs will use this AI rule.
-
-### Known Issues & Planned Improvements
-- **First PR Design Flaw**: Review reports failure on repos without repo-spec
-- **No Automation**: Branch protection requires manual GitHub settings
-- **Missing Templates**: AI rule templates must be copied from other repos
-
-**Target**: One-click installation with automatic repo-spec generation and branch protection setup.
+2. **Find the auto-created PR**
+   - Installing the App triggers an auto-generated welcome PR. Find it.
+   - Follow the setup steps for configuring Branch Protections
+   - Merge the PR to the default branch
+    
+3. **Decide which rules to create for the repo**
+   - Create more AI rule files, like .cogni/rules/ai-rule-file.yaml
+   - Select more pre-existing gates within repo-spec.yaml
 
 ## Development Setup
 
