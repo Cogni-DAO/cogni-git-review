@@ -20,8 +20,8 @@ installation_repositories.added webhook
 ```
 
 ## Templates Used
-- `templates/repo-spec-template.yaml` - Repository specification template
-- `templates/rules/ai-rule-template.yaml` - AI rule template
+- `${RAILS_TEMPLATE_PATH}/.cogni/repo-spec-template.yaml` - Repository specification template
+- `${RAILS_TEMPLATE_PATH}/.cogni/rules/ai-rule-template.yaml` - AI rule template
 
 ## Integration
 Called from `index.js` webhook handler for installation events.

@@ -124,7 +124,8 @@ gates:
 ```bash
 npm install
 npm start  # Local development with webhook proxy
-npm test   # Run tests (several integration tests currently skipped due to mocking issues)
+npm test   # Run tests
+npm run lint  # ESLint + actionlint for workflows
 ```
 
 

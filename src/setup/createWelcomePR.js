@@ -1,12 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PR_REVIEW_NAME } from '../constants.js';
+import { PR_REVIEW_NAME, RAILS_TEMPLATE_PATH } from '../constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TEMPLATE_PATH = "templates/repo-spec-template.yaml";
-const AI_RULE_TEMPLATE_PATH = "templates/rules/ai-rule-template.yaml";
+const TEMPLATE_PATH = `${RAILS_TEMPLATE_PATH}/.cogni/repo-spec-template.yaml`;
+const AI_RULE_TEMPLATE_PATH = `${RAILS_TEMPLATE_PATH}/.cogni/rules/ai-rule-template.yaml`;
 const WELCOME_BRANCH_PREFIX = "cogni/welcome-setup";
 const WELCOME_PR_TITLE = (repo) => `chore(cogni): bootstrap repo-spec for ${repo}`;
 const WELCOME_LABEL = "cogni-setup";

@@ -1,14 +1,14 @@
 // test/check-contract.min.test.js
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
-import { PR_REVIEW_NAME } from '../src/constants.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, '..', '..');
 const indexPath = path.resolve(repoRoot, 'index.js');
 const indexSource = fs.readFileSync(indexPath, 'utf8');
 

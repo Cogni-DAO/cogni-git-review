@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { RAILS_TEMPLATE_PATH } from '../../src/constants.js';
 
 // Import the function we want to test
 // Note: customizeRepoSpec is not exported, so we need to test it through the module
@@ -146,7 +147,7 @@ gates:
 
   test('integration test with actual template file', async () => {
     // Read the actual template file
-    const templatePath = path.join(__dirname, '..', '..', 'templates', 'repo-spec-template.yaml');
+    const templatePath = path.join(__dirname, '..', '..', RAILS_TEMPLATE_PATH, '.cogni', 'repo-spec-template.yaml');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     
     const result = await testCustomizeRepoSpec(templateContent, 'integration-test-repo');

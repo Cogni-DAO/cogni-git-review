@@ -1,56 +1,53 @@
-// ESLint configuration for cogni-git-review (flat config, permissive + safety nets)
+// eslint.config.js (flat)
 import js from '@eslint/js';
 import globals from 'globals';
 import promise from 'eslint-plugin-promise';
-import eslintPluginYml from 'eslint-plugin-yml';
-// import n from 'eslint-plugin-n';  // Intentionally disabled: generates false positives about Node.js test runner being "experimental"
+import yml from 'eslint-plugin-yml';
+import { RAILS_TEMPLATE_PATH } from './src/constants.js';
+// import n from 'eslint-plugin-n'; // optional; see note below
 
 export default [
-  // Global linter options
+  // Global options
+  { linterOptions: { reportUnusedDisableDirectives: 'error' } },
+
+  // Global ignores (keep ESLint off GitHub Actions YAML)
   {
-    linterOptions: {
-      reportUnusedDisableDirectives: 'error'
-    }
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'coverage/**',
+      'test/fixtures/**/*.json',
+      '.venv/**',
+      '.github/workflows/**', // <-- actionlint handles these
+      `${RAILS_TEMPLATE_PATH}/.github/workflows/**` // <-- template workflows
+    ]
   },
 
-  // Core recommended rules (permissive, bug catchers)
+  // Core recommended sets
   js.configs.recommended,
-  // n.configs['flat/recommended'],  // Re-enable later with selective rules once plugin data catches up
   promise.configs['flat/recommended'],
-  ...eslintPluginYml.configs['flat/recommended'],
 
-  // Project rules
+  // YAML linting (generic YAML only; workflows are globally ignored)
+  ...yml.configs['flat/recommended'],
+
+  // Project JS rules
   {
     files: ['**/*.js'],
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 'latest',
       sourceType: 'module',
       globals: { ...globals.node }
     },
     rules: {
-      // Keep permissive choices
       'no-console': 'off',
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-use-before-define': ['error', { functions: false }]
     }
   },
 
-  // Tests: even more permissive (Node.js native test runner)
+  // Tests: even more permissive
   {
     files: ['test/**/*.js'],
-    rules: {
-      'no-unused-vars': 'off'
-    }
-  },
-
-  // Ignores
-  {
-    ignores: [
-      'node_modules/',
-      'coverage/',
-      'coverage/**',
-      'dist/',
-      'test/fixtures/**/*.json'
-    ]
+    rules: { 'no-unused-vars': 'off' }
   }
 ];
