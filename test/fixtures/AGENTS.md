@@ -4,10 +4,21 @@
 Reusable test data that eliminates duplication across test suites.
 
 ## Fixture Types
-- **Repository specs**: YAML configurations for different test scenarios
+- **Repository specs**: YAML configurations for different test scenarios (repo-specs.js)
 - **Webhook payloads**: Real GitHub webhook events (check_run, check_suite, pull_request, installation)
+- **AI rule fixtures**: Mock AI evaluation data and contexts (ai-rules.js)
 - **Mock contexts**: GitHub API response simulations
 - **Certificates**: Authentication test files
+
+## Current Repository Spec Fixtures
+- `minimal`, `full`, `bootstrap`, `advisory` - Basic gate configurations
+- `behaviorTest30_100`, `behaviorTest10_50` - Review limit testing
+- `gateConsistency1Gate`, `gateConsistency2Gates`, `gateConsistency3Gates` - Gate counting
+- `legacy` - Legacy spec format testing
+- `rulesSingleFile`, `rulesNoRuleFile`, `rulesInvalidFile` - AI rule configurations
+- `multipleAIRules` - Multiple AI rule instances
+- `agentsSync`, `agentsSyncWithCustomConfig`, `agentsSyncWithOtherGates` - AGENTS.md sync testing
+- `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing
 
 ## Principles
 - Use fixtures instead of inline test data

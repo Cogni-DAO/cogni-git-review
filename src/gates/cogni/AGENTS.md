@@ -12,6 +12,7 @@ Gates are implemented by cogni-git-review. The .cogni/repo-spec.yml in a reposit
 - **goal-declaration**: Repository goals validation
 - **forbidden-scopes**: Repository non-goals validation  
 - **agents-md-sync**: Ensures AGENTS.md files are updated when code changes
+- **governance-policy**: Validates required GitHub Actions workflows exist and match context names
 - **ai-rule**: AI-powered evaluation using declarative rules (supports multiple instances)
 
 ## Gate Implementation Pattern

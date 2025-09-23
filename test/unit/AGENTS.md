@@ -17,12 +17,13 @@ Tests for individual functions and components in isolation, without external dep
 ## Current Test Files
 - `agents-sync.test.js` - AGENTS.md synchronization gate tests
 - `ai-provider.test.js` - AI provider contract validation with observation handling
-- `ai-rule-input-validation.test.js` - **New**: AI rule input assembly validation tests
+- `ai-rule-input-validation.test.js` - AI rule input assembly validation tests
 - `check-contract.min.test.js` - Enforce github Check name is constant and does not drift
 - `config-extraction-debug.test.js` - Configuration extraction debugging
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
 - `goal-alignment-workflow.test.js` - Goal alignment workflow tests
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
+- `governance-policy.test.js` - Governance policy gate workflow validation tests
 - `pr-structure-validation.test.js` - Pull request structure validation tests
 - `rules-gate-code-aware.test.js` - AI rule gate code-aware enhancement tests
 - `rules-gate-neutral.test.js` - AI rule gate neutral case handling tests
