@@ -381,7 +381,58 @@ gates:
   - type: agents-md-sync
     id: agents_sync
   - type: goal-declaration
-    id: goal_declaration`
+    id: goal_declaration`,
+
+  // Governance Policy Gate Test Fixtures
+  governance: `schema_version: '0.1.4'
+
+intent:
+  name: governance-test-project
+  goals:
+    - Test governance policy gate
+    - Ensure required workflows exist
+  non_goals:
+    - Manual workflow management
+
+required_status_contexts:
+  - CI - PR
+  - Security
+  - Release
+  - Cogni Git PR Review
+
+gates:
+  - type: governance-policy
+    id: governance_policy`,
+
+  governanceNoContexts: `schema_version: '0.1.4'
+
+intent:
+  name: governance-no-contexts-project
+  goals:
+    - Test governance without required contexts
+  non_goals:
+    - Status context enforcement
+
+gates:
+  - type: governance-policy
+    id: governance_policy`,
+
+  governanceUnknownContext: `schema_version: '0.1.4'
+
+intent:
+  name: governance-unknown-context-project
+  goals:
+    - Test governance with unmapped context
+  non_goals:
+    - Standard workflow contexts
+
+required_status_contexts:
+  - Unknown Context
+  - Cogni Git PR Review
+
+gates:
+  - type: governance-policy
+    id: governance_policy`
 };
 
 // Helper for accessing specs by key  

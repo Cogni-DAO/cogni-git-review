@@ -10,6 +10,16 @@ intent:
   non_goals:
     - Explicitly out-of-scope items
 
+
+# CI checks that must be required-by-branch-protection and green to merge.
+# These are *status context names*, not workflow file names. 
+# Cogni confirms these are enforced via Allstar.
+required_status_contexts:
+  - CI - PR
+  - Security
+  - Release
+  - Cogni Git PR Review
+
 # Gates run in the order they appear below.
 gates:
   # Built-in gates (run directly in bot process)
