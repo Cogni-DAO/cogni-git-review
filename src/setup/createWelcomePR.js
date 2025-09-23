@@ -6,6 +6,7 @@ import { PR_REVIEW_NAME } from '../constants.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATE_PATH = "templates/repo-spec-template.yaml";
+const AI_RULE_TEMPLATE_PATH = "templates/rules/ai-rule-template.yaml";
 const WELCOME_BRANCH_PREFIX = "cogni/welcome-setup";
 const WELCOME_PR_TITLE = (repo) => `chore(cogni): bootstrap repo-spec for ${repo}`;
 const WELCOME_LABEL = "cogni-setup";
@@ -94,6 +95,19 @@ export async function createWelcomePR(context, repoInfo) {
       path: '.cogni/repo-spec.yaml',
       message: 'feat(cogni): add initial repo-spec configuration',
       content: Buffer.from(customizedContent).toString('base64'),
+      branch: branchName
+    });
+
+    // Add AI rule template file
+    const aiRuleTemplatePath = path.join(__dirname, '..', '..', AI_RULE_TEMPLATE_PATH);
+    const aiRuleContent = fs.readFileSync(aiRuleTemplatePath, 'utf8');
+    
+    await context.octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path: '.cogni/rules/ai-rule-template.yaml',
+      message: 'feat(cogni): add AI rule template',
+      content: Buffer.from(aiRuleContent).toString('base64'),
       branch: branchName
     });
 
