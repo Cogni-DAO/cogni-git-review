@@ -146,7 +146,7 @@ gates:
 
   test('integration test with actual template file', async () => {
     // Read the actual template file
-    const templatePath = path.join(__dirname, '..', '..', 'templates', 'repo-spec-template.yaml');
+    const templatePath = path.join(__dirname, '..', '..', 'cogni-rails-templates-v0.1', '.cogni', 'repo-spec-template.yaml');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     
     const result = await testCustomizeRepoSpec(templateContent, 'integration-test-repo');
