@@ -14,7 +14,7 @@
   "scripts": {
     "start": "probot run ./index.js",
     "test": "node --test",
-    "lint": "eslint . --ext .js,.yaml,.yml",
+    "lint": "eslint . --ext .js,.yaml,.yml && actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml",
     "lint:fix": "eslint . --ext .js,.yaml,.yml --fix"
   },
   "dependencies": {
