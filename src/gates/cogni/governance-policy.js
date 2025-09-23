@@ -7,10 +7,9 @@ export const type = 'governance-policy';
  * Checks that required workflow files exist and have matching names
  * 
  * @param {object} context - Probot context
- * @param {object} gateConfig - Gate configuration from repo-spec
  * @returns {Promise<GateResult>}
  */
-export async function run(context, gateConfig) {
+export async function run(context) {
   const startTime = Date.now();
   
   try {
