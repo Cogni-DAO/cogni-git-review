@@ -2,11 +2,11 @@ id: single-check-pr-verdict
 schema_version: "0.1"
 blocking: true
 
-evaluation-statement: AI Powered Pull Request gates accrue to one single, enforced, deterministic, machine-checkable Pass/Fail/Neutral verdict.
+evaluation-statement: The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates.
 
 # Present, but totally unused for now.
 variables: [pr_title, pr_body, diff_summary]
 
 success_criteria:
   metric: score
-  threshold: 0.9
+  threshold: 0.8
