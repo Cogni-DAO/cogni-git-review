@@ -141,42 +141,15 @@ export async function createWelcomePR(context, repoInfo) {
 }
 
 function createPRBody(owner, repo, checkContextName) {
-  const bash = String.raw`set -eo pipefail
-
-OWNER="${owner}"
-REPO="${repo}"
-CHECK_NAME="${checkContextName}"
-
-DEFAULT_BRANCH=$(gh repo view "$OWNER/$REPO" --json defaultBranchRef --jq .defaultBranchRef.name)
-
-echo "Setting up branch protection for $OWNER/$REPO on $DEFAULT_BRANCH…"
-
-if gh api "repos/$OWNER/$REPO/branches/$DEFAULT_BRANCH/protection" >/dev/null 2>&1; then
-  echo "Updating existing branch protection…"
-  gh api -X PATCH "repos/$OWNER/$REPO/branches/$DEFAULT_BRANCH/protection/required_pull_request_reviews" --input - <<'JSON'
-{}
-JSON
-  gh api -X PATCH "repos/$OWNER/$REPO/branches/$DEFAULT_BRANCH/protection/required_status_checks" --input - <<JSON
+  const bash = String.raw`# For repos WITHOUT existing branch protection only
+gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSON'
 {
-  "strict": true,
-  "contexts": ["$CHECK_NAME"]
-}
-JSON
-  echo "✅ Branch protection updated."
-else
-  echo "Creating minimal branch protection…"
-  gh api -X PUT "repos/$OWNER/$REPO/branches/$DEFAULT_BRANCH/protection" --input - <<JSON
-{
-  "required_pull_request_reviews": {},
-  "required_status_checks": { "strict": true, "contexts": ["$CHECK_NAME"] },
+  "required_pull_request_reviews": { "required_approving_review_count": 0 },
+  "required_status_checks": { "strict": true, "contexts": ["${checkContextName}"] },
   "enforce_admins": false,
   "restrictions": null
 }
-JSON
-  echo "✅ Branch protection created."
-fi
-
-echo "✅ '$CHECK_NAME' is now required; PRs are required on $DEFAULT_BRANCH."`;
+JSON`;
 
   return `# Welcome to Cogni Review
 
@@ -184,11 +157,20 @@ This PR adds a minimal \`.cogni/repo-spec.yaml\` so Cogni can evaluate PRs deter
 
 ## Final step: Enable branch protection
 
+**For fresh repos (no existing branch protection):**
+
 \`\`\`bash
 ${bash}
 \`\`\`
 
+**For repos with existing branch protection:**
+
+Go to: https://github.com/${owner}/${repo}/settings/branches
+1. Require a pull request to default branch before merging ✅
+2. Require status checks to pass ✅ 
+3. Add **${checkContextName}** to required status checks
+
 After merging this PR, new PRs will be gated by **${checkContextName}**.
 
-If you see a **neutral** check on this PR, that's expected — merge this PR to enable Cogni on future PRs.`;
+If you see a **neutral** check on this PR, that's expected — the policy files don't exist on the default branch yet.`;
 }
