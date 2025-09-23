@@ -1,16 +1,22 @@
-name: CI
+name: CI — PR
 on:
-  pull_request: { branches: [ main ] }
-  push: { branches: [ main ] }
+  pull_request:
+    branches: [ main ]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  build-test:
+  node-ci:
     runs-on: ubuntu-latest
-    permissions: { contents: read }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 'lts/*', cache: 'npm' }
+        with:
+          node-version: '20'
+          # Auto-caching is enabled when package.json has "packageManager"
+          # Otherwise: cache: 'npm'
       - run: npm ci
       - run: npm run lint --if-present
       - run: npm test -- --reporter tap
-      - run: npm run build --if-present

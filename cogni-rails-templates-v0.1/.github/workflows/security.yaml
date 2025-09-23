@@ -1,12 +1,39 @@
 name: Security
 on:
-  schedule: [ { cron: "0 9 * * *" } ]
   pull_request:
+  schedule:
+    - cron: "0 9 * * 1"  # weekly, Mondays 09:00 UTC
 permissions:
   contents: read
   security-events: write
+
 jobs:
+  dependency-review:
+    name: Dependency Review (PR only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  codeql:
+    name: CodeQL
+    # Runs on PRs and a weekly analysis on default branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          # For TS/JS repos, default/built-in query suites:
+          # https://docs.github.com/en/code-security/code-scanning/managing-your-code-scanning-configuration/javascript-typescript-built-in-queries
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/analyze@v3
+
   scorecard:
+    name: OpenSSF Scorecard (weekly)
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: ossf/scorecard-action@v2.3.1

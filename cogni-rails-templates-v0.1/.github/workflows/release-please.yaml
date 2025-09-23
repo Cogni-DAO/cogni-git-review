@@ -4,6 +4,10 @@ on:
     branches: [ main ]
 permissions:
   contents: write
+  pull-requests: write
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -11,3 +15,5 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         with:
           release-type: node
+          # Optional: If you have multiple packages or want config, use a config file
+          # config-file: .release-please-config.json
