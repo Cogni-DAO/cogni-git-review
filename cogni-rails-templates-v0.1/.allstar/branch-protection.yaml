@@ -1,0 +1,8 @@
+branchProtection:
+  enforce_admins: true
+  required_status_checks:
+    strict: true
+    contexts: ["CI", "Security", "Release", "Cogni Git PR Review"]
+  required_pull_request_reviews:
+    required_approving_review_count: {}
+  restrictions: {}
