@@ -14,7 +14,7 @@ import checkSuiteRerequestedPayload from '../fixtures/check_suite.rerequested.co
 
 describe("GitHub Webhook Handler Contract Tests", () => {
 
-  test("pull_request.opened webhook creates failure check when spec missing", async () => {
+  test("pull_request.opened webhook creates neutral check when spec missing", async () => {
     await testEventHandler({
       event: 'pull_request.opened',
       payload: pullRequestOpenedPayload,
@@ -23,14 +23,14 @@ describe("GitHub Webhook Handler Contract Tests", () => {
         assert.strictEqual(params.name, "Cogni Git PR Review");
         assert.strictEqual(params.head_sha, pullRequestOpenedPayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
-        assert.strictEqual(params.conclusion, "failure");
+        assert.strictEqual(params.conclusion, "neutral");
         assert.strictEqual(params.output.title, "Cogni Git PR Review");
-        assert(params.output.summary.includes("No .cogni/repo-spec.yaml found"));
+        assert(params.output.summary.includes("Cogni needs a repo-spec"));
       }
     });
   });
 
-  test("pull_request.synchronize webhook creates failure check when spec missing", async () => {
+  test("pull_request.synchronize webhook creates neutral check when spec missing", async () => {
     await testEventHandler({
       event: 'pull_request.synchronize',
       payload: prSynchronizePayload,
@@ -39,14 +39,14 @@ describe("GitHub Webhook Handler Contract Tests", () => {
         assert.strictEqual(params.name, "Cogni Git PR Review");
         assert.strictEqual(params.head_sha, prSynchronizePayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
-        assert.strictEqual(params.conclusion, "failure");
+        assert.strictEqual(params.conclusion, "neutral");
         assert.strictEqual(params.output.title, "Cogni Git PR Review");
-        assert(params.output.summary.includes("No .cogni/repo-spec.yaml found"));
+        assert(params.output.summary.includes("Cogni needs a repo-spec"));
       }
     });
   });
 
-  test("pull_request.reopened should create failure check when spec missing", async () => {
+  test("pull_request.reopened should create neutral check when spec missing", async () => {
     await testEventHandler({
       event: 'pull_request.reopened',
       payload: prReopenedPayload,
@@ -55,9 +55,9 @@ describe("GitHub Webhook Handler Contract Tests", () => {
         assert.strictEqual(params.name, "Cogni Git PR Review");
         assert.strictEqual(params.head_sha, prReopenedPayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
-        assert.strictEqual(params.conclusion, "failure");
+        assert.strictEqual(params.conclusion, "neutral");
         assert.strictEqual(params.output.title, "Cogni Git PR Review");
-        assert(params.output.summary.includes("No .cogni/repo-spec.yaml found"));
+        assert(params.output.summary.includes("Cogni needs a repo-spec"));
       }
     });
   });

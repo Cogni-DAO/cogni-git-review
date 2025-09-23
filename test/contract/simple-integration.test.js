@@ -95,7 +95,7 @@ describe("Simple Integration Tests", () => {
             assert.strictEqual(typeof params.name, "string");
             assert.strictEqual(params.head_sha, "abc123def456789012345678901234567890abcd");
             assert.strictEqual(params.status, "completed");
-            assert.strictEqual(params.conclusion, "failure");
+            assert.strictEqual(params.conclusion, "neutral");
             assert.strictEqual(typeof params.output, "object");
             assert.strictEqual(typeof params.output.summary, "string");
             return { data: { id: 9999999998 } };

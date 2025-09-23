@@ -5,8 +5,8 @@ import { loadRepoSpec } from './src/spec-loader.js';
 import { runAllGates } from './src/gates/index.js';
 import { postPRCommentWithGuards } from './src/pr-comment.js';
 import { renderCheckSummary } from './src/summary-adapter.js';
-
-const PR_REVIEW_NAME = "Cogni Git PR Review";
+import { handleInstallationAdded } from './src/setup/installation-handler.js';
+import { PR_REVIEW_NAME } from './src/constants.js';
 
 
 /**
@@ -35,6 +35,7 @@ export default (app) => {
 
   app.on("check_suite.rerequested", handleCheckRerun);
   app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], handlePullRequest);
+  app.on("installation_repositories.added", handleInstallationAdded);
 
   async function createCheckOnSha(context, options) {
     const { sha, conclusion, summary, text } = options;
@@ -118,12 +119,12 @@ export default (app) => {
       const isMissing = error?.code === 'SPEC_MISSING';
       const isInvalid = error?.code === 'SPEC_INVALID';
       
-      const conclusion = (isMissing || isInvalid) ? 'failure' : 'neutral';
+      const conclusion = isMissing ? 'neutral' : (isInvalid ? 'failure' : 'neutral');
       const summary = isMissing
-        ? 'No .cogni/repo-spec.yaml found'
+        ? 'Cogni needs a repo-spec'
         : (isInvalid ? 'Invalid .cogni/repo-spec.yaml' : 'Spec could not be loaded (transient error)');
       const text = isMissing
-        ? 'Add `.cogni/repo-spec.yaml` to configure this required check.'
+        ? 'Please merge the Welcome PR to configure Cogni, or add `.cogni/repo-spec.yaml` manually.'
         : (isInvalid
             ? `Repository spec validation failed: ${error.message || 'Unknown error'}`
             : 'GitHub API/network issue while loading the spec. Re-run the check or try again.');

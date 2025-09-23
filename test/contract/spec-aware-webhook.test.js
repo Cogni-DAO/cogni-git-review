@@ -37,8 +37,8 @@ describe('Spec-Aware Webhook Contract Tests', () => {
         assert.strictEqual(params.name, 'Cogni Git PR Review');
         assert.strictEqual(params.head_sha, 'abc123def456789012345678901234567890abcd');
         assert.strictEqual(params.status, 'completed');
-        assert.strictEqual(params.conclusion, 'failure');
-        assert(params.output.summary.includes('No .cogni/repo-spec.yaml found'));
+        assert.strictEqual(params.conclusion, 'neutral');
+        assert(params.output.summary.includes('Cogni needs a repo-spec'));
       }
     });
   });

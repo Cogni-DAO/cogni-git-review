@@ -123,6 +123,9 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `spec-gate-consistency.test.js` - Gate counting validation
 - `simple-integration.test.js` - Basic success/failure paths
 - `code-aware-ai-gate.test.js` - Integration tests for code-aware AI rule capabilities
+- `welcome-pr-creation.test.js` - Installation workflow verification
+- `installation-idempotency.test.js` - Installation retry scenarios
+- `template-customization.test.js` - YAML template replacement validation
 
 ## Known Issues
 

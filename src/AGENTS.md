@@ -3,11 +3,13 @@
 ## Structure
 ```
 src/
+├── constants.js        # Global app constants
 ├── spec-loader.js      # Repository configuration I/O layer
 ├── pr-comment.js       # PR comment publishing
 ├── summary-adapter.js  # Check run summary formatting
 ├── ai/                 # AI-specific evaluation files (→ AGENTS.md)
 └── gates/              # Gate evaluation system (→ AGENTS.md)
+
 ```
 
 ## Core Modules

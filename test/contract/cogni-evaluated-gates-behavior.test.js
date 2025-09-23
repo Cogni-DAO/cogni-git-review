@@ -78,9 +78,9 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         checks: {
           create: async (params) => {
             // Verify the check run is created correctly
-            assert.strictEqual(params.conclusion, 'failure');
+            assert.strictEqual(params.conclusion, 'neutral');
             assert.strictEqual(params.name, 'Cogni Git PR Review');
-            assert(params.output.summary.includes('No .cogni/repo-spec.yaml found'));
+            assert(params.output.summary.includes('Cogni needs a repo-spec'));
             return { data: { id: 1 } };
           }
         }
