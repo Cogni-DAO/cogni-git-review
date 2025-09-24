@@ -17,7 +17,12 @@ jobs:
           node-version: '20'
           # Auto-caching is enabled when package.json has "packageManager"
           # Otherwise: cache: 'npm'
-      - uses: rhysd/actionlint@v1
       - run: npm ci
       - run: npm run lint --if-present
+      
+      - name: Install and Run actionlint
+        run: |
+          curl -sSL https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_linux_amd64.tar.gz \
+          | tar -xz -C /usr/local/bin
+          npm run lint:workflows
       - run: npm test
