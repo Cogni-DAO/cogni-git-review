@@ -14,8 +14,9 @@
   "scripts": {
     "start": "probot run ./index.js",
     "test": "node --test",
-    "lint": "eslint . --ext .js,.yaml,.yml && actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml",
-    "lint:fix": "eslint . --ext .js,.yaml,.yml --fix"
+    "lint": "eslint . --ext .js,.yaml,.yml",
+    "lint:fix": "eslint . --ext .js,.yaml,.yml --fix",
+    "lint:workflows": "actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml"
   },
   "dependencies": {
     "@langchain/langgraph": "^0.4.6",
