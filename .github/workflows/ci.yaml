@@ -22,7 +22,7 @@ jobs:
       
       - name: Install and Run actionlint
         run: |
-          curl -sSL https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_linux_amd64.tar.gz \
-          | tar -xz -C /usr/local/bin
+          curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
+          sudo mv ./actionlint /usr/local/bin/
           npm run lint:workflows
       - run: npm test
