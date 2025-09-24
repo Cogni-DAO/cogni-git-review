@@ -12,6 +12,40 @@ const WELCOME_PR_TITLE = (repo) => `chore(cogni): bootstrap repo-spec for ${repo
 const WELCOME_LABEL = "cogni-setup";
 
 /**
+ * Copy a template file to the repository if it doesn't already exist
+ */
+async function copyTemplateFile(context, repoInfo, branchName, sourceRelativePath, destPath, commitMessage) {
+  const { owner, repo } = repoInfo;
+  
+  // Read template file
+  const sourcePath = path.join(__dirname, '..', '..', RAILS_TEMPLATE_PATH, sourceRelativePath);
+  const content = fs.readFileSync(sourcePath, 'utf8');
+  
+  try {
+    await context.octokit.repos.getContent({
+      owner,
+      repo,
+      path: destPath,
+      ref: branchName
+    });
+    // File exists, skip creation
+    return false;
+  } catch (error) {
+    if (error.status !== 404) throw error;
+    // File doesn't exist, create it
+    await context.octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path: destPath,
+      message: commitMessage,
+      content: Buffer.from(content).toString('base64'),
+      branch: branchName
+    });
+    return true;
+  }
+}
+
+/**
  * Customize repo-spec template for the specific repository
  */
 function customizeRepoSpec(templateContent, repoName) {
@@ -115,29 +149,43 @@ export async function createWelcomePR(context, repoInfo) {
       });
     }
 
-    // Add AI rule template file (only if it doesn't exist)
-    const aiRuleTemplatePath = path.join(__dirname, '..', '..', AI_RULE_TEMPLATE_PATH);
-    const aiRuleContent = fs.readFileSync(aiRuleTemplatePath, 'utf8');
-    
-    try {
-      await context.octokit.repos.getContent({
-        owner,
-        repo,
-        path: '.cogni/rules/ai-rule-template.yaml',
-        ref: branchName
-      });
-      // File exists, skip creation
-    } catch (error) {
-      if (error.status !== 404) throw error;
-      // File doesn't exist, create it
-      await context.octokit.repos.createOrUpdateFileContents({
-        owner,
-        repo,
-        path: '.cogni/rules/ai-rule-template.yaml',
-        message: 'feat(cogni): add AI rule template',
-        content: Buffer.from(aiRuleContent).toString('base64'),
-        branch: branchName
-      });
+    // Copy template files to repository (source paths relative to RAILS_TEMPLATE_PATH)
+    const filesToCopy = [
+      {
+        source: '.cogni/rules/ai-rule-template.yaml',
+        dest: '.cogni/rules/ai-rule-template.yaml', 
+        message: 'feat(cogni): add AI rule template'
+      },
+      {
+        source: '.allstar/allstar.yaml',
+        dest: '.allstar/allstar.yaml',
+        message: 'feat(allstar): add allstar configuration'
+      },
+      {
+        source: '.allstar/branch_protection.yaml', 
+        dest: '.allstar/branch_protection.yaml',
+        message: 'feat(allstar): add branch protection policy'
+      }
+      // TODO: Add workflow files once GitHub App has workflows=write permission
+      // {
+      //   source: '.github/workflows/ci.yaml',
+      //   dest: '.github/workflows/ci.yaml',
+      //   message: 'feat(ci): add CI workflow'
+      // },
+      // {
+      //   source: '.github/workflows/security.yaml',
+      //   dest: '.github/workflows/security.yaml', 
+      //   message: 'feat(security): add security workflow'
+      // },
+      // {
+      //   source: '.github/workflows/release-please.yaml',
+      //   dest: '.github/workflows/release-please.yaml',
+      //   message: 'feat(release): add release workflow'
+      // }
+    ];
+
+    for (const file of filesToCopy) {
+      await copyTemplateFile(context, { owner, repo }, branchName, file.source, file.dest, file.message);
     }
 
     // Create PR body
@@ -170,44 +218,21 @@ export async function createWelcomePR(context, repoInfo) {
 }
 
 function createPRBody(owner, repo, checkContextName) {
-  const bash = String.raw`# For repos WITHOUT existing branch protection only
-gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSON'
-{
-  "required_pull_request_reviews": { "required_approving_review_count": 0 },
-  "required_status_checks": { "strict": true, "contexts": ["${checkContextName}"] },
-  "enforce_admins": false,
-  "restrictions": null
-}
-JSON`;
 
   return `# Welcome to Cogni Git Review!
 
   This PR adds:
   - a minimal \`.cogni/repo-spec.yaml\`. This is the defining policy for Cogni Git Review
   - a minimal \`.cogni/rules/ai-rule-template.yaml\`. This is the template for a new AI powered gate.
+  - \`.allstar/\` configuration files for automated branch protection enforcement
 
 Note: Cogni Git Review will only load these files from the default branch.
 
-## Do you want to require Cogni reviews pass? 
-Enable branch protections!
+## Setup Required:
+**Step 1:** Install Allstar - Visit https://github.com/apps/allstar-app and install on your org/repo. Allstar is used to enable branch protections on the repo.
+**Step 2:** Merge this PR to add governance policies
+**Step 3:** Allstar will automatically enforce branch protection with required checks
 
-## **For repos with existing branch protection:**
-
-Go to: https://github.com/${owner}/${repo}/settings/branches
-1. Require a pull request to default branch before merging ✅
-2. Require status checks to pass ✅ 
-3. Add **${checkContextName}** to required status checks
-
-
-##**For fresh repos (no existing branch protection):**
-This bash script is the fastest way. 
-Copy this script, and paste it into your terminal. 
-
-Note: This assumes you have github cli installed and authenticated.
-
-\`\`\`bash
-${bash}
-\`\`\`
 
 After merging this PR, new PRs will be gated by **${checkContextName}**.
 

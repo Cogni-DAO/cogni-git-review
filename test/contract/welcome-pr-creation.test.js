@@ -65,6 +65,31 @@ threshold: 0.8`;
               const error = new Error('Not Found');
               error.status = 404;
               throw error;
+            } else if (params.path === '.allstar/allstar.yaml' && params.ref === 'cogni/welcome-setup') {
+              // Check if Allstar config exists on branch (should return 404 for new file)
+              const error = new Error('Not Found');
+              error.status = 404;
+              throw error;
+            } else if (params.path === '.allstar/branch-protection.yaml' && params.ref === 'cogni/welcome-setup') {
+              // Check if Allstar branch protection exists on branch (should return 404 for new file)
+              const error = new Error('Not Found');
+              error.status = 404;
+              throw error;
+            } else if (params.path === '.github/workflows/ci.yaml' && params.ref === 'cogni/welcome-setup') {
+              // Check if CI workflow exists on branch (should return 404 for new file)
+              const error = new Error('Not Found');
+              error.status = 404;
+              throw error;
+            } else if (params.path === '.github/workflows/security.yaml' && params.ref === 'cogni/welcome-setup') {
+              // Check if Security workflow exists on branch (should return 404 for new file)
+              const error = new Error('Not Found');
+              error.status = 404;
+              throw error;
+            } else if (params.path === '.github/workflows/release-please.yaml' && params.ref === 'cogni/welcome-setup') {
+              // Check if Release workflow exists on branch (should return 404 for new file)
+              const error = new Error('Not Found');
+              error.status = 404;
+              throw error;
             }
             
             throw new Error(`Unexpected getContent call: ${params.path}`);
@@ -101,6 +126,41 @@ threshold: 0.8`;
               assert(params.content); // Base64 encoded content
               
               return { data: { content: { sha: 'file2sha' } } };
+            } else if (params.path === '.allstar/allstar.yaml') {
+              // Verify Allstar config file creation
+              assert.strictEqual(params.message, 'feat(allstar): add allstar configuration');
+              assert.strictEqual(params.branch, 'cogni/welcome-setup');
+              assert(params.content); // Base64 encoded content
+              
+              return { data: { content: { sha: 'file3sha' } } };
+            } else if (params.path === '.allstar/branch-protection.yaml') {
+              // Verify Allstar branch protection file creation
+              assert.strictEqual(params.message, 'feat(allstar): add branch protection policy');
+              assert.strictEqual(params.branch, 'cogni/welcome-setup');
+              assert(params.content); // Base64 encoded content
+              
+              return { data: { content: { sha: 'file4sha' } } };
+            } else if (params.path === '.github/workflows/ci.yaml') {
+              // Verify CI workflow file creation
+              assert.strictEqual(params.message, 'feat(ci): add CI workflow');
+              assert.strictEqual(params.branch, 'cogni/welcome-setup');
+              assert(params.content); // Base64 encoded content
+              
+              return { data: { content: { sha: 'file5sha' } } };
+            } else if (params.path === '.github/workflows/security.yaml') {
+              // Verify Security workflow file creation
+              assert.strictEqual(params.message, 'feat(security): add security workflow');
+              assert.strictEqual(params.branch, 'cogni/welcome-setup');
+              assert(params.content); // Base64 encoded content
+              
+              return { data: { content: { sha: 'file6sha' } } };
+            } else if (params.path === '.github/workflows/release-please.yaml') {
+              // Verify Release workflow file creation
+              assert.strictEqual(params.message, 'feat(release): add release workflow');
+              assert.strictEqual(params.branch, 'cogni/welcome-setup');
+              assert(params.content); // Base64 encoded content
+              
+              return { data: { content: { sha: 'file7sha' } } };
             }
             
             throw new Error(`Unexpected createOrUpdateFileContents call: ${params.path}`);
@@ -125,8 +185,9 @@ threshold: 0.8`;
             assert.strictEqual(params.base, 'main');
             assert(params.body); // PR body with script
             
-            // Verify PR body contains correct script with repo-specific values (T3 test)
-            assert(params.body.includes('repos/derekg1729/cogni-git-review/branches/main/protection'));
+            // Verify PR body contains Allstar installation instructions (T3 test)
+            assert(params.body.includes('Install Allstar'));
+            assert(params.body.includes('https://github.com/apps/allstar-app'));
             assert(params.body.includes('Cogni Git PR Review'));
             
             return { data: { number: 42, id: 123 } };
