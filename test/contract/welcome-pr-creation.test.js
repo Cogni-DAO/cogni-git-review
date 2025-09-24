@@ -113,7 +113,7 @@ threshold: 0.8`;
             
             // Verify PR body contains Allstar installation instructions (T3 test)
             assert(params.body.includes('Install Allstar'));
-            assert(params.body.includes('https://github.com/apps/allstar-app'));
+            assert(params.body.includes('Visit https://github.com/apps/allstar-app and install'));
             assert(params.body.includes('Cogni Git PR Review'));
             
             return { data: { number: 42, id: 123 } };
