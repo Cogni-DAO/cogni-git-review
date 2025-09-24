@@ -18,5 +18,9 @@ jobs:
           # Auto-caching is enabled when package.json has "packageManager"
           # Otherwise: cache: 'npm'
       - run: npm ci
+      - name: Install actionlint
+        run: |
+          curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
+          sudo mv ./actionlint /usr/local/bin/
       - run: npm run lint --if-present
       - run: npm test -- --reporter tap
