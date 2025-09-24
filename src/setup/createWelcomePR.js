@@ -254,6 +254,15 @@ export async function createWelcomePR(context, repoInfo) {
 }
 
 function createPRBody(owner, repo, checkContextName) {
+  const bash = String.raw`# For repos WITHOUT existing branch protection only
+gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSON'
+{
+  "required_pull_request_reviews": { "required_approving_review_count": 0 },
+  "required_status_checks": { "strict": true, "contexts": ["${checkContextName}"] },
+  "enforce_admins": false,
+  "restrictions": null
+}
+JSON`;
 
   return `# Welcome to Cogni Git Review!
 
@@ -268,12 +277,29 @@ function createPRBody(owner, repo, checkContextName) {
 Note: Cogni Git Review will only load these files from the default branch.
 
 ## Setup Required:
+
 **Step 1:** Install Allstar - Visit https://github.com/apps/allstar-app and install on your org/repo. Allstar is used to enable branch protections on the repo.
 **Step 2:** Merge this PR to add governance policies
 **Step 3:** Allstar will automatically enforce branch protection with required checks
 
+## Alternative: Manual Branch Protection Setup
+(Use this if Allstar installation is not working)
 
-After merging this PR, new PRs will be gated by **${checkContextName}**.
+**For repos with existing branch protection:**
+Go to: https://github.com/${owner}/${repo}/settings/branches
+1. Require a pull request to default branch before merging ✅
+2. Require status checks to pass ✅ 
+3. Add **${checkContextName}** to required status checks
+
+**For fresh repos (no existing branch protection):**
+This bash script is the fastest way. Copy and paste into your terminal.
+Note: Requires GitHub CLI installed and authenticated.
+
+\`\`\`bash
+${bash}
+\`\`\`
+
+After completing setup, new PRs will be gated by **${checkContextName}**.
 
 If you see a **neutral** check on this PR, that's expected — the policy files don't exist on the default branch yet.`;
 }
