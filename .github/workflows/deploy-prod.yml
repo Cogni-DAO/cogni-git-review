@@ -1,0 +1,26 @@
+name: Update App
+
+on:
+ push:
+   branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+     - name: Checkout repository
+       uses: actions/checkout@v4
+     - name: Deploy the app
+       uses: digitalocean/app_action/deploy@v2
+       with:
+         token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
+         app_spec_location: .do/app.prod.yaml
+       env:
+         APP_ID: ${{ vars.APP_ID }}
+         PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+         WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

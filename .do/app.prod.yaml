@@ -1,0 +1,54 @@
+alerts:
+- rule: DEPLOYMENT_FAILED
+- rule: DOMAIN_FAILED
+features:
+- buildpack-stack=ubuntu-22
+ingress:
+  rules:
+  - component:
+      name: cogni-git-review-prod
+    match:
+      authority:
+        exact: ""
+      path:
+        prefix: /cogni-git-review-prod
+name: cogni-git-review-prod
+region: atl
+services:
+- build_command: npm ci
+  environment_slug: node-js
+  envs:
+  - key: NODE_ENV
+    scope: RUN_TIME
+    value: production
+  - key: APP_ENV
+    scope: RUN_TIME
+    value: prod
+  - key: APP_ID
+    scope: RUN_TIME
+    value: ${APP_ID}
+  - key: WEBHOOK_SECRET
+    scope: RUN_TIME
+    type: SECRET
+    value: ${WEBHOOK_SECRET}
+  - key: LOG_LEVEL
+    scope: RUN_TIME
+    value: info
+  - key: OPENAI_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${OPENAI_API_KEY}
+  - key: PRIVATE_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${PRIVATE_KEY} 
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: Cogni-DAO/cogni-git-review
+  http_port: 3000
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-0.5gb
+  name: cogni-git-review-prod
+  run_command: npm start
+  source_dir: /
