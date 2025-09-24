@@ -25,7 +25,7 @@ src/
 - **pr-comment.js**: PR comment publishing with staleness guards
   - `postPRComment()` - Basic comment creation
   - `postPRCommentWithGuards()` - Comment with head SHA validation
-- **summary-adapter.js**: Check run summary formatting (extracted from index.js)
+- **summary-adapter.js**: Check run summary formatting
   - `renderCheckSummary()` - Main check summary renderer
   - `formatGateResults()` - Detailed per-gate markdown sections
   - `formatRunSummaryJSON()` - Debug JSON output

@@ -30,6 +30,24 @@ export async function run(context, gateConfig) {
 }
 ```
 
+## Review Limits Gate
+The `review-limits` gate enforces PR size constraints:
+- Validates maximum number of changed files and total diff size
+- Configurable thresholds for `max_changed_files` and `max_total_diff_kb`
+- Uses GitHub API PR statistics (`changed_files`, `additions`, `deletions`)
+
+## STUB: Goal Declaration Gate  
+The `goal-declaration` gate validates repository intent specification:
+- Ensures `.cogni/repo-spec.yaml` contains well-defined project goals
+- Validates `intent.goals` array exists and is non-empty
+- Stub implementation returns neutral pending full AI evaluation
+
+## STUB: Forbidden Scopes Gate
+The `forbidden-scopes` gate enforces project boundaries:
+- Validates `.cogni/repo-spec.yaml` contains explicit non-goals
+- Ensures `intent.non_goals` array exists and is non-empty  
+- Stub implementation returns neutral pending full AI evaluation
+
 ## AGENTS.md Sync Gate
 The `agents-md-sync` gate enforces documentation synchronization:
 - Analyzes PR file changes using GitHub API (`context.octokit.pulls.listFiles`)
@@ -48,6 +66,14 @@ gates:
       code_patterns: ["src/**/*.js", "lib/**/*.ts"]  # Optional
       doc_pattern: "AGENTS.md"                       # Optional
 ```
+
+## Governance Policy Gate
+The `governance-policy` gate validates CI/CD workflow compliance:
+- Verifies required GitHub Actions workflows exist at expected paths
+- Ensures workflow names match required status context names
+- Uses `CONTEXT_TO_WORKFLOW` mapping from constants.js
+- Exempt from checking itself (`PR_REVIEW_NAME`)
+- Returns violations for missing workflows or name mismatches
 
 ## AI Rule Gate
 The `ai-rule` gate type supports multiple instances:

@@ -126,6 +126,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `welcome-pr-creation.test.js` - Installation workflow verification
 - `installation-idempotency.test.js` - Installation retry scenarios
 - `template-customization.test.js` - YAML template replacement validation using RAILS_TEMPLATE_PATH
+- `agents-sync-integration.test.js` - AGENTS.md synchronization gate integration tests
 
 ## Known Issues
 
