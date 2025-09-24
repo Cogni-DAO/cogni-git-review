@@ -254,7 +254,16 @@ export async function createWelcomePR(context, repoInfo) {
 }
 
 function createPRBody(owner, repo, checkContextName) {
-  const bash = String.raw`# For repos WITHOUT existing branch protection only
+  const bash = String.raw`# GitHub Advanced Security + Branch Protection Setup
+# This script enables: GitHub Advanced Security, CodeQL scanning, Secret Scanning, Dependabot alerts/fixes, and Default branch protection
+
+gh repo edit "${owner}/${repo}" --enable-advanced-security
+gh repo edit "${owner}/${repo}" --enable-secret-scanning
+gh repo edit "${owner}/${repo}" --enable-secret-scanning-push-protection
+gh api -X PUT "repos/${owner}/${repo}/vulnerability-alerts"
+gh api -X PUT "repos/${owner}/${repo}/automated-security-fixes"
+gh api -X PATCH "repos/${owner}/${repo}/code-scanning/default-setup" \
+  -f state=configured
 gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSON'
 {
   "required_pull_request_reviews": { "required_approving_review_count": 0 },
@@ -301,5 +310,5 @@ ${bash}
 
 After completing setup, new PRs will be gated by **${checkContextName}**.
 
-If you see a **neutral** check on this PR, that's expected — the policy files don't exist on the default branch yet.`;
+Note: You can expect checks to FAIL on this PR, until you follow the instructions above. The next PR should be successful.`;
 }
