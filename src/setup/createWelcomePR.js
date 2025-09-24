@@ -6,7 +6,6 @@ import { PR_REVIEW_NAME, RAILS_TEMPLATE_PATH } from '../constants.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATE_PATH = `${RAILS_TEMPLATE_PATH}/.cogni/repo-spec-template.yaml`;
-const AI_RULE_TEMPLATE_PATH = `${RAILS_TEMPLATE_PATH}/.cogni/rules/ai-rule-template.yaml`;
 const WELCOME_BRANCH_PREFIX = "cogni/welcome-setup";
 const WELCOME_PR_TITLE = (repo) => `chore(cogni): bootstrap repo-spec for ${repo}`;
 const WELCOME_LABEL = "cogni-setup";
@@ -165,23 +164,22 @@ export async function createWelcomePR(context, repoInfo) {
         source: '.allstar/branch_protection.yaml', 
         dest: '.allstar/branch_protection.yaml',
         message: 'feat(allstar): add branch protection policy'
+      },
+      {
+        source: '.github/workflows/ci.yaml',
+        dest: '.github/workflows/ci.yaml',
+        message: 'feat(ci): add CI workflow'
+      },
+      {
+        source: '.github/workflows/security.yaml',
+        dest: '.github/workflows/security.yaml', 
+        message: 'feat(security): add security workflow'
+      },
+      {
+        source: '.github/workflows/release-please.yaml',
+        dest: '.github/workflows/release-please.yaml',
+        message: 'feat(release): add release workflow'
       }
-      // TODO: Add workflow files once GitHub App has workflows=write permission
-      // {
-      //   source: '.github/workflows/ci.yaml',
-      //   dest: '.github/workflows/ci.yaml',
-      //   message: 'feat(ci): add CI workflow'
-      // },
-      // {
-      //   source: '.github/workflows/security.yaml',
-      //   dest: '.github/workflows/security.yaml', 
-      //   message: 'feat(security): add security workflow'
-      // },
-      // {
-      //   source: '.github/workflows/release-please.yaml',
-      //   dest: '.github/workflows/release-please.yaml',
-      //   message: 'feat(release): add release workflow'
-      // }
     ];
 
     for (const file of filesToCopy) {
@@ -225,6 +223,7 @@ function createPRBody(owner, repo, checkContextName) {
   - a minimal \`.cogni/repo-spec.yaml\`. This is the defining policy for Cogni Git Review
   - a minimal \`.cogni/rules/ai-rule-template.yaml\`. This is the template for a new AI powered gate.
   - \`.allstar/\` configuration files for automated branch protection enforcement
+  - \`.github/workflows/\` CI pipeline templates (ci.yaml, security.yaml, release-please.yaml)
 
 Note: Cogni Git Review will only load these files from the default branch.
 

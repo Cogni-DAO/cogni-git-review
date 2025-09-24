@@ -26,6 +26,16 @@ gates:
         return `name: "AI Rule Template"
 description: "Template for AI-powered rules"
 threshold: 0.8`;
+      } else if (path.includes('.allstar/allstar.yaml')) {
+        return 'issue:\n  action: log';
+      } else if (path.includes('.allstar/branch_protection.yaml')) {
+        return 'branchProtectionRule:\n  requireBranchesToBeUpToDate: true';
+      } else if (path.includes('.github/workflows/ci.yaml')) {
+        return 'name: CI\non: [push, pull_request]';
+      } else if (path.includes('.github/workflows/security.yaml')) {
+        return 'name: Security\non: [push, pull_request]';
+      } else if (path.includes('.github/workflows/release-please.yaml')) {
+        return 'name: Release Please\non: [push]';
       }
       // Fall back to original for other files
       return originalReadFileSync.call(fs, path, encoding);
@@ -49,50 +59,10 @@ threshold: 0.8`;
           getContent: async (params) => {
             apiCalls.push({ type: 'getContent', params });
             
-            // Mock responses for different content checks
-            if (params.path === '.cogni/repo-spec.yaml' && !params.ref) {
-              // Check if repo-spec exists on default branch (should return 404 for new install)  
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.cogni/repo-spec.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if repo-spec exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.cogni/rules/ai-rule-template.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if AI rule template exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.allstar/allstar.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if Allstar config exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.allstar/branch-protection.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if Allstar branch protection exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.github/workflows/ci.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if CI workflow exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.github/workflows/security.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if Security workflow exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            } else if (params.path === '.github/workflows/release-please.yaml' && params.ref === 'cogni/welcome-setup') {
-              // Check if Release workflow exists on branch (should return 404 for new file)
-              const error = new Error('Not Found');
-              error.status = 404;
-              throw error;
-            }
-            
-            throw new Error(`Unexpected getContent call: ${params.path}`);
+            // Always return 404 for new files (they don't exist yet)
+            const error = new Error('Not Found');
+            error.status = 404;
+            throw error;
           },
           
           get: async (params) => {
@@ -107,63 +77,19 @@ threshold: 0.8`;
           createOrUpdateFileContents: async (params) => {
             apiCalls.push({ type: 'createFile', params });
             
+            // Verify all files are created on the correct branch with content
+            assert.strictEqual(params.branch, 'cogni/welcome-setup');
+            assert(params.content); // Base64 encoded content
+            assert(params.message); // Has a commit message
+            
+            // Special check for repo-spec template customization
             if (params.path === '.cogni/repo-spec.yaml') {
-              // Verify repo-spec file creation
-              assert.strictEqual(params.message, 'feat(cogni): add initial repo-spec configuration');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              // Decode and verify template customization (T4 test)
               const content = Buffer.from(params.content, 'base64').toString('utf8');
               assert(content.includes('name: cogni-git-review')); // Template customized with repo name
               assert(!content.includes('REPO_NAME')); // Template placeholder should be replaced
-              
-              return { data: { content: { sha: 'file1sha' } } };
-            } else if (params.path === '.cogni/rules/ai-rule-template.yaml') {
-              // Verify AI rule template file creation
-              assert.strictEqual(params.message, 'feat(cogni): add AI rule template');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              return { data: { content: { sha: 'file2sha' } } };
-            } else if (params.path === '.allstar/allstar.yaml') {
-              // Verify Allstar config file creation
-              assert.strictEqual(params.message, 'feat(allstar): add allstar configuration');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              return { data: { content: { sha: 'file3sha' } } };
-            } else if (params.path === '.allstar/branch-protection.yaml') {
-              // Verify Allstar branch protection file creation
-              assert.strictEqual(params.message, 'feat(allstar): add branch protection policy');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              return { data: { content: { sha: 'file4sha' } } };
-            } else if (params.path === '.github/workflows/ci.yaml') {
-              // Verify CI workflow file creation
-              assert.strictEqual(params.message, 'feat(ci): add CI workflow');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              return { data: { content: { sha: 'file5sha' } } };
-            } else if (params.path === '.github/workflows/security.yaml') {
-              // Verify Security workflow file creation
-              assert.strictEqual(params.message, 'feat(security): add security workflow');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              return { data: { content: { sha: 'file6sha' } } };
-            } else if (params.path === '.github/workflows/release-please.yaml') {
-              // Verify Release workflow file creation
-              assert.strictEqual(params.message, 'feat(release): add release workflow');
-              assert.strictEqual(params.branch, 'cogni/welcome-setup');
-              assert(params.content); // Base64 encoded content
-              
-              return { data: { content: { sha: 'file7sha' } } };
             }
             
-            throw new Error(`Unexpected createOrUpdateFileContents call: ${params.path}`);
+            return { data: { content: { sha: 'mocksha' } } };
           }
         },
         
@@ -262,6 +188,25 @@ threshold: 0.8`;
     assert(callTypes.indexOf('createRef') < callTypes.indexOf('createFile'), 'Should create branch before adding files');
     assert(callTypes.indexOf('createFile') < callTypes.indexOf('createPR'), 'Should create files before creating PR');
     assert(callTypes.indexOf('createPR') < callTypes.indexOf('addLabels'), 'Should create PR before adding labels');
+    
+    // Verify all expected files were created
+    const createdFiles = apiCalls
+      .filter(call => call.type === 'createFile')
+      .map(call => call.params.path);
+    
+    const expectedFiles = [
+      '.cogni/repo-spec.yaml',
+      '.cogni/rules/ai-rule-template.yaml', 
+      '.allstar/allstar.yaml',
+      '.allstar/branch_protection.yaml',
+      '.github/workflows/ci.yaml',
+      '.github/workflows/security.yaml',
+      '.github/workflows/release-please.yaml'
+    ];
+    
+    for (const expectedFile of expectedFiles) {
+      assert(createdFiles.includes(expectedFile), `Should create ${expectedFile}`);
+    }
   });
 
 });

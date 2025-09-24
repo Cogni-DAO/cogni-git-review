@@ -60,6 +60,11 @@ threshold: 0.8`;
               const error = new Error('Not Found');
               error.status = 404;
               throw error;
+            } else if (params.ref === 'cogni/welcome-setup') {
+              // All other files don't exist on branch yet (Allstar and workflow files)
+              const error = new Error('Not Found');
+              error.status = 404;
+              throw error;
             }
             throw new Error(`Unexpected getContent call: ${params.path} ref: ${params.ref || 'default'}`);
           },
@@ -219,6 +224,14 @@ threshold: 0.8`;
                 data: {
                   content: Buffer.from('existing ai rule content').toString('base64'),
                   sha: 'existing-ai-sha'
+                }
+              };
+            } else if (params.ref === 'cogni/welcome-setup') {
+              // All other files exist on branch (Allstar and workflow files)
+              return {
+                data: {
+                  content: Buffer.from('existing file content').toString('base64'),
+                  sha: 'existing-file-sha'
                 }
               };
             }
