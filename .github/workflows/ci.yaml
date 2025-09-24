@@ -23,4 +23,4 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
           sudo mv ./actionlint /usr/local/bin/
       - run: npm run lint --if-present
-      - run: npm test -- --reporter tap
+      - run: npm test
