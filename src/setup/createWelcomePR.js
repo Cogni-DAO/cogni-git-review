@@ -179,6 +179,11 @@ export async function createWelcomePR(context, repoInfo) {
         source: '.github/workflows/release-please.yaml',
         dest: '.github/workflows/release-please.yaml',
         message: 'feat(release): add release workflow'
+      },
+      {
+        source: 'repolinter.json',
+        dest: 'repolinter.json',
+        message: 'feat(repolinter): add repository policy enforcement'
       }
     ];
 
@@ -224,6 +229,7 @@ function createPRBody(owner, repo, checkContextName) {
   - a minimal \`.cogni/rules/ai-rule-template.yaml\`. This is the template for a new AI powered gate.
   - \`.allstar/\` configuration files for automated branch protection enforcement
   - \`.github/workflows/\` CI pipeline templates (ci.yaml, security.yaml, release-please.yaml)
+  - \`repolinter.json\` configuration for repository policy enforcement
 
 Note: Cogni Git Review will only load these files from the default branch.
 
