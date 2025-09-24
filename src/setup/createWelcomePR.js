@@ -60,6 +60,13 @@ function customizeRepoSpec(templateContent, repoName) {
 }
 
 /**
+ * Customize CODEOWNERS template for the specific repository
+ */
+function customizeCodeowners(templateContent, repoOwner) {
+  return templateContent.replace(/{{REPO_OWNER}}/g, repoOwner);
+}
+
+/**
  * Create a welcome PR that adds .cogni/repo-spec.yaml from template
  */
 export async function createWelcomePR(context, repoInfo) {
@@ -148,6 +155,32 @@ export async function createWelcomePR(context, repoInfo) {
       });
     }
 
+    // Add CODEOWNERS file with owner customization (only if it doesn't exist)
+    try {
+      await context.octokit.repos.getContent({
+        owner,
+        repo,
+        path: '.github/CODEOWNERS',
+        ref: branchName
+      });
+      // File exists, skip creation
+    } catch (error) {
+      if (error.status !== 404) throw error;
+      // File doesn't exist, create it
+      const codeownersTemplatePath = path.join(__dirname, '..', '..', RAILS_TEMPLATE_PATH, '.github/CODEOWNERS');
+      const codeownersTemplate = fs.readFileSync(codeownersTemplatePath, 'utf8');
+      const customizedCodeowners = customizeCodeowners(codeownersTemplate, owner);
+      
+      await context.octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path: '.github/CODEOWNERS',
+        message: 'feat(github): add CODEOWNERS for review assignments',
+        content: Buffer.from(customizedCodeowners).toString('base64'),
+        branch: branchName
+      });
+    }
+
     // Copy template files to repository (source paths relative to RAILS_TEMPLATE_PATH)
     const filesToCopy = [
       {
@@ -230,6 +263,7 @@ function createPRBody(owner, repo, checkContextName) {
   - \`.allstar/\` configuration files for automated branch protection enforcement
   - \`.github/workflows/\` CI pipeline templates (ci.yaml, security.yaml, release-please.yaml)
   - \`repolinter.json\` configuration for repository policy enforcement
+  - \`.github/CODEOWNERS\` with repository owner ${owner} as default reviewer
 
 Note: Cogni Git Review will only load these files from the default branch.
 
