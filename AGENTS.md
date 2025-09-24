@@ -125,7 +125,8 @@ gates:
 npm install
 npm start  # Local development with webhook proxy
 npm test   # Run tests
-npm run lint  # ESLint + actionlint for workflows
+npm run lint  # ESLint for JavaScript code
+npm run lint:workflows  # actionlint for GitHub Actions workflows
 ```
 
 

@@ -9,7 +9,7 @@ function formatRunSummaryJSON(runResult) {
   const gates = Array.isArray(runResult?.gates) ? runResult.gates : [];
   const failed = gates.filter(g => g.status === 'fail');
   const neutral = gates.filter(g => g.status === 'neutral'); 
-  const passed = gates.filter(g => g.status === 'pass');
+  // const passed = gates.filter(g => g.status === 'pass');L
   
   const title = gates.length === 0 
     ? 'No gates configured'
@@ -105,7 +105,6 @@ function renderGate(gate, status) {
   if (isFinite(gate.stats?.score)) {
     const score = gate.stats.score;
     const threshold = gate.stats.threshold;
-    const ruleId = gate.stats.rule_id;
     section += `- **Score:** ${score}/${threshold}\n`;
     
     if (gate.stats.statement) {

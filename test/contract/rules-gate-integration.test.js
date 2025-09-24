@@ -10,7 +10,7 @@ import assert from 'node:assert';
 import { testPullRequestHandler } from '../helpers/handler-harness.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import yaml from 'js-yaml';
-import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' assert { type: 'json' };
+import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 
 function payload(overrides = {}) {
   return {

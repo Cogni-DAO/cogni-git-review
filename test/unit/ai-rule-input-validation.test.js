@@ -11,6 +11,9 @@ import assert from 'node:assert';
 // We'll test by mocking at the file system level since direct mocking is complex
 // This approach tests the actual logic without hitting external APIs
 
+let mockRule = {};
+let capturedProviderInput = null;
+
 function createMockContext(prData = {}, filesData = []) {
   return {
     pr: {
@@ -39,11 +42,8 @@ function createMockContext(prData = {}, filesData = []) {
   };
 }
 
-let mockRule = {};
-let capturedProviderInput = null;
-
 // Mock AI provider by creating a test file
-import { writeFileSync, unlinkSync } from 'fs';
+import { writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const mockProviderPath = join(process.cwd(), 'test-mock-provider.js');
@@ -73,8 +73,12 @@ export async function review(input, options = {}) {
   
   test.afterEach(async () => {
     // Cleanup mock files
-    try { unlinkSync(mockProviderPath); } catch {}
-    try { unlinkSync('test-captured-input.json'); } catch {}
+    if (existsSync(mockProviderPath)) {
+      unlinkSync(mockProviderPath);
+    }
+    if (existsSync('test-captured-input.json')) {
+      unlinkSync('test-captured-input.json');
+    }
   });
 
   test.skip('gatherEvidence function produces enhanced diff_summary format - SKIP: private function', async () => {
