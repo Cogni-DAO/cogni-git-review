@@ -6,10 +6,43 @@ import { PR_REVIEW_NAME, RAILS_TEMPLATE_PATH } from '../constants.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATE_PATH = `${RAILS_TEMPLATE_PATH}/.cogni/repo-spec-template.yaml`;
-const AI_RULE_TEMPLATE_PATH = `${RAILS_TEMPLATE_PATH}/.cogni/rules/ai-rule-template.yaml`;
 const WELCOME_BRANCH_PREFIX = "cogni/welcome-setup";
 const WELCOME_PR_TITLE = (repo) => `chore(cogni): bootstrap repo-spec for ${repo}`;
 const WELCOME_LABEL = "cogni-setup";
+
+/**
+ * Copy a template file to the repository if it doesn't already exist
+ */
+async function copyTemplateFile(context, repoInfo, branchName, sourceRelativePath, destPath, commitMessage) {
+  const { owner, repo } = repoInfo;
+  
+  // Read template file
+  const sourcePath = path.join(__dirname, '..', '..', RAILS_TEMPLATE_PATH, sourceRelativePath);
+  const content = fs.readFileSync(sourcePath, 'utf8');
+  
+  try {
+    await context.octokit.repos.getContent({
+      owner,
+      repo,
+      path: destPath,
+      ref: branchName
+    });
+    // File exists, skip creation
+    return false;
+  } catch (error) {
+    if (error.status !== 404) throw error;
+    // File doesn't exist, create it
+    await context.octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path: destPath,
+      message: commitMessage,
+      content: Buffer.from(content).toString('base64'),
+      branch: branchName
+    });
+    return true;
+  }
+}
 
 /**
  * Customize repo-spec template for the specific repository
@@ -24,6 +57,13 @@ function customizeRepoSpec(templateContent, repoName) {
   );
   
   return content;
+}
+
+/**
+ * Customize CODEOWNERS template for the specific repository
+ */
+function customizeCodeowners(templateContent, repoOwner) {
+  return templateContent.replace(/{{REPO_OWNER}}/g, repoOwner);
 }
 
 /**
@@ -115,29 +155,73 @@ export async function createWelcomePR(context, repoInfo) {
       });
     }
 
-    // Add AI rule template file (only if it doesn't exist)
-    const aiRuleTemplatePath = path.join(__dirname, '..', '..', AI_RULE_TEMPLATE_PATH);
-    const aiRuleContent = fs.readFileSync(aiRuleTemplatePath, 'utf8');
-    
+    // Add CODEOWNERS file with owner customization (only if it doesn't exist)
     try {
       await context.octokit.repos.getContent({
         owner,
         repo,
-        path: '.cogni/rules/ai-rule-template.yaml',
+        path: '.github/CODEOWNERS',
         ref: branchName
       });
       // File exists, skip creation
     } catch (error) {
       if (error.status !== 404) throw error;
       // File doesn't exist, create it
+      const codeownersTemplatePath = path.join(__dirname, '..', '..', RAILS_TEMPLATE_PATH, '.github/CODEOWNERS');
+      const codeownersTemplate = fs.readFileSync(codeownersTemplatePath, 'utf8');
+      const customizedCodeowners = customizeCodeowners(codeownersTemplate, owner);
+      
       await context.octokit.repos.createOrUpdateFileContents({
         owner,
         repo,
-        path: '.cogni/rules/ai-rule-template.yaml',
-        message: 'feat(cogni): add AI rule template',
-        content: Buffer.from(aiRuleContent).toString('base64'),
+        path: '.github/CODEOWNERS',
+        message: 'feat(github): add CODEOWNERS for review assignments',
+        content: Buffer.from(customizedCodeowners).toString('base64'),
         branch: branchName
       });
+    }
+
+    // Copy template files to repository (source paths relative to RAILS_TEMPLATE_PATH)
+    const filesToCopy = [
+      {
+        source: '.cogni/rules/ai-rule-template.yaml',
+        dest: '.cogni/rules/ai-rule-template.yaml', 
+        message: 'feat(cogni): add AI rule template'
+      },
+      {
+        source: '.allstar/allstar.yaml',
+        dest: '.allstar/allstar.yaml',
+        message: 'feat(allstar): add allstar configuration'
+      },
+      {
+        source: '.allstar/branch_protection.yaml', 
+        dest: '.allstar/branch_protection.yaml',
+        message: 'feat(allstar): add branch protection policy'
+      },
+      {
+        source: '.github/workflows/ci.yaml',
+        dest: '.github/workflows/ci.yaml',
+        message: 'feat(ci): add CI workflow'
+      },
+      {
+        source: '.github/workflows/security.yaml',
+        dest: '.github/workflows/security.yaml', 
+        message: 'feat(security): add security workflow'
+      },
+      {
+        source: '.github/workflows/release-please.yaml',
+        dest: '.github/workflows/release-please.yaml',
+        message: 'feat(release): add release workflow'
+      },
+      {
+        source: 'repolinter.json',
+        dest: 'repolinter.json',
+        message: 'feat(repolinter): add repository policy enforcement'
+      }
+    ];
+
+    for (const file of filesToCopy) {
+      await copyTemplateFile(context, { owner, repo }, branchName, file.source, file.dest, file.message);
     }
 
     // Create PR body
@@ -170,7 +254,16 @@ export async function createWelcomePR(context, repoInfo) {
 }
 
 function createPRBody(owner, repo, checkContextName) {
-  const bash = String.raw`# For repos WITHOUT existing branch protection only
+  const bash = String.raw`# GitHub Advanced Security + Branch Protection Setup
+# This script enables: GitHub Advanced Security, CodeQL scanning, Secret Scanning, Dependabot alerts/fixes, and Default branch protection
+
+gh repo edit "${owner}/${repo}" --enable-advanced-security
+gh repo edit "${owner}/${repo}" --enable-secret-scanning
+gh repo edit "${owner}/${repo}" --enable-secret-scanning-push-protection
+gh api -X PUT "repos/${owner}/${repo}/vulnerability-alerts"
+gh api -X PUT "repos/${owner}/${repo}/automated-security-fixes"
+gh api -X PATCH "repos/${owner}/${repo}/code-scanning/default-setup" \
+  -f state=configured
 gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSON'
 {
   "required_pull_request_reviews": { "required_approving_review_count": 0 },
@@ -185,31 +278,37 @@ JSON`;
   This PR adds:
   - a minimal \`.cogni/repo-spec.yaml\`. This is the defining policy for Cogni Git Review
   - a minimal \`.cogni/rules/ai-rule-template.yaml\`. This is the template for a new AI powered gate.
+  - \`.allstar/\` configuration files for automated branch protection enforcement
+  - \`.github/workflows/\` CI pipeline templates (ci.yaml, security.yaml, release-please.yaml)
+  - \`repolinter.json\` configuration for repository policy enforcement
+  - \`.github/CODEOWNERS\` with repository owner ${owner} as default reviewer
 
 Note: Cogni Git Review will only load these files from the default branch.
 
-## Do you want to require Cogni reviews pass? 
-Enable branch protections!
+## Setup Required:
 
-## **For repos with existing branch protection:**
+**Step 1:** Install Allstar - Visit https://github.com/apps/allstar-app and install on your org/repo. Allstar is used to enable branch protections on the repo.
+**Step 2:** Merge this PR to add governance policies
+**Step 3:** Allstar will automatically enforce branch protection with required checks
 
+## Alternative: Manual Branch Protection Setup
+(Use this if Allstar installation is not working)
+
+**For repos with existing branch protection:**
 Go to: https://github.com/${owner}/${repo}/settings/branches
 1. Require a pull request to default branch before merging ✅
 2. Require status checks to pass ✅ 
 3. Add **${checkContextName}** to required status checks
 
-
-##**For fresh repos (no existing branch protection):**
-This bash script is the fastest way. 
-Copy this script, and paste it into your terminal. 
-
-Note: This assumes you have github cli installed and authenticated.
+**For fresh repos (no existing branch protection):**
+This bash script is the fastest way. Copy and paste into your terminal.
+Note: Requires GitHub CLI installed and authenticated.
 
 \`\`\`bash
 ${bash}
 \`\`\`
 
-After merging this PR, new PRs will be gated by **${checkContextName}**.
+After completing setup, new PRs will be gated by **${checkContextName}**.
 
-If you see a **neutral** check on this PR, that's expected — the policy files don't exist on the default branch yet.`;
+Note: You can expect checks to FAIL on this PR, until you follow the instructions above. The next PR should be successful.`;
 }

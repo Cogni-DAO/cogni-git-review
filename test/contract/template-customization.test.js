@@ -25,6 +25,12 @@ async function testCustomizeRepoSpec(templateContent, repoName) {
   return content;
 }
 
+// Helper function to test customizeCodeowners
+async function testCustomizeCodeowners(templateContent, repoOwner) {
+  // Same logic as in createWelcomePR.js:customizeCodeowners
+  return templateContent.replace(/{{REPO_OWNER}}/g, repoOwner);
+}
+
 describe('Template Customization Contract Tests', () => {
 
   test('replaces intent.name placeholder with actual repo name', async () => {
@@ -197,6 +203,76 @@ gates:
     assert(result.includes('# Project intent and goals'), 'Should preserve section comment');
     assert(result.includes('# inline comment'), 'Should preserve inline comments');
     assert(result.includes('# Comment about limits'), 'Should preserve gate comments');
+  });
+
+  // CODEOWNERS Customization Tests
+  test('replaces REPO_OWNER placeholder with actual owner handle', async () => {
+    const templateContent = `* @{{REPO_OWNER}}`;
+
+    const result = await testCustomizeCodeowners(templateContent, 'derekg1729');
+    
+    assert.strictEqual(result, '* @derekg1729', 'Should replace placeholder with actual owner handle');
+    assert(!result.includes('{{REPO_OWNER}}'), 'Should not contain placeholder after replacement');
+  });
+
+  test('handles CODEOWNERS with comments and multiple patterns', async () => {
+    const templateContent = `# Default code ownership - all files owned by repository owner
+* @{{REPO_OWNER}}
+
+# Specific overrides can be added here
+# docs/ @{{REPO_OWNER}} @docs-team`;
+
+    const result = await testCustomizeCodeowners(templateContent, 'myorg');
+    
+    assert(result.includes('* @myorg'), 'Should replace owner in main pattern');
+    assert(result.includes('# docs/ @myorg @docs-team'), 'Should replace owner in commented examples');
+    assert(!result.includes('{{REPO_OWNER}}'), 'Should replace all occurrences of placeholder');
+    assert(result.includes('# Default code ownership'), 'Should preserve comments');
+  });
+
+  test('handles multiple REPO_OWNER placeholders in same file', async () => {
+    const templateContent = `# Default ownership
+* @{{REPO_OWNER}}
+
+# Fallback patterns
+*.md @{{REPO_OWNER}}
+/docs/ @{{REPO_OWNER}} @docs-team`;
+
+    const result = await testCustomizeCodeowners(templateContent, 'testowner');
+    
+    assert(result.includes('* @testowner'), 'Should replace first occurrence');
+    assert(result.includes('*.md @testowner'), 'Should replace second occurrence');  
+    assert(result.includes('/docs/ @testowner @docs-team'), 'Should replace third occurrence');
+    assert(!result.includes('{{REPO_OWNER}}'), 'Should replace all placeholders');
+  });
+
+  test('integration test with actual CODEOWNERS template file', async () => {
+    // Read the actual CODEOWNERS template file
+    const templatePath = path.join(__dirname, '..', '..', RAILS_TEMPLATE_PATH, '.github', 'CODEOWNERS');
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    
+    const result = await testCustomizeCodeowners(templateContent, 'integration-test-owner');
+    
+    // Verify the actual template transformation
+    assert(result.includes('@integration-test-owner'), 'Should replace owner in actual template');
+    assert(!result.includes('{{REPO_OWNER}}'), 'Should not contain placeholder after replacement');
+  });
+
+  test('handles edge cases with special characters in owner name', async () => {
+    const templateContent = `* @{{REPO_OWNER}}`;
+
+    // Test with various owner formats
+    const testCases = [
+      'simple-name',
+      'name_with_underscores', 
+      'name123',
+      'CamelCaseOwner'
+    ];
+
+    for (const owner of testCases) {
+      const result = await testCustomizeCodeowners(templateContent, owner);
+      assert.strictEqual(result, `* @${owner}`, `Should handle owner name: ${owner}`);
+    }
   });
 
 });
