@@ -223,7 +223,7 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
     
     // ID should be normalized to spec configuration
     assert.strictEqual(gateResult.id, 'agents_sync');
-    assert(gateResult.hasOwnProperty('duration_ms'));
+    assert(Object.prototype.hasOwnProperty.call(gateResult, 'duration_ms'));
     assert(Array.isArray(gateResult.violations));
     assert(typeof gateResult.stats === 'object');
   });
