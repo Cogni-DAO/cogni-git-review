@@ -8,15 +8,7 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  repolinter:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: philips-labs/github-action-repolinter@v1
-        with:
-          config_file: repolinter.json
-  
-  node-ci:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +17,10 @@ jobs:
           node-version: '20'
           # Auto-caching is enabled when package.json has "packageManager"
           # Otherwise: cache: 'npm'
+      - name: Repository policy check
+        run: |
+          npm install -g repolinter
+          repolinter lint -c repolinter.json .
       - run: npm ci
       - run: npm run lint --if-present
-      - run: npm test -- --reporter tap
+      - run: npm test
