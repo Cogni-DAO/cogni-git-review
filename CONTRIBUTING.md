@@ -19,6 +19,67 @@ We'd also love PRs. If you're thinking of a large PR, we advise opening up an is
 1. [Fork][fork] and clone the repository.
 1. Configure and install the dependencies: `npm install`.
 1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so there's no need to lint separately.
+
+## Local Development Setup
+
+To test the GitHub App locally, you need your own dev GitHub App:
+
+### 1. Create GitHub App
+Go to https://github.com/settings/apps/new and enter:
+
+- **App name**: `cogni-git-review-dev-<yourname>`
+- **Homepage URL**: `https://github.com/<your-username>/cogni-git-review`
+- **Webhook URL**:  Go to https://smee.io/new → copy the URL
+- **Webhook secret**: Generate a password: `openssl rand -hex 20` (or use `development` for testing)
+- **Repository permissions**:
+  - Checks: Read & write
+  - Contents: Read & write
+  - Metadata: Read
+  - Pull requests: Read & write
+  - Workflows: Read & write
+- **Subscribe to events**: `pull_request`, `check_run`, `check_suite`, `installation_repositories`
+
+Click "Create GitHub App" → "Generate a private key" (downloads .pem file)
+
+### 2. Install App
+Install your app on a test repository (use https://github.com/Cogni-DAO/test-repo or your own fork/sandbox repo)
+
+### 3. Install Smee Client
+```bash
+npm install -g smee-client
+```
+
+### 4. Configure Environment
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+```bash
+APP_ID=123456  # from your app page
+WEBHOOK_SECRET=your-password-from-step-1
+WEBHOOK_PROXY_URL=https://smee.io/your-channel
+LOG_LEVEL=debug
+PRIVATE_KEY=-----BEGIN RSA PRIVATE KEY-----
+...paste entire .pem file contents here...
+-----END RSA PRIVATE KEY-----
+```
+
+### 5. Run
+Start the smee forwarder (replace with your smee URL):
+```bash
+smee --url https://smee.io/your-channel --target http://localhost:3000/api/github/webhooks
+```
+
+In another terminal, start the app:
+```bash
+npm start
+```
+
+Test by opening/updating a PR in your test repo. You should see webhook events in both terminals and checks appear on the PR.
+
+**Note**: Each developer needs their own GitHub App + Smee URL to avoid conflicts.
+
 1. Create a new branch: `git checkout -b my-branch-name`.
 1. Make your change, add tests, and make sure the tests still pass.
 1. Push to your fork and [submit a pull request][pr].
