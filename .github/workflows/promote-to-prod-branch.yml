@@ -1,0 +1,30 @@
+name: Promote to Prod
+
+on:
+  workflow_run:
+    workflows: ["E2E Test (Preview)"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create or update PR main → production
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="chore: promote preview to production"
+          BODY="Auto-created after green E2E (Preview). Please review and merge to deploy production."
+          # Try to create; if exists, just update title/body/label
+          gh pr create --base production --head main --title "$TITLE" --body "$BODY" || true
+          # Ensure label present & body updated
+          PR_NUMBER=$(gh pr list --base production --head main --json number --jq '.[0].number')
+          gh pr edit "$PR_NUMBER" --add-label "promotion"
+          gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"

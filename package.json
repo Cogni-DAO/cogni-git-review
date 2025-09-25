@@ -14,6 +14,7 @@
   "scripts": {
     "start": "probot run ./index.js",
     "test": "node --test",
+    "e2e:preview": "node scripts/e2e-runner.js",
     "lint": "eslint . --ext .js,.yaml,.yml",
     "lint:fix": "eslint . --ext .js,.yaml,.yml --fix",
     "lint:workflows": "actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml"
