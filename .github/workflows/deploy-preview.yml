@@ -1,8 +1,8 @@
-name: Deploy Production
+name: Deploy Preview
 
 on:
  push:
-   branches: [production]
+   branches: [main]
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ permissions:
 jobs:
   deploy-app:
     runs-on: ubuntu-latest
-    environment: Production
+    environment: Preview
     steps:
      - name: Checkout repository
        uses: actions/checkout@v4
@@ -18,9 +18,9 @@ jobs:
        uses: digitalocean/app_action/deploy@v2
        with:
          token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
-         app_spec_location: .do/app.prod.yaml
+         app_spec_location: .do/app.preview.yaml
        env:
-         APP_ID: ${{ vars.APP_ID }}
-         PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-         WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+         PREVIEW_APP_ID: ${{ vars.PREVIEW_APP_ID }}
+         PREVIEW_PRIVATE_KEY: ${{ secrets.PREVIEW_PRIVATE_KEY }}
+         PREVIEW_WEBHOOK_SECRET: ${{ secrets.PREVIEW_WEBHOOK_SECRET }}
          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

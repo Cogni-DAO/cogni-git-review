@@ -6,13 +6,13 @@ features:
 ingress:
   rules:
   - component:
-      name: cogni-git-review-prod
+      name: cogni-git-review-preview
     match:
       authority:
         exact: ""
       path:
-        prefix: /cogni-git-review-prod
-name: cogni-git-review-prod
+        prefix: /cogni-git-review-preview
+name: cogni-git-review-preview
 region: atl
 services:
 - build_command: npm ci
@@ -23,17 +23,17 @@ services:
     value: production
   - key: APP_ENV
     scope: RUN_TIME
-    value: prod
+    value: preview
   - key: APP_ID
     scope: RUN_TIME
-    value: ${APP_ID}
+    value: ${PREVIEW_APP_ID}
   - key: WEBHOOK_SECRET
     scope: RUN_TIME
     type: SECRET
-    value: ${WEBHOOK_SECRET}
+    value: ${PREVIEW_WEBHOOK_SECRET}
   - key: LOG_LEVEL
     scope: RUN_TIME
-    value: info
+    value: debug
   - key: OPENAI_API_KEY
     scope: RUN_TIME
     type: SECRET
@@ -41,13 +41,13 @@ services:
   - key: PRIVATE_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${PRIVATE_KEY} 
+    value: ${PREVIEW_PRIVATE_KEY} 
   github:
-    branch: production
+    branch: main
     repo: Cogni-DAO/cogni-git-review
   http_port: 3000
   instance_count: 1
   instance_size_slug: apps-s-1vcpu-0.5gb
-  name: cogni-git-review-prod
+  name: cogni-git-review-preview
   run_command: npm start
   source_dir: /
