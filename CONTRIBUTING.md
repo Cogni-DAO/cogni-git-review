@@ -104,6 +104,8 @@ If you've done this all correctly, your test repo should have received a `Welcom
 ### Success? 
 Nice! You now have a working local development environment with your own GitHub App!
 
+**Note**: Go delete that `app.private_key.pem` in your downloads. 
+
 ---
 
 ## Development Workflow
