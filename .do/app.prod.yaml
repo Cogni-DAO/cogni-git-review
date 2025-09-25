@@ -43,8 +43,8 @@ services:
     type: SECRET
     value: ${PRIVATE_KEY} 
   github:
-    branch: production
-    deploy_on_push: false
+    branch: main
+    deploy_on_push: true
     repo: Cogni-DAO/cogni-git-review
   http_port: 3000
   instance_count: 1

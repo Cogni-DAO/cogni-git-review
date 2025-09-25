@@ -1,8 +1,8 @@
-name: Deploy Production
+name: Update App
 
 on:
  push:
-   branches: [production]
+   branches: [main]
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ permissions:
 jobs:
   deploy-app:
     runs-on: ubuntu-latest
-    environment: Production
+    environment: production
     steps:
      - name: Checkout repository
        uses: actions/checkout@v4
