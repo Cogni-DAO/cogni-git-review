@@ -6,12 +6,12 @@ features:
 ingress:
   rules:
   - component:
-      name: cogni-git-review-prod
+      name: cogni-git-review-preview
     match:
       authority:
         exact: ""
       path:
-        prefix: /cogni-git-review-prod
+        prefix: /cogni-git-review-preview
 name: cogni-git-review-prod
 region: atl
 services:
@@ -23,7 +23,7 @@ services:
     value: production
   - key: APP_ENV
     scope: RUN_TIME
-    value: prod
+    value: preview
   - key: APP_ID
     scope: RUN_TIME
     value: ${APP_ID}
@@ -49,6 +49,6 @@ services:
   http_port: 3000
   instance_count: 1
   instance_size_slug: apps-s-1vcpu-0.5gb
-  name: cogni-git-review-prod
+  name: cogni-git-review-preview
   run_command: npm start
   source_dir: /
