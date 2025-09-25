@@ -26,25 +26,26 @@ services:
     value: preview
   - key: APP_ID
     scope: RUN_TIME
-    value: ${PREVIEW_APP_ID}
+    value: "${PREVIEW_APP_ID}"
   - key: WEBHOOK_SECRET
     scope: RUN_TIME
     type: SECRET
-    value: ${PREVIEW_WEBHOOK_SECRET}
+    value: "${PREVIEW_WEBHOOK_SECRET}"
   - key: LOG_LEVEL
     scope: RUN_TIME
     value: info
   - key: OPENAI_API_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${PREVIEW_OPENAI_API_KEY}
+    value: "${PREVIEW_OPENAI_API_KEY}"
   - key: PRIVATE_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${PREVIEW_PRIVATE_KEY} 
+    value: |
+      ${PREVIEW_PRIVATE_KEY} 
   github:
     branch: main
-    deploy_on_push: true
+    deploy_on_push: false
     repo: Cogni-DAO/cogni-git-review
   http_port: 3000
   instance_count: 1
