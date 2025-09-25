@@ -18,22 +18,9 @@ services:
 - build_command: npm ci
   environment_slug: node-js
   envs:
-  - key: NODE_ENV
-    scope: RUN_TIME
-    value: production
-  - key: APP_ENV
-    scope: RUN_TIME
-    value: preview
   - key: APP_ID
     scope: RUN_TIME
     value: ${APP_ID}
-  - key: WEBHOOK_SECRET
-    scope: RUN_TIME
-    type: SECRET
-    value: ${WEBHOOK_SECRET}
-  - key: LOG_LEVEL
-    scope: RUN_TIME
-    value: info
   - key: OPENAI_API_KEY
     scope: RUN_TIME
     type: SECRET
@@ -41,10 +28,13 @@ services:
   - key: PRIVATE_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${PRIVATE_KEY} 
+    value: ${PRIVATE_KEY}
+  - key: WEBHOOK_SECRET
+    scope: RUN_TIME
+    type: SECRET
+    value: ${WEBHOOK_SECRET}
   github:
     branch: main
-    deploy_on_push: false
     repo: Cogni-DAO/cogni-git-review
   http_port: 3000
   instance_count: 1

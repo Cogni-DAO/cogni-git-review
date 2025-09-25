@@ -1,4 +1,4 @@
-name: Update App
+name: Deploy (Production)
 
 on:
  push:
