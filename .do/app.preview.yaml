@@ -12,7 +12,7 @@ ingress:
         exact: ""
       path:
         prefix: /cogni-git-review-preview
-name: cogni-git-review-prod
+name: cogni-git-review-preview
 region: atl
 services:
 - build_command: npm ci
