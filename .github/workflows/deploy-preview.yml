@@ -23,4 +23,4 @@ jobs:
          PREVIEW_APP_ID: ${{ vars.PREVIEW_APP_ID }}
          PREVIEW_PRIVATE_KEY: ${{ secrets.PREVIEW_PRIVATE_KEY }}
          PREVIEW_WEBHOOK_SECRET: ${{ secrets.PREVIEW_WEBHOOK_SECRET }}
-         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+         PREVIEW_OPENAI_API_KEY: ${{ secrets.PREVIEW_OPENAI_API_KEY }}

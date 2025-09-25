@@ -37,11 +37,11 @@ services:
   - key: OPENAI_API_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${OPENAI_API_KEY}
+    value: ${PREVIEW_OPENAI_API_KEY}
   - key: PRIVATE_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${PREVIEW_PRIVATE_KEY} 
+    value: ${PREVIEW_PRIVATE_KEY}
   github:
     branch: main
     repo: Cogni-DAO/cogni-git-review
