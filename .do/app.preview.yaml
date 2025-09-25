@@ -33,7 +33,7 @@ services:
     value: ${PREVIEW_WEBHOOK_SECRET}
   - key: LOG_LEVEL
     scope: RUN_TIME
-    value: debug
+    value: info
   - key: OPENAI_API_KEY
     scope: RUN_TIME
     type: SECRET
@@ -41,10 +41,10 @@ services:
   - key: PRIVATE_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${PREVIEW_PRIVATE_KEY}
+    value: ${PREVIEW_PRIVATE_KEY} 
   github:
     branch: main
-    deploy_on_push: false
+    deploy_on_push: true
     repo: Cogni-DAO/cogni-git-review
   http_port: 3000
   instance_count: 1
