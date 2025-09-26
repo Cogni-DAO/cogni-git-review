@@ -65,6 +65,8 @@ context.payload.pull_request = pr;
 ## Repository Structure
 ```
 ├── index.js                    # Main bot webhook handlers
+├── bin/e2e-runner.js          # CLI for E2E testing (executable)
+├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/
 │   ├── spec-loader.js         # Repository specification loading
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
@@ -73,7 +75,11 @@ context.payload.pull_request = pr;
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── contract/              # End-to-end tests, using test harness without HTTP (→ AGENTS.md)
 │   ├── helpers/               # Test utilities and harnesses (→ AGENTS.md)
-│   └── unit/                  # Isolated component tests (→ AGENTS.md)
+│   ├── unit/                  # Isolated component tests (→ AGENTS.md)
+│   └── e2e/                   # Preview environment E2E tests (→ AGENTS.md)
+├── .github/workflows/         # CI/CD pipeline workflows
+│   ├── e2e-test-preview.yml   # E2E testing after preview deployment
+│   └── promote-to-prod-branch.yml # Auto-promotion after green E2E
 └── .cogni/
     ├── repo-spec.yaml         # This repository's quality gates
     └── repo-spec-template.yaml # Template for new repositories

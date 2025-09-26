@@ -4,27 +4,17 @@
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { runE2ETest } from '../../lib/e2e-runner.js';
-
-function env(name, fallback) {
-  return process.env[name] ?? fallback;
-}
+import { runE2ETest, parseE2EOptionsFromEnv } from '../../lib/e2e-runner.js';
 
 describe('E2E Test Runner', () => {
   test('should successfully run E2E test against preview environment', async (t) => {
-    const options = {
-      ghToken: env('GH_TOKEN'),
-      testRepo: env('TEST_REPO', 'Cogni-DAO/test-repo'),
-      checkName: env('CHECK_NAME', 'Cogni Git PR Review'),
-      timeoutSec: parseInt(env('TIMEOUT_SEC', '480'), 10),
-      sleepMs: parseInt(env('SLEEP_MS', '5000'), 10)
-    };
-
     // Skip test if no GitHub token available
-    if (!options.ghToken) {
-      t.skip('Skipping E2E test - no GH_TOKEN provided');
+    if (!process.env.TEST_REPO_GITHUB_PAT) {
+      t.skip('Skipping E2E test - no TEST_REPO_GITHUB_PAT provided');
       return;
     }
+
+    const options = parseE2EOptionsFromEnv();
 
     console.log('Running E2E test with options:', {
       ...options,
@@ -75,17 +65,15 @@ describe('E2E Test Runner', () => {
   });
 
   test('should handle invalid repository gracefully', async (t) => {
-    const ghToken = env('GH_TOKEN');
-    if (!ghToken) {
-      t.skip('Skipping invalid repo test - no GH_TOKEN provided');
+    if (!process.env.TEST_REPO_GITHUB_PAT) {
+      t.skip('Skipping invalid repo test - no TEST_REPO_GITHUB_PAT provided');
       return;
     }
 
-    const options = {
-      ghToken,
+    const options = parseE2EOptionsFromEnv({
       testRepo: 'nonexistent/nonexistent-repo',
       timeoutSec: 30 // Short timeout for invalid repo test
-    };
+    });
 
     const result = await runE2ETest(options);
     
