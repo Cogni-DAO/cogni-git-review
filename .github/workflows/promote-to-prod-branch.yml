@@ -6,25 +6,45 @@ on:
     types: [completed]
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
+
+concurrency:
+  group: promote-prod
+  cancel-in-progress: true
 
 jobs:
   promote:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BASE_BRANCH: production
+      HEAD_BRANCH: main
+      LABEL: promotion
+      TITLE: chore: promote preview to production
+      BODY: "Auto-created after green E2E (Preview).\n\nRun: ${{ github.event.workflow_run.html_url }}"
     steps:
       - uses: actions/checkout@v4
-
-      - name: Create or update PR main → production
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Verify tested SHA matches HEAD_BRANCH
         run: |
-          TITLE="chore: promote preview to production"
-          BODY="Auto-created after green E2E (Preview). Please review and merge to deploy production."
-          # Try to create; if exists, just update title/body/label
-          gh pr create --base production --head main --title "$TITLE" --body "$BODY" || true
-          # Ensure label present & body updated
-          PR_NUMBER=$(gh pr list --base production --head main --json number --jq '.[0].number')
-          gh pr edit "$PR_NUMBER" --add-label "promotion"
-          gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+          git fetch --no-tags origin $HEAD_BRANCH
+          TESTED_SHA='${{ github.event.workflow_run.head_sha }}'
+          CURRENT=$(git rev-parse origin/$HEAD_BRANCH)
+          if [ "$CURRENT" != "$TESTED_SHA" ]; then
+            echo "Ref drift: tested $TESTED_SHA but $HEAD_BRANCH is $CURRENT"
+            exit 1
+          fi
+
+      - name: Create or update PR ${{ env.HEAD_BRANCH }} → ${{ env.BASE_BRANCH }}
+        run: |
+          set -euo pipefail
+          PR=$(gh pr list --base $BASE_BRANCH --head $HEAD_BRANCH --json number --jq '.[0].number // empty')
+          if [ -z "$PR" ]; then
+            gh pr create --base $BASE_BRANCH --head $HEAD_BRANCH --title "$TITLE" --body "$BODY"
+            PR=$(gh pr list --base $BASE_BRANCH --head $HEAD_BRANCH --json number --jq '.[0].number')
+          else
+            gh pr edit "$PR" --title "$TITLE" --body "$BODY"
+          fi
+          gh pr edit "$PR" --add-label "$LABEL" || true
