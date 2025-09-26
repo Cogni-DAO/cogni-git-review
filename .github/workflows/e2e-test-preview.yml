@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.E2E_PREVIEW_GH_TOKEN }}
+      TEST_REPO_GITHUB_PAT: ${{ secrets.E2E_PREVIEW_GH_TOKEN }}
       TEST_REPO: Cogni-DAO/test-repo
       CHECK_NAME: Cogni Git PR Review
       TIMEOUT_SEC: "480"
@@ -32,10 +32,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci --ignore-scripts
-      - run: npm run e2e:preview
+      - run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-summary
-          path: e2e-summary.json
+          path: test-artifacts/e2e-summary.json
+          if-no-files-found: warn
           retention-days: 7
