@@ -20,7 +20,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_deploy_check == 'true') }}
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    environment: preview
+    environment: preview-E2E-testing
     env:
       APP_ENV: preview
       TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
@@ -35,7 +35,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Configure git creds from PAT
         env:
-          GH_TOKEN: ${{ secrets.TEST_REPO_GITHUB_PAT }}   # PAT with repo write
+          GH_TOKEN: ${{ secrets.TEST_REPO_GITHUB_PAT }}
         run: |
           gh auth setup-git
           git config --global user.name  "cogni-bot"
