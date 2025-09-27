@@ -28,7 +28,7 @@ gh workflow run "E2E Test (Preview)" --ref main
 | `TEST_REPO_GITHUB_PAT` | ✅ | - | GitHub token for API access |
 | `TEST_REPO` | - | `Cogni-DAO/test-repo` | Target repository |
 | `APP_ENV` | - | `dev` | Environment name (determines check name) |
-| `TIMEOUT_SEC` | - | `480` | Maximum wait time |
+| `TIMEOUT_SEC` | - | `120` | Maximum wait time |
 
 **Check Names by Environment:**
 - `dev` → `"Cogni Git PR Review (dev)"`  

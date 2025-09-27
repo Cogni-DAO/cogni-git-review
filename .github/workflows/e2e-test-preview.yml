@@ -20,7 +20,7 @@ jobs:
       APP_ENV: preview
       TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
       TEST_REPO: ${{ vars.TEST_REPO }}
-      TIMEOUT_SEC: "480"
+      TIMEOUT_SEC: "120"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
