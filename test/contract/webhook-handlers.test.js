@@ -7,6 +7,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
 import { testEventHandler } from '../helpers/handler-harness.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 import prSynchronizePayload from '../fixtures/pull_request.synchronize.complete.json' with { type: 'json' };
 import prReopenedPayload from '../fixtures/pull_request.reopened.complete.json' with { type: 'json' };
@@ -20,11 +21,11 @@ describe("GitHub Webhook Handler Contract Tests", () => {
       payload: pullRequestOpenedPayload,
       spec: null,
       expectCheck: (params) => {
-        assert.strictEqual(params.name, "Cogni Git PR Review");
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.head_sha, pullRequestOpenedPayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
         assert.strictEqual(params.conclusion, "neutral");
-        assert.strictEqual(params.output.title, "Cogni Git PR Review");
+        assert.strictEqual(params.output.title, PR_REVIEW_NAME);
         assert(params.output.summary.includes("Cogni needs a repo-spec"));
       }
     });
@@ -36,11 +37,11 @@ describe("GitHub Webhook Handler Contract Tests", () => {
       payload: prSynchronizePayload,
       spec: null,
       expectCheck: (params) => {
-        assert.strictEqual(params.name, "Cogni Git PR Review");
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.head_sha, prSynchronizePayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
         assert.strictEqual(params.conclusion, "neutral");
-        assert.strictEqual(params.output.title, "Cogni Git PR Review");
+        assert.strictEqual(params.output.title, PR_REVIEW_NAME);
         assert(params.output.summary.includes("Cogni needs a repo-spec"));
       }
     });
@@ -52,11 +53,11 @@ describe("GitHub Webhook Handler Contract Tests", () => {
       payload: prReopenedPayload,
       spec: null,
       expectCheck: (params) => {
-        assert.strictEqual(params.name, "Cogni Git PR Review");
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.head_sha, prReopenedPayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
         assert.strictEqual(params.conclusion, "neutral");
-        assert.strictEqual(params.output.title, "Cogni Git PR Review");
+        assert.strictEqual(params.output.title, PR_REVIEW_NAME);
         assert(params.output.summary.includes("Cogni needs a repo-spec"));
       }
     });
@@ -68,11 +69,11 @@ describe("GitHub Webhook Handler Contract Tests", () => {
       payload: pullRequestOpenedPayload,
       spec: 'minimal',
       expectCheck: (params) => {
-        assert.strictEqual(params.name, "Cogni Git PR Review");
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.head_sha, pullRequestOpenedPayload.pull_request.head.sha);
         assert.strictEqual(params.status, "completed");
         assert.strictEqual(params.conclusion, "success");
-        assert.strictEqual(params.output.title, "Cogni Git PR Review");
+        assert.strictEqual(params.output.title, PR_REVIEW_NAME);
         assert.strictEqual(params.output.summary, "All gates passed");
         // New format validation - accept any number of gates
         const match = (params.output.text || '').match(/✅\s*(\d+)\s+passed\s*\|\s*❌\s*(\d+)\s+failed\s*\|\s*⚠️\s*(\d+)\s+neutral/);
@@ -144,11 +145,11 @@ describe("GitHub Webhook Handler Contract Tests", () => {
       payload: checkSuiteRerequestedPayload,
       spec: 'minimal',
       expectCheck: (params) => {
-        assert.strictEqual(params.name, "Cogni Git PR Review");
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.head_sha, "e92817d301df48f3ea502537fbd0b3d9a3ef792a");
         assert.strictEqual(params.status, "completed");
         assert.strictEqual(params.conclusion, "success");
-        assert.strictEqual(params.output.title, "Cogni Git PR Review");
+        assert.strictEqual(params.output.title, PR_REVIEW_NAME);
         assert.strictEqual(params.output.summary, "All gates passed");
         // Stats should be in gate sections now (no more footer)
         assert(params.output.text.includes("changed_files: 3"));

@@ -6,14 +6,24 @@
 - **Logs**: `https://cloud.digitalocean.com/apps/58d763ca-c99c-4bc2-be03-f3109930130c/logs/cogni-git-review-prod?i=7b25f6`
 - **Auto-deploys**: on Push to `main` branch
 
+
+
 ## GitHub Configuration
+
+**Environment "preview":**
+- Variables: `TEST_REPO`, `APP_ID` 
+- Secrets: `TEST_REPO_GITHUB_PAT`, `PRIVATE_KEY`, `WEBHOOK_SECRET`, `PREVIEW_OPENAI_API_KEY`
+
 **Environment "production":**
-- Variables: `APP_ID` (1761205), `CLIENT_ID` (Iv23liXZB0avFTzd2auo)
+- Variables: `APP_ID`, `CLIENT_ID`
 - Secrets: `PRIVATE_KEY`, `WEBHOOK_SECRET`, `OPENAI_API_KEY`
 
 **Repository:**
 - `DIGITAL_OCEAN_ACCESS_TOKEN`
 
-## Preview/Dev Environments
-Not configured. Only production exists.
+## Preview Environment  
+- **URL**: `https://cogni-git-review-preview-3w8v6.ondigitalocean.app/cogni-git-review-preview/`
+- **Webhook**: `https://cogni-git-review-preview-3w8v6.ondigitalocean.app/cogni-git-review-preview/api/github/webhooks`
+- **Auto-deploys**: on Push to `main` branch
+- **Check name**: `"Cogni Git PR Review (preview)"`
 

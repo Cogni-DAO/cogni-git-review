@@ -18,6 +18,9 @@ services:
 - build_command: npm ci
   environment_slug: node-js
   envs:
+  - key: APP_ENV
+    scope: RUN_TIME
+    value: preview
   - key: APP_ID
     scope: RUN_TIME
     value: ${APP_ID}

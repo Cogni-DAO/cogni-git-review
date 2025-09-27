@@ -43,11 +43,11 @@ Every test must verify the check run contract:
 
 ```javascript
 expectCheck: (params) => {
-  assert.strictEqual(params.name, 'Cogni Git PR Review');
+  assert.strictEqual(params.name, PR_REVIEW_NAME); // Environment-aware constant
   assert.strictEqual(params.head_sha, payload.pull_request.head.sha);
   assert.strictEqual(params.status, 'completed');
   assert(['success', 'failure', 'neutral'].includes(params.conclusion));
-  assert.strictEqual(params.output.title, 'Cogni Git PR Review');
+  assert.strictEqual(params.output.title, PR_REVIEW_NAME);
   // ... specific behavior assertions
 }
 ```

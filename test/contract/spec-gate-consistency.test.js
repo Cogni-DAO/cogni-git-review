@@ -8,6 +8,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { testPullRequestHandler } from '../helpers/handler-harness.js';
 import { assertGateCountsFormat } from '../helpers/summary-format-validator.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 
 function payload() {
@@ -47,7 +48,7 @@ describe('Spec-Gate Consistency Contract Tests', () => {
       payload: payload(),
       spec: 'gateConsistency2Gates',
       expectCheck: (params) => {
-        assert.strictEqual(params.name, 'Cogni Git PR Review');
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.status, 'completed');
         assertGateCountsFormat(params.output.text, 2);
       }
@@ -69,7 +70,7 @@ describe('Spec-Gate Consistency Contract Tests', () => {
       payload: payload(),
       spec: 'gateConsistency2GatesNoLimits',
       expectCheck: (params) => {
-        assert.strictEqual(params.name, 'Cogni Git PR Review');
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.status, 'completed');
         assertGateCountsFormat(params.output.text, 2);
       }

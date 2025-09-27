@@ -20,10 +20,11 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_deploy_check == 'true') }}
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    environment: preview
     env:
-      TEST_REPO_GITHUB_PAT: ${{ secrets.E2E_PREVIEW_GH_TOKEN }}
-      TEST_REPO: Cogni-DAO/test-repo
-      CHECK_NAME: Cogni Git PR Review
+      APP_ENV: preview
+      TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
+      TEST_REPO: ${{ vars.TEST_REPO }}
       TIMEOUT_SEC: "480"
     steps:
       - uses: actions/checkout@v4

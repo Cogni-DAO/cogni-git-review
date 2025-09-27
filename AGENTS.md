@@ -126,6 +126,19 @@ gates:
 
 ## Development
 
+### Common Commands (for AI Agents)
+```bash
+# Essential development commands - run these frequently:
+npm test                    # Run all tests (unit, contract, E2E unit tests)
+npm run lint               # ESLint for JavaScript code  
+npm run lint:workflows     # actionlint for GitHub Actions workflows
+npm run e2e                # End-to-end testing against live deployment
+
+# Setup and running:
+npm install                # Install dependencies
+npm start                  # Start Local dev server. WARNING: this is a blocking command. Have the user run this themselves, not you. 
+```
+
 ### Setup
 ```bash
 npm install

@@ -9,6 +9,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import { testPullRequestHandler } from '../helpers/handler-harness.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 import yaml from 'js-yaml';
 import pullRequestOpenedPayload from '../fixtures/pull_request.opened.complete.json' with { type: 'json' };
 
@@ -38,7 +39,7 @@ describe('Rules Gate Contract Tests', () => {
       spec: 'rulesSingleFile',
       expectCheck: (params) => {
         // Minimal contract assertions
-        assert.strictEqual(params.name, 'Cogni Git PR Review');
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.head_sha, 'abc123def456789012345678901234567890abcd');
         assert.strictEqual(params.status, 'completed');
         assert(['success', 'failure', 'neutral'].includes(params.conclusion));
@@ -57,7 +58,7 @@ describe('Rules Gate Contract Tests', () => {
       payload: payload(),
       spec: 'rulesInvalidFile',
       expectCheck: (params) => {
-        assert.strictEqual(params.name, 'Cogni Git PR Review');
+        assert.strictEqual(params.name, PR_REVIEW_NAME);
         assert.strictEqual(params.status, 'completed');
         assert(['success', 'failure', 'neutral'].includes(params.conclusion));
       }
