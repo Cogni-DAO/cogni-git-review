@@ -35,6 +35,18 @@ gh workflow run "E2E Test (Preview)" --ref main -f skip_deploy_check=true
 - `preview` → `"Cogni Git PR Review (preview)"`
 - `prod` → `"Cogni Git PR Review"` (locked for branch protection)
 
+## Authentication Setup
+
+**Local Development:**
+- E2E runner uses `TEST_REPO_GITHUB_PAT` for GitHub API operations (`gh` commands)
+- Git push operations work using your existing personal git credentials
+- Both authentication methods must have write access to `TEST_REPO`
+
+**GitHub Actions (CI):**
+- Workflow configures git authentication using `gh auth setup-git` before E2E tests
+- Uses the same `TEST_REPO_GITHUB_PAT` for both API operations and git push
+- Git user configured as `cogni-bot` for commit operations
+
 ## Current Limitations
 
 ⚠️ **This is a MINIMAL test** - current state, not desired state:

@@ -33,6 +33,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci --ignore-scripts
+      - name: Configure git creds from PAT
+        env:
+          GH_TOKEN: ${{ secrets.TEST_REPO_GITHUB_PAT }}   # PAT with repo write
+        run: |
+          gh auth setup-git
+          git config --global user.name  "cogni-bot"
+          git config --global user.email "actions@users.noreply.github.com"
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: always()
