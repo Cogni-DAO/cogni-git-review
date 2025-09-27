@@ -18,7 +18,7 @@ The GitHub Action `.github/workflows/e2e-test-preview.yml` triggers after succes
 npm run e2e
 
 # Manual GitHub Actions trigger
-gh workflow run "E2E Test (Preview)" --ref main -f skip_deploy_check=true
+gh workflow run "E2E Test (Preview)" --ref main
 ```
 
 ## Environment Variables
