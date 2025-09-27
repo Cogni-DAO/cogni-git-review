@@ -14,10 +14,13 @@ const indexSource = fs.readFileSync(indexPath, 'utf8');
 
 describe('Check Contract — Minimal Drift Guard', () => {
   test('constant value is locked (branch protection)', () => {
+    // Test environment-aware behavior: dev gets (dev), prod gets locked base name
+    const env = process.env.APP_ENV || 'dev';
+    const expectedName = env === 'prod' ? 'Cogni Git PR Review' : `Cogni Git PR Review (${env})`;
     assert.strictEqual(
       PR_REVIEW_NAME,
-      'Cogni Git PR Review',
-      'PR_REVIEW_NAME must not drift — would break existing branch protection'
+      expectedName,
+      'PR_REVIEW_NAME must follow environment-aware pattern: prod locked, others get suffix'
     );
   });
 

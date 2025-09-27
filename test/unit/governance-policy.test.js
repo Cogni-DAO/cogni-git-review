@@ -4,6 +4,7 @@ import yaml from 'js-yaml';
 import { run } from '../../src/gates/cogni/governance-policy.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import { loadRepoSpec } from '../../src/spec-loader.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 
 describe('Governance Policy Gate', () => {
   let mockContext;
@@ -52,7 +53,7 @@ describe('Governance Policy Gate', () => {
     assert.strictEqual(result.status, 'pass');
     assert.strictEqual(result.violations.length, 0);
     assert.strictEqual(result.stats.contexts_checked, 3); // Excludes self-exempt "Cogni Git PR Review"
-    assert.deepStrictEqual(result.stats.exempt_contexts, ['Cogni Git PR Review']);
+    assert.deepStrictEqual(result.stats.exempt_contexts, [PR_REVIEW_NAME]);
   });
 
   test('fails when workflow file is missing', async () => {
@@ -152,7 +153,7 @@ intent:
     - Testing non-exempt contexts
 
 required_status_contexts:
-  - Cogni Git PR Review
+  - ${PR_REVIEW_NAME}
 
 gates:
   - type: governance-policy
