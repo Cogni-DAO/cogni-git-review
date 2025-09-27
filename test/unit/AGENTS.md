@@ -6,6 +6,7 @@ Tests for individual functions and components in isolation, without external dep
 ## Focus Areas
 - **Spec loading and validation**: Repository configuration parsing
 - **Gate logic**: Individual gate behavior and error handling  
+- **Model selection**: Environment-based AI model configuration
 - **Utility functions**: Helper functions and shared logic
 
 ## Testing Principles
@@ -24,6 +25,7 @@ Tests for individual functions and components in isolation, without external dep
 - `goal-alignment-workflow.test.js` - Goal alignment workflow tests
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP
+- `model-selector.test.js` - Environment-based model selection tests
 - `pr-structure-validation.test.js` - Pull request structure validation tests
 - `rules-gate-code-aware.test.js` - AI rule gate code-aware enhancement tests
 - `rules-gate-neutral.test.js` - AI rule gate neutral case handling tests
