@@ -29,10 +29,9 @@ jobs:
           cache: 'npm'
       - run: npm ci --ignore-scripts
       - name: Configure git creds from PAT
-        env:
-          GH_TOKEN: ${{ secrets.TEST_REPO_GITHUB_PAT }}   # PAT must have write to the test repo
         run: |
-          printf '%s' "$GH_TOKEN" | gh auth login --with-token --hostname github.com
+          unset GH_TOKEN                                  
+          printf '%s' "$TEST_REPO_GITHUB_PAT" | gh auth login --with-token --hostname github.com
           gh auth setup-git
           git config --global user.name  "cogni-bot"
           git config --global user.email "actions@users.noreply.github.com"
