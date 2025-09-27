@@ -106,6 +106,48 @@ Nice! You now have a working local development environment with your own GitHub 
 
 **Note**: Go delete that `app.private_key.pem` in your downloads. 
 
+## E2E Testing
+
+To test the complete workflow end-to-end (recommended for contributors working on core functionality):
+
+** Note:** this assumes you've already created a `test-repo` and installed your dev app onto it.
+
+### 1. Create Personal Access Token (PAT)
+Go to [GitHub Settings > Developer Settings > Personal Access Tokens](https://github.com/settings/personal-access-tokens) and create a token with:
+- **Token Name**: My Cogni Test-Repo PAT
+- **Repository Access**: `Only Select Repos` -> `<username>/test-repo`
+- **Permissions**: Read and Write access for `Contents`, `Actions`, `Pull Requests`, `Webhooks`, `Workflows`
+
+Generate token, and use in the next step
+
+### 2. Add E2E Environment Variables  
+Add these to your `.env` file:
+```bash
+TEST_REPO=<your-username>/<your-test-repo>
+TEST_REPO_GITHUB_PAT=<your-personal-access-token>
+```
+
+### 3. Run E2E Test
+In one terminal:
+```bash
+npm start
+```
+
+Then in another terminal:
+
+```bash
+npm run e2e
+```
+
+This will:
+- Clone your test repo to a temp directory
+- Create a test branch with a small change
+- Open a PR to trigger your dev Cogni app
+- Wait for the Cogni check to complete
+- Report success/failure and clean up
+
+**Expected output**: `✅ E2E test passed!` with a JSON summary showing the test results.
+
 ---
 
 ## Development Workflow

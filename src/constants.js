@@ -1,4 +1,13 @@
-export const PR_REVIEW_NAME = "Cogni Git PR Review";
+const BASE_CHECK_NAME = 'Cogni Git PR Review';
+const ENV = process.env.APP_ENV || 'dev';
+const OVERRIDE = (process.env.CHECK_NAME || '').trim();
+
+export const PR_REVIEW_NAME =
+  ENV === 'prod' ? BASE_CHECK_NAME : (OVERRIDE || `${BASE_CHECK_NAME} (${ENV})`);
+
+if (ENV === 'prod' && OVERRIDE) {
+  console.warn('Ignoring CHECK_NAME override in prod; using locked name.');
+}
 
 // Context name → workflow file mapping for governance policy
 export const CONTEXT_TO_WORKFLOW = {
