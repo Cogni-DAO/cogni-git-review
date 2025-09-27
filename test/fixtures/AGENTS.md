@@ -25,3 +25,4 @@ Reusable test data that eliminates duplication across test suites.
 - Maintain consistent IDs and structure across all fixtures
 - Base webhook fixtures on real GitHub payloads
 - Keep sensitive data sanitized
+- Some fixtures use `${PR_REVIEW_NAME}` template literal for environment-aware check names
