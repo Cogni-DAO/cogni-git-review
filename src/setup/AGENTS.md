@@ -41,7 +41,7 @@ installation_repositories.added webhook
 ## Welcome PR Content
 Creates dual setup paths:
 1. **Primary**: Allstar automated branch protection (preferred but currently not working)
-2. **Fallback**: Manual gh CLI script + GitHub settings instructions
+2. **Fallback**: Manual gh CLI script + GitHub settings instructions. Protect main, produciton branches.
 
 ## Integration
 Called from `index.js` webhook handler for installation events. Creates complete governance automation stack in a single welcome PR.
