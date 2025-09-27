@@ -21,7 +21,6 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BASE_BRANCH: production
       HEAD_BRANCH: main
-      LABEL: promotion
       BODY: "Auto-created after green E2E (Preview).\n\nRun: ${{ github.event.workflow_run.html_url }}"
     steps:
       - uses: actions/checkout@v4
@@ -54,4 +53,4 @@ jobs:
           DYNAMIC_TITLE="chore(deploy): promote main→production (e2e passed, ${SHORT_SHA}, ${DATE})"
           
           # Create new PR
-          gh pr create --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --title "$DYNAMIC_TITLE" --body "$BODY" --label "$LABEL"
+          gh pr create --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --title "$DYNAMIC_TITLE" --body "$BODY"
