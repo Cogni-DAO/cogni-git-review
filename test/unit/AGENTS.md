@@ -23,7 +23,7 @@ Tests for individual functions and components in isolation, without external dep
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
 - `goal-alignment-workflow.test.js` - Goal alignment workflow tests
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
-- `governance-policy.test.js` - Governance policy gate workflow validation tests
+- `governance-policy.test.js` - Governance policy gate workflow validation tests MVP
 - `pr-structure-validation.test.js` - Pull request structure validation tests
 - `rules-gate-code-aware.test.js` - AI rule gate code-aware enhancement tests
 - `rules-gate-neutral.test.js` - AI rule gate neutral case handling tests

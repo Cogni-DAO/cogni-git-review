@@ -18,7 +18,7 @@ Reusable test data that eliminates duplication across test suites.
 - `rulesSingleFile`, `rulesNoRuleFile`, `rulesInvalidFile` - AI rule configurations
 - `multipleAIRules` - Multiple AI rule instances
 - `agentsSync`, `agentsSyncWithCustomConfig`, `agentsSyncWithOtherGates` - AGENTS.md sync testing
-- `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing
+- `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing MVP
 
 ## Principles
 - Use fixtures instead of inline test data

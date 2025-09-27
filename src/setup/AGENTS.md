@@ -34,7 +34,7 @@ installation_repositories.added webhook
 - `.cogni/repo-spec-template.yaml` - Repository specification
 - `.cogni/rules/ai-rule-template.yaml` - AI rule template
 - `.allstar/*.yaml` - Allstar configuration bundle
-- `.github/workflows/*.yaml` - CI/security/release workflow templates
+- `.github/workflows/*.yaml` - CI/security/e2e/deployment workflow templates
 - `.github/CODEOWNERS` - Code ownership template
 - `repolinter.json` - Repository policy rules
 
