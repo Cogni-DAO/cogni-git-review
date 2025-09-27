@@ -17,7 +17,6 @@ intent:
 required_status_contexts:
   - CI - PR
   - Security
-  - Release
   - Cogni Git PR Review
 
 # Gates run in the order they appear below.

@@ -1,6 +1,6 @@
 # Templates Directory
 
-Template files for automated repository setup.
+MVP Template files for automated repository setup.
 
 ## Files
 - `repo-spec-template.yaml` - Default repository specification for new installations

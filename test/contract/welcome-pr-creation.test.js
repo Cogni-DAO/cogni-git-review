@@ -34,8 +34,6 @@ threshold: 0.8`;
         return 'name: CI\non: [push, pull_request]';
       } else if (path.includes('.github/workflows/security.yaml')) {
         return 'name: Security\non: [push, pull_request]';
-      } else if (path.includes('.github/workflows/release-please.yaml')) {
-        return 'name: Release Please\non: [push]';
       }
       // Fall back to original for other files
       return originalReadFileSync.call(fs, path, encoding);
@@ -200,8 +198,7 @@ threshold: 0.8`;
       '.allstar/allstar.yaml',
       '.allstar/branch_protection.yaml',
       '.github/workflows/ci.yaml',
-      '.github/workflows/security.yaml',
-      '.github/workflows/release-please.yaml'
+      '.github/workflows/security.yaml'
     ];
     
     for (const expectedFile of expectedFiles) {

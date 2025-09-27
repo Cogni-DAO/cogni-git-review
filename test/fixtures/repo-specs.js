@@ -398,7 +398,6 @@ intent:
 required_status_contexts:
   - CI - PR
   - Security
-  - Release
   - ${PR_REVIEW_NAME}
 
 gates:

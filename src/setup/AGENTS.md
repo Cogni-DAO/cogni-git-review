@@ -34,14 +34,14 @@ installation_repositories.added webhook
 - `.cogni/repo-spec-template.yaml` - Repository specification
 - `.cogni/rules/ai-rule-template.yaml` - AI rule template
 - `.allstar/*.yaml` - Allstar configuration bundle
-- `.github/workflows/*.yaml` - CI/security/release workflow templates
+- `.github/workflows/*.yaml` - CI/security/e2e/deployment workflow templates
 - `.github/CODEOWNERS` - Code ownership template
 - `repolinter.json` - Repository policy rules
 
 ## Welcome PR Content
 Creates dual setup paths:
 1. **Primary**: Allstar automated branch protection (preferred but currently not working)
-2. **Fallback**: Manual gh CLI script + GitHub settings instructions
+2. **Fallback**: Manual gh CLI script + GitHub settings instructions. Protect main, produciton branches.
 
 ## Integration
 Called from `index.js` webhook handler for installation events. Creates complete governance automation stack in a single welcome PR.
