@@ -3,7 +3,7 @@
 Core library implementations for Cogni operations.
 
 ## E2E Testing
-- `e2e-runner.js` - E2E testing implementation with JSDoc types and environment parsing
+- `e2e-runner.js` - Creates test PRs, waits for Cogni checks, and reports results with debugging artifacts
 
 ### Usage for Agents:
 ```bash
