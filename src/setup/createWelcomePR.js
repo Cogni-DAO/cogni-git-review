@@ -274,6 +274,14 @@ gh api -X PUT "repos/${owner}/${repo}/branches/main/protection" --input - <<'JSO
   "enforce_admins": false,
   "restrictions": null
 }
+JSON
+gh api -X PUT "repos/${owner}/${repo}/branches/production/protection" --input - <<'JSON'
+{
+  "required_pull_request_reviews": { "required_approving_review_count": 1 },
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "restrictions": null
+}
 JSON`;
 
   return `# Welcome to Cogni Git Review!
