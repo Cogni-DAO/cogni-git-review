@@ -1,0 +1,57 @@
+name: Promote to Prod
+
+on:
+  workflow_run:
+    workflows: ["E2E Test (Preview)"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: promote-prod
+  cancel-in-progress: true
+
+jobs:
+  promote:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BASE_BRANCH: production
+      HEAD_BRANCH: main
+      LABEL: promotion
+      BODY: "Auto-created after green E2E (Preview).\n\nRun: ${{ github.event.workflow_run.html_url }}"
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Verify tested SHA matches HEAD_BRANCH
+        run: |
+          git fetch --no-tags origin "$HEAD_BRANCH"
+          TESTED_SHA='${{ github.event.workflow_run.head_sha }}'
+          CURRENT=$(git rev-parse "origin/$HEAD_BRANCH")
+          if [ "$CURRENT" != "$TESTED_SHA" ]; then
+            echo "Ref drift: tested $TESTED_SHA but $HEAD_BRANCH is $CURRENT"
+            exit 1
+          fi
+
+      - name: Create PR ${{ env.HEAD_BRANCH }} → ${{ env.BASE_BRANCH }}
+        run: |
+          set -euo pipefail
+          # Check if PR already exists - fail if so
+          EXISTING_PR=$(gh pr list --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING_PR" ]; then
+            echo "❌ PR #$EXISTING_PR already exists for $HEAD_BRANCH → $BASE_BRANCH"
+            echo "Please merge or close the existing PR before creating a new promotion."
+            exit 1
+          fi
+          
+          # Generate dynamic title with SHA and date
+          TESTED_SHA='${{ github.event.workflow_run.head_sha }}'
+          SHORT_SHA="${TESTED_SHA:0:7}"
+          DATE=$(date +%Y%m%d)
+          DYNAMIC_TITLE="chore(deploy): promote main→production (e2e passed, ${SHORT_SHA}, ${DATE})"
+          
+          # Create new PR
+          gh pr create --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --title "$DYNAMIC_TITLE" --body "$BODY" --label "$LABEL"

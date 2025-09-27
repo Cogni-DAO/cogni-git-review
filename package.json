@@ -11,9 +11,13 @@
     "github",
     "probot-app"
   ],
+  "bin": {
+    "cogni-e2e": "bin/e2e-runner.js"
+  },
   "scripts": {
     "start": "probot run ./index.js",
     "test": "node --test",
+    "e2e": "node -r dotenv/config bin/e2e-runner.js",
     "lint": "eslint . --ext .js,.yaml,.yml",
     "lint:fix": "eslint . --ext .js,.yaml,.yml --fix",
     "lint:workflows": "actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml"
@@ -30,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "dotenv": "^17.2.2",
     "eslint": "^9.33.0",
     "eslint-plugin-n": "^17.21.3",
     "eslint-plugin-promise": "^7.2.1",

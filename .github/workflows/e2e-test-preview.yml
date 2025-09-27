@@ -1,0 +1,42 @@
+name: E2E Test (Preview)
+permissions:
+  contents: read
+  actions: read
+on:
+  workflow_run:
+    workflows: ["Deploy (Preview)"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      skip_deploy_check:
+        description: 'Skip deploy success check (for testing)'
+        required: false
+        default: 'false'
+concurrency:
+  group: e2e-preview-${{ github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_deploy_check == 'true') }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      TEST_REPO_GITHUB_PAT: ${{ secrets.E2E_PREVIEW_GH_TOKEN }}
+      TEST_REPO: Cogni-DAO/test-repo
+      CHECK_NAME: Cogni Git PR Review
+      TIMEOUT_SEC: "480"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --ignore-scripts
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-summary
+          path: test-artifacts/e2e-summary.json
+          if-no-files-found: warn
+          retention-days: 7
