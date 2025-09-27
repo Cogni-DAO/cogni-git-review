@@ -27,8 +27,13 @@ gh workflow run "E2E Test (Preview)" --ref main -f skip_deploy_check=true
 |----------|----------|---------|-------------|
 | `TEST_REPO_GITHUB_PAT` | ✅ | - | GitHub token for API access |
 | `TEST_REPO` | - | `Cogni-DAO/test-repo` | Target repository |
-| `CHECK_NAME` | - | `Cogni Git PR Review` | Expected check name |
+| `APP_ENV` | - | `dev` | Environment name (determines check name) |
 | `TIMEOUT_SEC` | - | `480` | Maximum wait time |
+
+**Check Names by Environment:**
+- `dev` → `"Cogni Git PR Review (dev)"`  
+- `preview` → `"Cogni Git PR Review (preview)"`
+- `prod` → `"Cogni Git PR Review"` (locked for branch protection)
 
 ## Current Limitations
 
