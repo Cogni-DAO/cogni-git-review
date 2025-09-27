@@ -10,13 +10,9 @@
 
 ## GitHub Configuration
 
-**Environment "preview":**
+**Environment:**
 - Variables: `TEST_REPO`, `APP_ID` 
-- Secrets: `TEST_REPO_GITHUB_PAT`, `PRIVATE_KEY`, `WEBHOOK_SECRET`, `PREVIEW_OPENAI_API_KEY`
-
-**Environment "production":**
-- Variables: `APP_ID`, `CLIENT_ID`
-- Secrets: `PRIVATE_KEY`, `WEBHOOK_SECRET`, `OPENAI_API_KEY`
+- Secrets: `TEST_REPO_GITHUB_PAT`, `PRIVATE_KEY`, `WEBHOOK_SECRET`, `OPENAI_API_KEY`
 
 **Repository:**
 - `DIGITAL_OCEAN_ACCESS_TOKEN`

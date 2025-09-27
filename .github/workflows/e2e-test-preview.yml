@@ -7,25 +7,20 @@ on:
     workflows: ["Deploy (Preview)"]
     types: [completed]
   workflow_dispatch:
-    inputs:
-      skip_deploy_check:
-        description: 'Skip deploy success check (for testing)'
-        required: false
-        default: 'false'
 concurrency:
   group: e2e-preview-${{ github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
 jobs:
   e2e:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_deploy_check == 'true') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    environment: preview
+    environment: preview-E2E-testing
     env:
       APP_ENV: preview
       TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
       TEST_REPO: ${{ vars.TEST_REPO }}
-      TIMEOUT_SEC: "480"
+      TIMEOUT_SEC: "120"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,6 +28,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci --ignore-scripts
+      - name: Configure git creds from PAT
+        run: |
+          unset GH_TOKEN                                  
+          printf '%s' "$TEST_REPO_GITHUB_PAT" | gh auth login --with-token --hostname github.com
+          gh auth setup-git
+          git config --global user.name  "cogni-bot"
+          git config --global user.email "actions@users.noreply.github.com"
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: always()

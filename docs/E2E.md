@@ -18,7 +18,7 @@ The GitHub Action `.github/workflows/e2e-test-preview.yml` triggers after succes
 npm run e2e
 
 # Manual GitHub Actions trigger
-gh workflow run "E2E Test (Preview)" --ref main -f skip_deploy_check=true
+gh workflow run "E2E Test (Preview)" --ref main
 ```
 
 ## Environment Variables
@@ -28,12 +28,24 @@ gh workflow run "E2E Test (Preview)" --ref main -f skip_deploy_check=true
 | `TEST_REPO_GITHUB_PAT` | ✅ | - | GitHub token for API access |
 | `TEST_REPO` | - | `Cogni-DAO/test-repo` | Target repository |
 | `APP_ENV` | - | `dev` | Environment name (determines check name) |
-| `TIMEOUT_SEC` | - | `480` | Maximum wait time |
+| `TIMEOUT_SEC` | - | `120` | Maximum wait time |
 
 **Check Names by Environment:**
 - `dev` → `"Cogni Git PR Review (dev)"`  
 - `preview` → `"Cogni Git PR Review (preview)"`
 - `prod` → `"Cogni Git PR Review"` (locked for branch protection)
+
+## Authentication Setup
+
+**Local Development:**
+- E2E runner uses `TEST_REPO_GITHUB_PAT` for GitHub API operations (`gh` commands)
+- Git push operations work using your existing personal git credentials
+- Both authentication methods must have write access to `TEST_REPO`
+
+**GitHub Actions (CI):**
+- Workflow configures git authentication using `gh auth setup-git` before E2E tests
+- Uses the same `TEST_REPO_GITHUB_PAT` for both API operations and git push
+- Git user configured as `cogni-bot` for commit operations
 
 ## Current Limitations
 
