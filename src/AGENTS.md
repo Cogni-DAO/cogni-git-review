@@ -3,7 +3,7 @@
 ## Structure
 ```
 src/
-├── constants.js        # Global app constants (PR_REVIEW_NAME, CONTEXT_TO_WORKFLOW, RAILS_TEMPLATE_PATH)
+├── constants.js        # Global app constants (environment-aware PR_REVIEW_NAME, CONTEXT_TO_WORKFLOW for CI/Security, RAILS_TEMPLATE_PATH)
 ├── spec-loader.js      # Repository configuration I/O layer
 ├── pr-comment.js       # PR comment publishing
 ├── summary-adapter.js  # Check run summary formatting

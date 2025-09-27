@@ -1,0 +1,45 @@
+name: E2E Test (Preview)
+permissions:
+  contents: read
+  actions: read
+on:
+  workflow_run:
+    workflows: ["Deploy (Preview)"]
+    types: [completed]
+  workflow_dispatch:
+concurrency:
+  group: e2e-preview-${{ github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    environment: preview-E2E-testing
+    env:
+      APP_ENV: preview
+      TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
+      TEST_REPO: ${{ vars.TEST_REPO }}
+      TIMEOUT_SEC: "120"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --ignore-scripts
+      - name: Configure git creds from PAT
+        run: |
+          unset GH_TOKEN                                  
+          printf '%s' "$TEST_REPO_GITHUB_PAT" | gh auth login --with-token --hostname github.com
+          gh auth setup-git
+          git config --global user.name  "cogni-bot"
+          git config --global user.email "actions@users.noreply.github.com"
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-summary
+          path: test-artifacts/e2e-summary.json
+          if-no-files-found: warn
+          retention-days: 7

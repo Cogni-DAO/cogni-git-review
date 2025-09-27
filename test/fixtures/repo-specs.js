@@ -1,4 +1,5 @@
 // Test fixtures for repository specifications
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 
 export const SPEC_FIXTURES = {
   // Valid minimal spec - list-of-gates format
@@ -397,8 +398,7 @@ intent:
 required_status_contexts:
   - CI - PR
   - Security
-  - Release
-  - Cogni Git PR Review
+  - ${PR_REVIEW_NAME}
 
 gates:
   - type: governance-policy
@@ -428,7 +428,7 @@ intent:
 
 required_status_contexts:
   - Unknown Context
-  - Cogni Git PR Review
+  - ${PR_REVIEW_NAME}
 
 gates:
   - type: governance-policy

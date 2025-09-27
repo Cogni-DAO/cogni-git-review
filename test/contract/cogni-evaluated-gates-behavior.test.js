@@ -9,6 +9,7 @@ import nock from 'nock';
 import yaml from 'js-yaml';
 import { clearSpecCache } from '../../src/spec-loader.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -79,7 +80,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
           create: async (params) => {
             // Verify the check run is created correctly
             assert.strictEqual(params.conclusion, 'neutral');
-            assert.strictEqual(params.name, 'Cogni Git PR Review');
+            assert.strictEqual(params.name, PR_REVIEW_NAME);
             assert(params.output.summary.includes('Cogni needs a repo-spec'));
             return { data: { id: 1 } };
           }

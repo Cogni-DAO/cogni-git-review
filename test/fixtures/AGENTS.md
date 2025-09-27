@@ -18,10 +18,11 @@ Reusable test data that eliminates duplication across test suites.
 - `rulesSingleFile`, `rulesNoRuleFile`, `rulesInvalidFile` - AI rule configurations
 - `multipleAIRules` - Multiple AI rule instances
 - `agentsSync`, `agentsSyncWithCustomConfig`, `agentsSyncWithOtherGates` - AGENTS.md sync testing
-- `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing
+- `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing MVP
 
 ## Principles
 - Use fixtures instead of inline test data
 - Maintain consistent IDs and structure across all fixtures
 - Base webhook fixtures on real GitHub payloads
 - Keep sensitive data sanitized
+- Some fixtures use `${PR_REVIEW_NAME}` template literal for environment-aware check names

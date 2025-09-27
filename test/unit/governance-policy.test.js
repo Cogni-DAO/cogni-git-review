@@ -4,6 +4,7 @@ import yaml from 'js-yaml';
 import { run } from '../../src/gates/cogni/governance-policy.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import { loadRepoSpec } from '../../src/spec-loader.js';
+import { PR_REVIEW_NAME } from '../../src/constants.js';
 
 describe('Governance Policy Gate', () => {
   let mockContext;
@@ -20,8 +21,7 @@ describe('Governance Policy Gate', () => {
             // Mock workflow file contents based on path
             const mockFiles = {
               '.github/workflows/ci.yaml': 'name: CI - PR\non:\n  pull_request:\n',
-              '.github/workflows/security.yaml': 'name: Security\non:\n  pull_request:\n',
-              '.github/workflows/release-please.yaml': 'name: Release\non:\n  push:\n'
+              '.github/workflows/security.yaml': 'name: Security\non:\n  pull_request:\n'
             };
             
             if (mockFiles[path]) {
@@ -51,8 +51,8 @@ describe('Governance Policy Gate', () => {
 
     assert.strictEqual(result.status, 'pass');
     assert.strictEqual(result.violations.length, 0);
-    assert.strictEqual(result.stats.contexts_checked, 3); // Excludes self-exempt "Cogni Git PR Review"
-    assert.deepStrictEqual(result.stats.exempt_contexts, ['Cogni Git PR Review']);
+    assert.strictEqual(result.stats.contexts_checked, 2); // Excludes self-exempt "Cogni Git PR Review"
+    assert.deepStrictEqual(result.stats.exempt_contexts, [PR_REVIEW_NAME]);
   });
 
   test('fails when workflow file is missing', async () => {
@@ -70,7 +70,7 @@ describe('Governance Policy Gate', () => {
       
       const mockFiles = {
         '.github/workflows/ci.yaml': 'name: CI - PR\non:\n  pull_request:\n',
-        '.github/workflows/release-please.yaml': 'name: Release\non:\n  push:\n'
+        '.github/workflows/security.yaml': 'name: Security\non:\n  push:\n'
       };
       
       if (mockFiles[path]) {
@@ -103,8 +103,7 @@ describe('Governance Policy Gate', () => {
     mockContext.octokit.repos.getContent = async ({ path }) => {
       const mockFiles = {
         '.github/workflows/ci.yaml': 'name: Wrong Name\non:\n  pull_request:\n',
-        '.github/workflows/security.yaml': 'name: Security\non:\n  pull_request:\n',
-        '.github/workflows/release-please.yaml': 'name: Release\non:\n  push:\n'
+        '.github/workflows/security.yaml': 'name: Security\non:\n  pull_request:\n'
       };
       
       if (mockFiles[path]) {
@@ -152,7 +151,7 @@ intent:
     - Testing non-exempt contexts
 
 required_status_contexts:
-  - Cogni Git PR Review
+  - ${PR_REVIEW_NAME}
 
 gates:
   - type: governance-policy
@@ -195,7 +194,7 @@ gates:
     const result = await run(mockContext, {});
 
     assert.strictEqual(result.status, 'fail');
-    assert.strictEqual(result.violations.length, 3); // All 3 contexts fail
+    assert.strictEqual(result.violations.length, 2); // All 2 contexts fail
     assert(result.violations.every(v => v.code === 'workflow_check_error'));
   });
 

@@ -43,11 +43,11 @@ Every test must verify the check run contract:
 
 ```javascript
 expectCheck: (params) => {
-  assert.strictEqual(params.name, 'Cogni Git PR Review');
+  assert.strictEqual(params.name, PR_REVIEW_NAME); // Environment-aware constant
   assert.strictEqual(params.head_sha, payload.pull_request.head.sha);
   assert.strictEqual(params.status, 'completed');
   assert(['success', 'failure', 'neutral'].includes(params.conclusion));
-  assert.strictEqual(params.output.title, 'Cogni Git PR Review');
+  assert.strictEqual(params.output.title, PR_REVIEW_NAME);
   // ... specific behavior assertions
 }
 ```
@@ -123,7 +123,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `spec-gate-consistency.test.js` - Gate counting validation
 - `simple-integration.test.js` - Basic success/failure paths
 - `code-aware-ai-gate.test.js` - Integration tests for code-aware AI rule capabilities
-- `welcome-pr-creation.test.js` - Installation workflow verification (complete governance stack)
+- `welcome-pr-creation.test.js` - Installation workflow verification MVP
 - `installation-idempotency.test.js` - Installation retry scenarios
 - `template-customization.test.js` - Template replacement validation (repo-spec + CODEOWNERS customization)
 - `agents-sync-integration.test.js` - AGENTS.md synchronization gate integration tests
