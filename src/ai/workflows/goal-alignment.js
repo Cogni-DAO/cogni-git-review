@@ -40,7 +40,7 @@ function createAgent(model) {
  * @param {Object} options - { timeoutMs, modelConfig }
  * @returns {Promise<Object>} { score, observations, summary }
  */
-export async function evaluate(input, { timeoutMs, modelConfig } = {}) {
+export async function evaluate(input, { timeoutMs: _timeoutMs, modelConfig } = {}) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is missing or empty');
   }
