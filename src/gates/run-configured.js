@@ -143,6 +143,7 @@ async function safeRunGate(handler, ctx, gate, gateId) {
       violations: result.violations ?? [],
       observations: result.observations ?? [],
       stats: result.stats ?? {},
+      provenance: result.provenance,
       duration_ms: Date.now() - startTime
     };
 
