@@ -4,7 +4,6 @@
  */
 
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
@@ -16,16 +15,13 @@ const EvaluationSchema = z.object({
 });
 
 /**
- * Create ReAct agent with specified model
- * @param {string} model - OpenAI model name
+ * Create ReAct agent with pre-built LLM client
+ * @param {ChatOpenAI} client - Pre-configured OpenAI client
  * @returns {Object} Configured ReAct agent
  */
-function createAgent(model) {
+function createAgent(client) {
   return createReactAgent({
-    llm: new ChatOpenAI({ 
-      model,
-      temperature: 0 
-    }),
+    llm: client,
     tools: [], // No tools - pure reasoning
     responseFormat: {
       prompt: "Evaluate if the <PR Information> aligns with the given <criteria>.",
@@ -37,22 +33,22 @@ function createAgent(model) {
 /**
  * Evaluate PR against statement using ReAct agent
  * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
- * @param {Object} options - { timeoutMs, modelConfig }
+ * @param {Object} options - { timeoutMs, client }
  * @returns {Promise<Object>} { score, observations, summary }
  */
-export async function evaluate(input, { timeoutMs: _timeoutMs, modelConfig } = {}) {
+export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is missing or empty');
   }
 
-  if (!modelConfig?.model) {
-    throw new Error('modelConfig.model is required');
+  if (!client) {
+    throw new Error('Pre-built LLM client is required');
   }
 
   const startTime = Date.now();
   
-  // Create agent with the selected model (NO fallback)
-  const agent = createAgent(modelConfig.model);
+  // Create agent with pre-built client
+  const agent = createAgent(client);
 
   const promptText = `You are an expert in analyzing code pull requests against a given set of criteria. Here is the current PR you are evaluating:
 

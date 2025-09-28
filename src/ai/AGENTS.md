@@ -25,11 +25,17 @@ const result = await provider.review({
 // Returns: { score: 0.85, observations: [], summary: "Brief assessment", provenance: {} }
 ```
 
-## Model Selection
+## Model Selection & Temperature Policy
 Models selected automatically by environment via `model-selector.js`:
-- **dev**: `gpt-4o-mini` (local development, no APP_ENV)
-- **preview**: `gpt-5-2025-08-07` (APP_ENV=preview)
-- **prod**: `gpt-5-2025-08-07` (APP_ENV=prod)
+- **dev**: `gpt-4o-mini` (local development, no APP_ENV) + `temperature=0`
+- **preview**: `gpt-5-2025-08-07` (APP_ENV=preview) + default temperature
+- **prod**: `gpt-5-2025-08-07` (APP_ENV=prod) + default temperature
+
+**Temperature Policy**: 
+- **Whitelisted models** (`gpt-4o-mini`, `4o-mini`): `temperature=0` for deterministic, repeatable results
+- **All other models**: Use model default (omit parameter) - safer for reasoning models and new releases
+
+LLM client creation centralized in `provider.js makeLLMClient({ model })` with explicit whitelist approach.
 
 Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 
@@ -42,4 +48,4 @@ Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 ## Constraints
 - No direct LLM calls outside provider.js
 - Gates decide pass/fail from score vs threshold
-- Temperature=0 for deterministic output
+- LLM client creation only via provider.js makeLLMClient() (enforces temperature policy)
