@@ -25,6 +25,7 @@ Tests for individual functions and components in isolation, without external dep
 - `goal-alignment-workflow.test.js` - Goal alignment workflow tests
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP
+- `make-llm-client.test.js` - LLM client factory whitelist behavior tests
 - `model-selector.test.js` - Environment-based model selection tests
 - `pr-structure-validation.test.js` - Pull request structure validation tests
 - `rules-gate-code-aware.test.js` - AI rule gate code-aware enhancement tests

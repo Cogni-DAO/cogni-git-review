@@ -8,6 +8,10 @@ Each workflow execution evaluates PR against one statement/requirement, defined 
 
 ```javascript
 import { evaluate } from './goal-alignment.js';
+import { makeLLMClient } from '../provider.js';
+
+// Client creation handled by provider.js
+const { client } = makeLLMClient({ model: 'gpt-5-2025-08-07' });
 
 const result = await evaluate({
   statement: "Deliver AI-powered advisory review to keep repo aligned",
@@ -16,18 +20,18 @@ const result = await evaluate({
   diff_summary: '3 files changed (+45 -12)'
 }, { 
   timeoutMs: 60000, 
-  modelConfig: { model: 'gpt-5-2025-08-07', environment: 'prod', provider: 'openai' }
+  client
 });
 
 // Returns: { score: 0.85, observations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
 ```
 
 ## Implementation Details
-- **Model**: Passed via modelConfig parameter from provider.js
+- **Client**: Pre-built ChatOpenAI client passed from provider.js (handles model + temperature policy)
 - **Schema**: Zod validation for structured output (score, observations, summary)
 - **Prompt**: Hardcoded template in goal-alignment.js
 - **Requirements**: OPENAI_API_KEY environment variable
-- **Agent Creation**: Dynamic per-request with selected model
+- **Agent Creation**: Uses pre-configured client (no model selection in workflow)
 
 ## Constraints
 - Only called by provider.js
