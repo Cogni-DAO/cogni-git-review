@@ -206,6 +206,7 @@ function makeGateDecision(providerResult, rule, startTime) {
       rule_id: rule.id,
       statement: rule['evaluation-statement']
     },
+    provenance: providerResult.provenance,
     duration_ms: Date.now() - startTime
   };
 }

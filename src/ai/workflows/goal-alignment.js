@@ -4,7 +4,6 @@
  */
 
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
@@ -15,30 +14,41 @@ const EvaluationSchema = z.object({
   summary: z.string().describe("Brief explanation of the evaluation")
 });
 
-// Create ReAct agent with structured output
-const agent = createReactAgent({
-  llm: new ChatOpenAI({ 
-    model: "gpt-4o-mini", 
-    temperature: 0 
-  }),
-  tools: [], // No tools - pure reasoning
-  responseFormat: {
-    prompt: "Evaluate if the <PR Information> aligns with the given <criteria>.",
-    schema: EvaluationSchema
-  }
-});
+/**
+ * Create ReAct agent with pre-built LLM client
+ * @param {ChatOpenAI} client - Pre-configured OpenAI client
+ * @returns {Object} Configured ReAct agent
+ */
+function createAgent(client) {
+  return createReactAgent({
+    llm: client,
+    tools: [], // No tools - pure reasoning
+    responseFormat: {
+      prompt: "Evaluate if the <PR Information> aligns with the given <criteria>.",
+      schema: EvaluationSchema
+    }
+  });
+}
 
 /**
  * Evaluate PR against statement using ReAct agent
  * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
+ * @param {Object} options - { timeoutMs, client }
  * @returns {Promise<Object>} { score, observations, summary }
  */
-export async function evaluate(input) {
+export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is missing or empty');
   }
 
+  if (!client) {
+    throw new Error('Pre-built LLM client is required');
+  }
+
   const startTime = Date.now();
+  
+  // Create agent with pre-built client
+  const agent = createAgent(client);
 
   const promptText = `You are an expert in analyzing code pull requests against a given set of criteria. Here is the current PR you are evaluating:
 

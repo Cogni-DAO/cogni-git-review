@@ -161,6 +161,11 @@ function renderGate(gate, status) {
     section += `- **Duration:** ${gate.duration_ms}ms\n`;
   }
   
+  // Model info from provenance
+  if (gate.provenance?.modelConfig?.provider && gate.provenance?.modelConfig?.model) {
+    section += `- **Model:** ${gate.provenance.modelConfig.provider} / ${gate.provenance.modelConfig.model}\n`;
+  }
+  
   // Neutral reason
   if (status === 'neutral' && gate.neutral_reason) {
     section += `- **Reason:** ${gate.neutral_reason}\n`;

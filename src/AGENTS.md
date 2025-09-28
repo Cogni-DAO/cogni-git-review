@@ -27,7 +27,7 @@ src/
   - `postPRCommentWithGuards()` - Comment with head SHA validation
 - **summary-adapter.js**: Check run summary formatting
   - `renderCheckSummary()` - Main check summary renderer
-  - `formatGateResults()` - Detailed per-gate markdown sections
+  - `formatGateResults()` - Detailed per-gate markdown sections with model info for AI rules
   - `formatRunSummaryJSON()` - Debug JSON output
 
 ### Processing Layers
