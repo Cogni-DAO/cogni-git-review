@@ -49,6 +49,7 @@ Individual gates return `GateResult`:
   violations: [{code, message, path?, meta?}],  // Non-AI gates
   observations: [string],                       // AI gates  
   stats: object,
+  provenance?: object,                          // AI gates only - model config + audit info
   duration_ms: number
 }
 ```

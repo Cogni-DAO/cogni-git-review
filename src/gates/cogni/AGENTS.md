@@ -81,6 +81,7 @@ The `ai-rule` gate type supports multiple instances:
 - Calls `src/ai/provider.js` for LangGraph evaluation
 - Decides pass/fail based on AI score vs rule threshold
 - Instance ID auto-derives from `rule_file` basename (without .yaml)
+- **Provenance**: Includes model config (provider, model, environment) for audit trails
 - **Recent Enhancement**: Added `gatherEvidence()` function for code-aware capabilities
   - When rules specify `x_capabilities: ['diff_summary', 'file_patches']`, provides actual file changes to AI
   - Uses GitHub API (`context.octokit.rest.pulls.listFiles`) to fetch file patches

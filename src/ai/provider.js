@@ -5,6 +5,7 @@
  */
 
 import { evaluate } from './workflows/goal-alignment.js';
+import { selectModel, buildContext } from './model-selector.js';
 
 /**
  * Single AI entrypoint router for all gate evaluations
@@ -22,17 +23,21 @@ export async function review(input, { timeoutMs = 60000 } = {}) {
   const startTime = Date.now();
   
   try {
-    // Forward to goal-alignment workflow
-    const result = await evaluate(input, { timeoutMs });
+    // Select model based on environment
+    const modelConfig = selectModel(buildContext());
+    console.log('🤖 AI Provider: ModelConfig:', modelConfig);
     
-    // Add provenance wrapper
+    // Forward to goal-alignment workflow with model config
+    const result = await evaluate(input, { timeoutMs, modelConfig });
+    
+    // Add provenance wrapper with resolved model info
     return {
       ...result,
       provenance: {
-        model: 'goal-alignment-workflow',
         runId: generateRunId(),
         durationMs: Date.now() - startTime,
-        providerVersion: '1.0.0'
+        providerVersion: '1.0.0',
+        modelConfig: modelConfig  // Include entire modelConfig object
       }
     };
     

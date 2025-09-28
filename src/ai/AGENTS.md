@@ -7,6 +7,7 @@
 ```
 src/ai/
 ├── provider.js           # Single entrypoint router - delegates to workflows with clear I/O
+├── model-selector.js     # Environment-based model selection
 ├── workflows/            # LangGraph workflows with clear I/O (make actual LLM calls)
 └── schemas/              # JSON Schema validation
 ```
@@ -24,9 +25,17 @@ const result = await provider.review({
 // Returns: { score: 0.85, observations: [], summary: "Brief assessment", provenance: {} }
 ```
 
+## Model Selection
+Models selected automatically by environment via `model-selector.js`:
+- **dev**: `gpt-4o-mini` (local development, no APP_ENV)
+- **preview**: `gpt-5-2025-08-07` (APP_ENV=preview)
+- **prod**: `gpt-5-2025-08-07` (APP_ENV=prod)
+
+Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
+
 ## Environment Configuration
+- `APP_ENV=preview|prod` - Environment detection (dev is default)
 - `AI_TIMEOUT_MS=180000` - Per-call timeout
-- `AI_MODEL=gpt-4o-mini` - Model selection
 - `AI_NEUTRAL_ON_ERROR=true` - Error handling policy
 - `OPENAI_API_KEY` - Provider credentials
 

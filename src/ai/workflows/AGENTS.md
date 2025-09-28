@@ -14,16 +14,20 @@ const result = await evaluate({
   pr_title: 'Add LangGraph integration', 
   pr_body: 'This PR implements...',
   diff_summary: '3 files changed (+45 -12)'
+}, { 
+  timeoutMs: 60000, 
+  modelConfig: { model: 'gpt-5-2025-08-07', environment: 'prod', provider: 'openai' }
 });
 
 // Returns: { score: 0.85, observations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
 ```
 
 ## Implementation Details
-- **Model**: gpt-4o-mini with temperature=0 for determinism
+- **Model**: Passed via modelConfig parameter from provider.js
 - **Schema**: Zod validation for structured output (score, observations, summary)
 - **Prompt**: Hardcoded template in goal-alignment.js
 - **Requirements**: OPENAI_API_KEY environment variable
+- **Agent Creation**: Dynamic per-request with selected model
 
 ## Constraints
 - Only called by provider.js
