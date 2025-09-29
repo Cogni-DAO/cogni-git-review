@@ -154,7 +154,15 @@ export async function run(ctx, gateConfig) {
       diff_summary: diff_summary
     };
     
-    const providerResult = await aiProvider.review(providerInput, {
+    // Step 6: Get workflow ID from rule configuration
+    const workflowId = rule.workflow_id || 'single-statement-evaluation';
+    // Default fallback
+    // TODO: remove this default fallback once ai rule specs have the workflow_id configured. update to a error/fail/neutral response
+    
+    const providerResult = await aiProvider.evaluateWithWorkflow({
+      workflowId,
+      workflowInput: providerInput
+    }, {
       timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
     });
     

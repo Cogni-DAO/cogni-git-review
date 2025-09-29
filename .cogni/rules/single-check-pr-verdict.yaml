@@ -1,6 +1,7 @@
 id: single-check-pr-verdict
-schema_version: "0.1"
+schema_version: "0.2"
 blocking: true
+workflow_id: single-statement-evaluation
 
 evaluation-statement: "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates."
 
