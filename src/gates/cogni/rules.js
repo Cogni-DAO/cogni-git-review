@@ -155,7 +155,7 @@ export async function run(ctx, gateConfig) {
     };
     
     // Step 6: Get workflow ID from rule configuration
-    const workflowId = rule.workflow_id;
+    const workflowId = rule.workflow_id || 'single-statement-evaluation';
     // Default fallback
     // TODO: remove this default fallback once ai rule specs have the workflow_id configured. update to a error/fail/neutral response
     
