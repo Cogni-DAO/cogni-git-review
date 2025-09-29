@@ -104,3 +104,38 @@ export const SINGLE_CHECK_PR_VERDICT_RULE = {
     threshold: 0.9
   }
 };
+
+// Matrix-format rule fixtures for new implementation
+export const MATRIX_RULE_BASIC = {
+  id: 'matrix-test-rule',
+  schema_version: '0.2',
+  blocking: true,
+  workflow_id: 'single-statement-evaluation',
+  'evaluation-statement': 'Test matrix evaluation',
+  variables: ['pr_title', 'pr_body', 'diff_summary'],
+  success_criteria: {
+    neutral_on_missing_metrics: true,
+    require: [
+      { metric: 'score', gte: 0.8 }
+    ]
+  }
+};
+
+export const MATRIX_RULE_MULTI_METRIC = {
+  id: 'matrix-multi-test',
+  schema_version: '0.2',
+  blocking: true,
+  workflow_id: 'repo-goal-alignment',
+  'evaluation-statement': 'Test multi-metric matrix evaluation',
+  variables: ['pr_title', 'pr_body', 'diff_summary', 'goals', 'non_goals'],
+  success_criteria: {
+    neutral_on_missing_metrics: false,
+    require: [
+      { metric: 'goal_alignment', gte: 0.7 },
+      { metric: 'non_goal_conflict', lte: 0.3 }
+    ],
+    any_of: [
+      { metric: 'user_value', gte: 0.6 }
+    ]
+  }
+};

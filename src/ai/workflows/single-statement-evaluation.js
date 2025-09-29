@@ -7,9 +7,11 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
-// Schema for structured output
+// Schema for structured output - standard_ai_rule_eval format
 const EvaluationSchema = z.object({
-  score: z.number().min(0).max(1).describe("Alignment score between 0 and 1"),
+  metrics: z.object({
+    score: z.number().min(0).max(1).describe("Alignment score between 0 and 1")
+  }).describe("Metrics object with score"),
   observations: z.array(z.string()).describe("List of specific observations or issues"),
   summary: z.string().describe("Brief explanation of the evaluation")
 });
@@ -34,7 +36,7 @@ function createAgent(client) {
  * Evaluate PR against statement using ReAct agent
  * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
  * @param {Object} options - { timeoutMs, client }
- * @returns {Promise<Object>} { score, observations, summary }
+ * @returns {Promise<Object>} standard_ai_rule_eval: { metrics: { score }, observations, summary }
  */
 export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   if (!process.env.OPENAI_API_KEY) {
@@ -46,7 +48,7 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   }
 
   const startTime = Date.now();
-  
+
   // Create agent with pre-built client
   const agent = createAgent(client);
 
@@ -64,18 +66,20 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
 Now, evaluate this PR against the following criteria:
 <criteria> ${input.statement} </criteria>
 
-Provide a score from 0.0-1.0, with 1.0 being the best score. 
-Provide a short list (1-5) of concise observations that justify the score.`;
+Provide your response in the following format:
+- metrics: { score: number from 0.0-1.0, with 1.0 being the best score }
+- observations: short list (1-5) of concise observations that justify the score
+- summary: brief explanation of the evaluation`;
 
 
   const message = new HumanMessage(promptText);
-  
+
   console.log('🤖 LangGraph: Prompt input:', promptText);
   console.log('🤖 LangGraph: Invoking agent...');
   const result = await agent.invoke({
     messages: [message]
   });
-  
+
   console.log(`🤖 LangGraph: Completed in ${Date.now() - startTime}ms`, result.structuredResponse);
   return result.structuredResponse;
 }
