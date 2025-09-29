@@ -33,8 +33,21 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
       // Show all violations for this gate (limit to 5 to avoid spam)
       const violations = gate.violations || [];
       if (violations.length === 0) {
-        // Check if this is an AI gate with score/threshold data
-        if (gate.stats?.score != null && gate.stats?.threshold != null) {
+        // Check if this is an AI gate with structured data
+        if (gate.providerResult?.metrics && gate.rule?.success_criteria?.require) {
+          // Display structured metrics vs criteria
+          const criteria = gate.rule.success_criteria.require;
+          for (const criterion of criteria) {
+            const metricName = criterion.metric;
+            const actualValue = gate.providerResult.metrics[metricName];
+            if (actualValue !== undefined) {
+              const operator = Object.keys(criterion).find(key => key !== 'metric');
+              const threshold = criterion[operator];
+              body += `  - ${metricName}: ${actualValue} / ${operator} / ${threshold}\n`;
+            }
+          }
+        } else if (gate.stats?.score != null && gate.stats?.threshold != null) {
+          // Legacy format fallback for traditional gates
           body += `  - Score: ${gate.stats.score}/${gate.stats.threshold}\n`;
         } else {
           body += `  - Failed\n`;

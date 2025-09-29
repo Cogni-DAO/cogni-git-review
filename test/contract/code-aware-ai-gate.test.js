@@ -146,7 +146,7 @@ describe('Code-Aware AI Gate Integration Tests', () => {
       id: 'legacy-rule',
       'schema_version': '0.1',
       'evaluation-statement': 'Basic evaluation',
-      success_criteria: { metric: 'score', threshold: 0.5 }
+      success_criteria: { require: [{ metric: 'score', gte: 0.5 }] }
       // No x_capabilities - should use basic diff summary
     };
 

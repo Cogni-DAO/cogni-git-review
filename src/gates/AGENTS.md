@@ -48,13 +48,19 @@ Individual gates return `GateResult`:
   neutral_reason?: "oversize_diff" | "internal_error" | "unimplemented_gate" | ...,
   violations: [{code, message, path?, meta?}],  // Non-AI gates
   observations: [string],                       // AI gates  
-  stats: object,
+  stats?: object,                               // Non-AI gates only
   provenance?: object,                          // AI gates only - model config + audit info
+  // AI rules structured format (Goal Alignment v2):
+  providerResult?: {metrics: {score: number}},  // AI gates only
+  rule?: {success_criteria: {require: [...]}},  // AI gates only
+  res?: object,                                 // AI gates only - evaluation result
+  passed?: [string],                            // AI gates only
+  failed?: [string],                            // AI gates only
   duration_ms: number
 }
 ```
 
-**Result Normalization**: The launcher preserves both `violations` (non-AI gates) and `observations` (AI gates) fields during result processing.
+**Result Normalization**: The launcher preserves structured data fields (`providerResult`, `rule`, `res`) for AI gates and `stats` for traditional gates during result processing.
 
 ## Registry-Based Discovery
 Gates are automatically discovered by `type` from filesystem:

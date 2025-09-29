@@ -6,7 +6,7 @@
 
 // Valid rule fixture with threshold)
 export const VALID_RULE_WITH_THRESHOLD = {
-  id: 'dont-rebuild-oss',
+  id: 'goal-alignment',
   schema_version: '0.2',
   blocking: true,
   workflow_id: 'single-statement-evaluation',
@@ -14,8 +14,9 @@ export const VALID_RULE_WITH_THRESHOLD = {
   'rule-schema-id': 'statement-alignment-evaluation',
   variables: ['pr_title', 'pr_body', 'diff_summary'],
   success_criteria: {
-    metric: 'score',
-    threshold: 0.85
+    require: [
+      { metric: 'score', gte: 0.85 }
+    ]
   }
 };
 
@@ -53,8 +54,9 @@ export const RULE_LOW_THRESHOLD = {
   'rule-schema-id': 'statement-alignment-evaluation',
   variables: ['pr_title', 'pr_body', 'diff_summary'],
   success_criteria: {
-    metric: 'score',
-    threshold: 0.3  // Low threshold for testing pass conditions
+    require: [
+      { metric: 'score', gte: 0.3 }  // Low threshold for testing pass conditions
+    ]
   }
 };
 
@@ -68,8 +70,9 @@ export const RULE_HIGH_THRESHOLD = {
   'rule-schema-id': 'statement-alignment-evaluation',
   variables: ['pr_title', 'pr_body', 'diff_summary'],
   success_criteria: {
-    metric: 'score',
-    threshold: 0.95  // High threshold for testing fail conditions
+    require: [
+      { metric: 'score', gte: 0.95 }  // High threshold for testing fail conditions
+    ]
   }
 };
 
@@ -83,8 +86,9 @@ export const DONT_REBUILD_OSS_RULE = {
   'rule-schema-id': 'statement-alignment-evaluation',
   variables: ['pr_title', 'pr_body', 'diff_summary'],
   success_criteria: {
-    metric: 'score',
-    threshold: 0.8
+    require: [
+      { metric: 'score', gte: 0.8 }
+    ]
   }
 };
 
@@ -97,8 +101,9 @@ export const SINGLE_CHECK_PR_VERDICT_RULE = {
   'evaluation-statement': "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates.",
   variables: ['pr_title', 'pr_body', 'diff_summary'],
   success_criteria: {
-    metric: 'score',
-    threshold: 0.9
+    require: [
+      { metric: 'score', gte: 0.9 }
+    ]
   }
 };
 
@@ -136,3 +141,65 @@ export const MATRIX_RULE_MULTI_METRIC = {
     ]
   }
 };
+
+// Mock AI Gate Result Fixtures for Testing
+// These can be reused across tests that need structured AI gate results
+
+/**
+ * Create a mock AI gate result with structured format
+ * @param {Object} options - Configuration options
+ * @param {string} options.id - Gate ID (default: 'dont-rebuild-oss')
+ * @param {string} options.status - Gate status (default: 'pass')
+ * @param {number} options.score - Score value (default: 0.85)
+ * @param {number} options.threshold - Threshold value (default: 0.8)
+ * @param {string} options.model - Model name (default: 'gpt-4o-mini')
+ * @param {string} options.provider - Provider name (default: 'openai')
+ * @returns {Object} Mock gate result with structured format
+ */
+export function createMockAIGateResult({
+  id = 'dont-rebuild-oss',
+  status = 'pass',
+  score = 0.85,
+  threshold = 0.8,
+  model = 'gpt-4o-mini',
+  provider = 'openai',
+  observations = ['Code looks good']
+} = {}) {
+  return {
+    id,
+    status,
+    provenance: {
+      runId: 'ai-12345-test',
+      durationMs: 1500,
+      providerVersion: '1.0.0',
+      modelConfig: {
+        provider,
+        model,
+        apiVersion: '2024-02-15-preview'
+      }
+    },
+    providerResult: { 
+      metrics: { score } 
+    },
+    rule: { 
+      success_criteria: { 
+        require: [{ metric: 'score', gte: threshold }] 
+      } 
+    },
+    observations,
+    violations: []
+  };
+}
+
+// Pre-configured mock results for common test scenarios
+export const MOCK_AI_GATE_PASS = createMockAIGateResult();
+export const MOCK_AI_GATE_FAIL = createMockAIGateResult({
+  status: 'fail',
+  score: 0.6,
+  threshold: 0.7,
+  observations: ['Issues found']
+});
+export const MOCK_AI_GATE_DIFFERENT_MODEL = createMockAIGateResult({
+  model: 'gpt-5-2025-08-07',
+  observations: ['Analysis complete']
+});

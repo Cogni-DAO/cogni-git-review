@@ -127,7 +127,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `installation-idempotency.test.js` - Installation retry scenarios
 - `template-customization.test.js` - Template replacement validation (repo-spec + CODEOWNERS customization)
 - `agents-sync-integration.test.js` - AGENTS.md synchronization gate integration tests
-- `model-provenance-display.test.js` - Model provenance display in GitHub Check summaries
+- `model-provenance-display.test.js` - Model provenance display in GitHub Check summaries (uses structured AI gate mocks)
 
 ## Known Issues
 
