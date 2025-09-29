@@ -18,7 +18,7 @@ src/
 ### Input Layer
 - **spec-loader.js**: Repository `.cogni/*` file loading
   - `loadRepoSpec()` - Main repository specification loading
-  - `loadSingleRule()` - AI rule file loading for gates
+  - `loadSingleRule()` - AI rule file loading with schema validation for gates
   - `clearSpecCache()`, `getSpecCacheStats()` - Cache management
 
 ### Output Layers  

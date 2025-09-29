@@ -1,29 +1,51 @@
 # AGENTS.md - AI Schemas Directory
 
 ## Purpose
-JSON schema definitions for AI evaluation rules and outputs. MVP implementation providing basic validation for the AI rule gate system.
+AJV-based JSON schema validation for AI evaluation rules and provider outputs. Provides early validation in the spec-loader pipeline to prevent internal property conflicts and ensure standardized data formats.
 
 ## Files
 
-### rule-spec.schema.json
-**JSON Schema for AI Rule Specifications (MVP)**
-- Validates `.cogni/rules/*.yaml` files used by the `ai-rule` gate
-- Required fields: `id`, `schema_version`, `prompt`, `success_criteria`
-- Recently added `patternProperties: {"^x_": {}}` to allow experimental vendor-prefixed fields
-- Currently supports `x_capabilities` and `x_budgets` for code-aware evidence gathering
-- Added `evaluation-statement` field and `statement` template variable
-- Supports `x_capabilities: ['diff_summary', 'file_patches']` for enhanced evidence
-- Budget controls: `x_budgets.{max_files, max_patch_bytes_per_file, max_patches}`
+### validators.js
+**AJV-based Schema Validation Module**
+- Pre-compiled schema validators using AJV with `allErrors: true, strict: true`
+- `assertRuleSchema(data)` - Validates raw rule YAML before internal property injection
+- `assertProviderResult(data)` - Validates AI provider response format
+- `parseYAML(yamlString)` - YAML parsing utility
+- Throws detailed validation errors with `error.details` containing AJV error array
+- Called early in `spec-loader.js` to prevent `rule_key`/`_metadata` property conflicts
 
-### goal-evaluation-output.json
+### rule-spec.schema.json
+**JSON Schema for AI Rule Specifications v0.2**
+- Validates `.cogni/rules/*.yaml` files used by the `ai-rule` gate
+- **Required fields**: `id`, `schema_version`, `workflow_id`, `success_criteria`
+- **Schema version**: `"0.2"` (updated from `"0.1"`)
+- **Workflow routing**: `workflow_id` field specifies AI workflow (e.g., `"single-statement-evaluation"`)
+- **Matrix success criteria**: `require` and `any_of` arrays with metric comparisons (`gte`, `gt`, `lte`, `lt`, `eq`)
+- **Evaluation statement**: `evaluation-statement` field passed as `evaluation_statement` parameter to workflows
+- **Vendor extensions**: `patternProperties: {"^x_": {}}` allows experimental fields like `x_capabilities`, `x_budgets`
+- **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` for enhanced evidence gathering
+- **Budget controls**: `x_budgets: {max_files, max_patch_bytes_per_file, max_patches}` for resource limits
+
+### provider-result.schema.json
 **JSON Schema for AI Provider Response Format**
-- Validates responses from AI providers evaluating pull requests
-- Ensures consistent output format with score, observations, and summary fields
+- Validates responses from `aiProvider.evaluateWithWorkflow()` calls
+- **Required fields**: `metrics`, `observations`, `summary`, `provenance`
+- **Metrics format**: Object with required `score` (0-1) plus additional metrics for matrix evaluation
+- **Observations format**: Array of string insights from AI evaluation
+- **Summary format**: Brief string explanation of the evaluation
+- **Provenance format**: Execution metadata including `runId`, `durationMs`, `workflowId`, `modelConfig`
+
+## Validation Flow
+1. **Early validation** in `spec-loader.js loadSingleRule()` on raw YAML data
+2. **Schema validation** happens before `rule_key` and `_metadata` properties added
+3. **Error handling** returns `RULE_SCHEMA_INVALID` with detailed AJV error arrays
+4. **Provider validation** in `rules.js` after AI workflow execution with structured error logging
 
 ## Current State
-This is MVP schema validation. The vendor-prefixed extension approach is a short-term solution for experimenting with code-aware capabilities while the overall AI rule system is in development.
+WIP implementation supporting matrix-based success criteria evaluation. Note: Gate result standardization in progress for summary/comment adapters.
 
 ## Related Components
-- **AI Rules Gate** (`src/gates/cogni/rules.js`): Consumes rule-spec schema
-- **Rule Files** (`.cogni/rules/*.yaml`): Validated against rule-spec schema  
-- **AI Providers**: Return data validated against goal-evaluation-output schema
+- **Spec Loader** (`src/spec-loader.js`): Calls `assertRuleSchema()` during rule loading
+- **AI Rules Gate** (`src/gates/cogni/rules.js`): Calls `assertProviderResult()` after AI evaluation
+- **Rule Files** (`.cogni/rules/*.yaml`): Must conform to v0.2 rule-spec schema
+- **AI Workflows** (`src/ai/workflows/`): Return data validated against provider-result schema

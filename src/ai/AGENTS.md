@@ -19,14 +19,14 @@ Generic workflow routing interface:
 const result = await provider.evaluateWithWorkflow({
   workflowId: 'single-statement-evaluation',
   workflowInput: {
-    statement: "Deliver AI-powered advisory review to keep repo aligned",
+    evaluation_statement: "Deliver AI-powered advisory review to keep repo aligned",
     pr_title: 'Add LangGraph integration',
     pr_body: 'This PR implements...', 
     diff_summary: '3 files changed (+45 -12)'
   }
 });
 
-// Returns: { score: 0.85, observations: [], summary: "Brief assessment", provenance: {} }
+// Returns: { metrics: { score: 0.85 }, observations: [], summary: "Brief assessment", provenance: {} }
 ```
 
 Available workflows configured in `workflows/registry.js`:

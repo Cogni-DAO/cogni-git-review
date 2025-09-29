@@ -79,10 +79,10 @@ The `governance-policy` gate validates CI/CD workflow compliance:
 The `ai-rule` gate type supports multiple rule types and workflows with standardized evaluation:
 - Each instance loads one rule from `.cogni/rules/*.yaml` specifying `workflow_id`
 - Supports different workflows: `single-statement-evaluation`, `repo-goal-alignment`, etc.
-- Calls `src/ai/provider.evaluateWithWorkflow()` which returns standard_ai_rule_eval format
+- Calls `src/ai/provider.evaluateWithWorkflow()` which returns provider-result schema format
 - Decides pass/fail based on standardized `success_criteria` evaluation (not single threshold)
 - Instance ID auto-derives from `rule_file` basename (without .yaml)
-- **Runtime Validation**: Guards ensure rule schema and provider standard_ai_rule_eval format conformance
+- **Validation**: Rule schema validation in `spec-loader.js`, provider result validation in `rules.js`
 - **Provenance**: Includes model config (provider, model, environment) for audit trails
 - **Recent Enhancement**: Added `gatherEvidence()` function for code-aware capabilities
   - When rules specify `x_capabilities: ['diff_summary', 'file_patches']`, provides actual file changes to AI
