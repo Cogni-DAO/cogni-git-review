@@ -7,7 +7,7 @@
 
 import { loadSingleRule } from '../../spec-loader.js';
 import * as aiProvider from '../../ai/provider.js';
-import { assertRuleSchema, assertProviderResultShape } from '../../schemas/standard-ai-rule-eval-format.js';
+import { assertProviderResult } from '../../ai/schemas/validators.js';
 
 export const type = 'ai-rule';
 
@@ -113,12 +113,8 @@ export async function run(ctx, gateConfig) {
 
     const rule = ruleResult.rule;
 
-    // Step 3: Runtime validation - Ensure rule follows standard format
-    try {
-      assertRuleSchema(rule);
-    } catch (error) {
-      return createNeutralResult('invalid_rule_schema', error.message, startTime);
-    }
+    // Step 3: Validation
+    // No-op:Rule schema validation now happens in spec-loader.js before internal properties are added
 
     // Step 4: Build PR context with enhanced diff summary
     const pr = ctx.pr;
@@ -165,10 +161,14 @@ export async function run(ctx, gateConfig) {
       timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
     });
 
-    // Runtime validation: Ensure provider result follows standard_ai_rule_eval format
+    // Runtime validation: Ensure provider result follows standard format
     try {
-      assertProviderResultShape(providerResult);
+      assertProviderResult(providerResult);
     } catch (error) {
+      console.error('🚨 Provider result validation failed:', error.message);
+      if (error.details) {
+        console.error('📋 Validation details:', JSON.stringify(error.details, null, 2));
+      }
       return createNeutralResult('invalid_provider_result', `Provider result validation failed: ${error.message}`, startTime);
     }
 
@@ -199,6 +199,12 @@ export async function run(ctx, gateConfig) {
 export function evalCriteria(metrics, criteria) {
   const req = criteria.require || [];
   const any = criteria.any_of || [];
+  
+  // Guard: Prevent silent PASS when no criteria are provided
+  if (req.length === 0 && any.length === 0) {
+    throw new Error('Empty success criteria: must specify at least one require or any_of criterion');
+  }
+  
   const missNeutral = criteria.neutral_on_missing_metrics === true;
   const val = (k) => (k in metrics ? metrics[k] : null);
   const cmp = (v, c) => (
@@ -231,24 +237,21 @@ export function evalCriteria(metrics, criteria) {
 function makeGateDecision(providerResult, rule, startTime) {
   const metrics = providerResult.metrics || {};
   const sc = rule.success_criteria;
-  if (!sc) return createNeutralResult('missing_success_criteria', 'No success_criteria specified', startTime);
+  if (!sc) return createNeutralResult('missing_success_criteria', 'No success_criteria specified', startTime, providerResult, rule);
 
   const res = evalCriteria(metrics, sc);
   if (res.status === 'neutral') {
-    return createNeutralResult('missing_metrics', res.failed.join('; '), startTime);
+    return createNeutralResult('missing_metrics', res.failed.join('; '), startTime, providerResult, rule);
   }
 
   return {
     status: res.status,
-    observations: providerResult.observations || [],
-    stats: {
-      rule_id: rule.id,
-      statement: rule['evaluation-statement'],
-      metrics,
-      passed: res.passed,
-      failed: res.failed
-    },
-    provenance: providerResult.provenance,
+    passed: res.passed,
+    failed: res.failed,
+    observations: providerResult.observations || [],  // TODO: Duplicates providerResult.observations - standardize output formats
+    res,
+    providerResult,
+    rule,
     duration_ms: Date.now() - startTime
   };
 }
@@ -256,12 +259,16 @@ function makeGateDecision(providerResult, rule, startTime) {
 /**
  * Create neutral result for error conditions
  */
-function createNeutralResult(reason, message, startTime) {
+function createNeutralResult(reason, message, startTime, providerResult = null, rule = null) {
   return {
     status: 'neutral',
     neutral_reason: reason,
-    observations: [],
-    stats: { error: message },
+    error: message,
+    passed: [],
+    failed: [],
+    observations: providerResult?.observations || [], // for backward compatibility
+    providerResult,
+    rule,
     duration_ms: Date.now() - startTime
   };
 }
@@ -278,4 +285,3 @@ function getErrorMessage(error) {
   };
   return messages[error.code] || `Unknown error: ${error.code}`;
 }
-

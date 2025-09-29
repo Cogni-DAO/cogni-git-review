@@ -1,3 +1,5 @@
+import { assertRuleSchema } from './ai/schemas/validators.js';
+
 /**
  * Load and parse repository spec using Probot's built-in config loader
  * @param {import('probot').Context} context - Probot context with repository info
@@ -9,6 +11,8 @@ export async function loadRepoSpec(context) {
   // Handle both null and empty object {} as missing spec
   if (!config || Object.keys(config).length === 0) return { ok: false, error: { code: 'SPEC_MISSING' } };
   if (!config.intent || !config.gates) return { ok: false, error: { code: 'SPEC_INVALID' } };
+  
+  // TODO: Add repo-spec schema validation similar to rule validation above
   
   return { ok: true, spec: config };
 }
@@ -56,6 +60,17 @@ export async function loadSingleRule(context, { rulesDir = '.cogni/rules', ruleF
     // Minimal validation - just check for required fields
     if (!config.id || !config.success_criteria) {
       return { ok: false, error: { code: 'RULE_INVALID' } };
+    }
+    
+    // Early schema validation on raw rule before adding internal properties
+    try {
+      assertRuleSchema(config);
+    } catch (error) {
+      console.error('🚨 Rule schema validation failed:', error.message);
+      if (error.details) {
+        console.error('📋 Validation details:', JSON.stringify(error.details, null, 2));
+      }
+      return { ok: false, error: { code: 'RULE_SCHEMA_INVALID', message: error.message, details: error.details } };
     }
     
     // Generate rule key and apply defaults

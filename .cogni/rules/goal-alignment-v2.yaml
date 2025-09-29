@@ -1,0 +1,12 @@
+id: goal-alignment-v2
+schema_version: "0.2"
+blocking: true
+workflow_id: repo-goal-alignment
+
+evaluation-statement: Aligns with repository goals and avoids conflicting non-goals.
+
+variables: [pr_title, pr_body, diff_summary, goals, non_goals]
+
+success_criteria:
+  metric: rule_verdict
+  threshold: pass

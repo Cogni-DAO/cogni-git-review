@@ -37,7 +37,7 @@ function createTestPayload(overrides = {}) {
 
 
 describe('Rules Gate Neutral Cases Unit Tests', () => {
-  test('missing threshold in rule → neutral with missing_threshold reason', async () => {
+  test('empty success_criteria in rule → neutral with rule_schema_invalid reason', async () => {
     const payload = createTestPayload();
     
     const mockContext = {
@@ -58,8 +58,8 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
     const result = await run(mockContext, mockConfig);
 
     assert.strictEqual(result.status, 'neutral', 'Should return neutral status');
-    assert.strictEqual(result.neutral_reason, 'missing_threshold', 'Should have missing_threshold reason');
-    assert.strictEqual(result.stats.error, 'No threshold specified in rule success criteria', 'Should have correct error message');
+    assert.strictEqual(result.neutral_reason, 'rule_schema_invalid', 'Should have rule_schema_invalid reason');
+    assert(result.error && result.error.includes('Rule schema invalid'), 'Should have schema validation error message');
     assert.deepStrictEqual(result.observations, [], 'Should have empty observations');
     assert(typeof result.duration_ms === 'number', 'Should include duration');
   });

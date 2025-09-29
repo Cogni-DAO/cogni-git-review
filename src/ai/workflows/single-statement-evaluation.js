@@ -26,7 +26,7 @@ function createAgent(client) {
     llm: client,
     tools: [], // No tools - pure reasoning
     responseFormat: {
-      prompt: "Evaluate if the <PR Information> aligns with the given <criteria>.",
+      prompt: "Evaluate if the <PR Information> aligns with the given <evaluation_statement>.",
       schema: EvaluationSchema
     }
   });
@@ -34,7 +34,7 @@ function createAgent(client) {
 
 /**
  * Evaluate PR against statement using ReAct agent
- * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
+ * @param {Object} input - { evaluation_statement, pr_title, pr_body, diff_summary }
  * @param {Object} options - { timeoutMs, client }
  * @returns {Promise<Object>} standard_ai_rule_eval: { metrics: { score }, observations, summary }
  */
@@ -64,7 +64,7 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
 </PR Information>
 
 Now, evaluate this PR against the following criteria:
-<criteria> ${input.statement} </criteria>
+<evaluation_statement> ${input.evaluation_statement} </evaluation_statement>
 
 Provide your response in the following format:
 - metrics: { score: number from 0.0-1.0, with 1.0 being the best score }

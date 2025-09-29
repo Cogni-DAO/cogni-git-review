@@ -19,18 +19,15 @@ export const VALID_RULE_WITH_THRESHOLD = {
   }
 };
 
-// Test rule fixture missing threshold field
+// Test rule fixture with empty success_criteria (should fail schema validation)
 export const RULE_MISSING_THRESHOLD = {
   id: 'dont-rebuild-oss',
   schema_version: '0.2',
   blocking: true,
   workflow_id: 'single-statement-evaluation',
   'evaluation-statement': 'Does NOT Re-implement mature OSS tools or libraries.',
-  'rule-schema-id': 'statement-alignment-evaluation',
-  variables: ['pr_title', 'pr_body', 'diff_summary'],
   success_criteria: {
-    metric: 'score'
-    // Missing threshold field
+    // Empty criteria - violates anyOf requirement for require/any_of
   }
 };
 
