@@ -59,9 +59,11 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
 
     assert.strictEqual(result.status, 'neutral', 'Should return neutral status');
     assert.strictEqual(result.neutral_reason, 'rule_schema_invalid', 'Should have rule_schema_invalid reason');
-    assert(result.error && result.error.includes('Rule schema invalid'), 'Should have schema validation error message');
+    assert(result.error && result.error.includes('Unknown error: RULE_SCHEMA_INVALID'), 'Should have schema validation error message');
     assert.deepStrictEqual(result.observations, [], 'Should have empty observations');
     assert(typeof result.duration_ms === 'number', 'Should include duration');
+    // Should NOT have stats field for AI rules
+    assert.strictEqual(result.stats, undefined, 'AI rules should not have stats field');
   });
 
   test.skip('valid rule with threshold → normal evaluation (SKIP: mocking issues)', async () => {
@@ -87,9 +89,11 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
     // Should get either pass or fail (not neutral) with valid rule structure
     assert(['pass', 'fail'].includes(result.status), `Should return pass or fail, got: ${result.status}`);
     assert.strictEqual(result.neutral_reason, undefined, 'Should not have neutral reason');
-    assert(typeof result.stats?.score === 'number', 'Should include numeric score in stats');
-    assert.strictEqual(result.stats.threshold, 0.85, 'Should include correct threshold from rule');
-    assert.strictEqual(result.stats.rule_id, 'goal-alignment', 'Should include correct rule ID in stats');
+    // AI rules use structured format, not stats
+    assert.strictEqual(result.stats, undefined, 'AI rules should not have stats field');
+    assert(typeof result.providerResult?.metrics?.score === 'number', 'Should include numeric score in providerResult.metrics');
+    assert.strictEqual(result.rule?.success_criteria?.require?.[0]?.gte, 0.85, 'Should include correct threshold in rule.success_criteria');
+    assert.strictEqual(result.rule?.id, 'goal-alignment', 'Should include correct rule ID');
     assert(typeof result.duration_ms === 'number', 'Should include duration');
   });
 

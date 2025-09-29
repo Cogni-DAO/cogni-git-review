@@ -1,48 +1,80 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { assertRuleSchema, assertProviderResultShape } from '../../src/schemas/standard-ai-rule-eval-format.js';
-import { VALID_RULE_WITH_THRESHOLD, MATRIX_RULE_BASIC, RULE_MISSING_SUCCESS_CRITERIA } from '../fixtures/ai-rules.js';
+import { assertRuleSchema, assertProviderResult } from '../../src/ai/schemas/validators.js';
+// import { VALID_RULE_WITH_THRESHOLD, MATRIX_RULE_BASIC, RULE_MISSING_SUCCESS_CRITERIA } from '../fixtures/ai-rules.js'; // TODO: switch back to fixtures
 
 test('assertRuleSchema: matrix format rule passes', () => {
-  assert.doesNotThrow(() => assertRuleSchema(MATRIX_RULE_BASIC));
+  const validRule = {
+    id: 'matrix-test-rule',
+    schema_version: '0.2',
+    workflow_id: 'single-statement-evaluation',
+    success_criteria: {
+      neutral_on_missing_metrics: true,
+      require: [
+        { metric: 'score', gte: 0.8 }
+      ]
+    }
+  };
+  assert.doesNotThrow(() => assertRuleSchema(validRule));
 });
 
 test('assertRuleSchema: legacy threshold format fails', () => {
+  const legacyRule = {
+    id: 'legacy-test',
+    schema_version: '0.2',
+    workflow_id: 'single-statement-evaluation',
+    success_criteria: {
+      metric: 'score',
+      threshold: 0.8
+    }
+  };
   assert.throws(
-    () => assertRuleSchema(VALID_RULE_WITH_THRESHOLD),
-    (error) => error.message.includes('uses legacy format')
+    () => assertRuleSchema(legacyRule),
+    (error) => error.message.includes('Rule schema invalid')
   );
 });
 
 test('assertRuleSchema: missing success_criteria fails', () => {
+  const ruleWithoutCriteria = {
+    id: 'no-criteria-test',
+    schema_version: '0.2',
+    workflow_id: 'single-statement-evaluation'
+    // missing success_criteria
+  };
   assert.throws(
-    () => assertRuleSchema(RULE_MISSING_SUCCESS_CRITERIA),
-    (error) => error.message.includes('missing success_criteria')
+    () => assertRuleSchema(ruleWithoutCriteria),
+    (error) => error.message.includes('Rule schema invalid')
   );
 });
 
-test('assertProviderResultShape: valid standard_ai_rule_eval passes', () => {
+test('assertProviderResult: valid standard_ai_rule_eval passes', () => {
   const validResult = {
     metrics: { score: 0.85 },
     observations: ['Good alignment'],
-    summary: 'Test passed',
-    provenance: { runId: 'test-123' }
+    summary: 'Test passed successfully with good alignment',
+    provenance: { 
+      runId: 'test-123',
+      durationMs: 1500,
+      providerVersion: '1.0.0',
+      workflowId: 'single-statement-evaluation',
+      modelConfig: { provider: 'test', model: 'test-model' }
+    }
   };
-  assert.doesNotThrow(() => assertProviderResultShape(validResult));
+  assert.doesNotThrow(() => assertProviderResult(validResult));
 });
 
-test('assertProviderResultShape: missing metrics fails', () => {
+test('assertProviderResult: missing metrics fails', () => {
   const invalidResult = { observations: [] };
   assert.throws(
-    () => assertProviderResultShape(invalidResult),
-    (error) => error.message.includes('missing required "metrics" object')
+    () => assertProviderResult(invalidResult),
+    (error) => error.message.includes('ProviderResult schema invalid')
   );
 });
 
-test('assertProviderResultShape: missing observations fails', () => {
+test('assertProviderResult: missing observations fails', () => {
   const invalidResult = { metrics: { score: 0.8 } };
   assert.throws(
-    () => assertProviderResultShape(invalidResult),
-    (error) => error.message.includes('missing required "observations" array')
+    () => assertProviderResult(invalidResult),
+    (error) => error.message.includes('ProviderResult schema invalid')
   );
 });
