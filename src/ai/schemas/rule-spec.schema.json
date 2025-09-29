@@ -38,6 +38,16 @@
       "minLength": 10,
       "description": "Statement describing what to evaluate in the PR"
     },
+    "evaluation-statement-1": {
+      "type": "string",
+      "minLength": 10,
+      "description": "First evaluation statement for multi-goal evaluation"
+    },
+    "evaluation-statement-2": {
+      "type": "string", 
+      "minLength": 10,
+      "description": "Second evaluation statement for multi-goal evaluation"
+    },
     "success_criteria": {
       "type": "object",
       "description": "Success criteria using require/any_of format",

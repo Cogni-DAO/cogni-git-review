@@ -153,6 +153,14 @@ export async function run(ctx, gateConfig) {
     if (rule['evaluation-statement']) {
       providerInput.evaluation_statement = rule['evaluation-statement'];
     }
+    
+    // Add dual evaluation statements for goal-alignment-v2 (consistent snake_case)
+    if (rule['evaluation-statement-1']) {
+      providerInput.evaluation_statement_1 = rule['evaluation-statement-1'];
+    }
+    if (rule['evaluation-statement-2']) {
+      providerInput.evaluation_statement_2 = rule['evaluation-statement-2'];
+    }
 
     const providerResult = await aiProvider.evaluateWithWorkflow({
       workflowId,

@@ -9,17 +9,14 @@
   "properties": {
     "metrics": {
       "type": "object",
-      "description": "Evaluation metrics",
-      "required": ["score"],
-      "additionalProperties": true,
-      "properties": {
-        "score": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "description": "Alignment score between 0 and 1"
-        }
-      }
+      "description": "Evaluation metrics - dynamic keys with numeric values",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Metric values between 0 and 1"
+      },
+      "minProperties": 1
     },
     "observations": {
       "type": "array",
