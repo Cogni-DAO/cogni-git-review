@@ -78,7 +78,7 @@ The `governance-policy` gate validates CI/CD workflow compliance:
 ## AI Rule Gate
 The `ai-rule` gate type supports multiple instances:
 - Each instance loads one rule from `.cogni/rules/*.yaml`
-- Calls `src/ai/provider.js` for LangGraph evaluation
+- Calls `src/ai/provider.evaluateWithWorkflow()` using `workflow_id` from rule YAML
 - Decides pass/fail based on AI score vs rule threshold
 - Instance ID auto-derives from `rule_file` basename (without .yaml)
 - **Provenance**: Includes model config (provider, model, environment) for audit trails

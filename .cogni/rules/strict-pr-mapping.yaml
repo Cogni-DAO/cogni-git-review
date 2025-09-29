@@ -1,6 +1,7 @@
 id: strict-pr-mapping
-schema_version: "0.1"
+schema_version: "0.2"
 blocking: false
+workflow_id: single-statement-evaluation
 
 evaluation-statement: PR summary has strict 1:1 mapping with the Code changes in this PR. No extra code, no overstatements.
 

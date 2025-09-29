@@ -5,7 +5,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { review } from '../../src/ai/provider.js';
+import { evaluateWithWorkflow } from '../../src/ai/provider.js';
 
 describe('AI Provider Unit Tests', () => {
 
@@ -17,7 +17,10 @@ describe('AI Provider Unit Tests', () => {
       diff_summary: "3 files changed (+45 -12 lines)"
     };
 
-    const result = await review(input);
+    const result = await evaluateWithWorkflow({
+      workflowId: 'single-statement-evaluation',
+      workflowInput: input
+    });
 
     // Validate contract structure
     assert.strictEqual(typeof result.score, 'number', 'Should return numeric score');
@@ -41,7 +44,10 @@ describe('AI Provider Unit Tests', () => {
       diff_summary: "2 files changed (+30 -15 lines)"
     };
 
-    const result = await review(input);
+    const result = await evaluateWithWorkflow({
+      workflowId: 'single-statement-evaluation',
+      workflowInput: input
+    });
 
     // Should get hardcoded response from goal-alignment workflow
     assert.strictEqual(result.score, 0.85, 'Should return hardcoded score');
@@ -52,7 +58,10 @@ describe('AI Provider Unit Tests', () => {
 
   test('provider handles errors from workflow', async () => {
     // Test error handling - provider should catch and format errors
-    const result = await review(null);
+    const result = await evaluateWithWorkflow({
+      workflowId: 'single-statement-evaluation',
+      workflowInput: null
+    });
 
     assert.strictEqual(result.score, null, 'Should return null score on error');
     assert(Array.isArray(result.observations), 'Should return observations array');
