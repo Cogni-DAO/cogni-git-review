@@ -1,7 +1,7 @@
 # AI Directory - Single Entrypoint Pattern
 
 ## Architecture Principle
-**CRITICAL**: `provider.js` is the single entrypoint router to AI functions. All AI functionality flows through the `review()` function, which delegates to workflows that make LLM calls. This is a clean I/O interface that maps to different workflows and enables future external providers.
+**CRITICAL**: `provider.js` is the single entrypoint router to AI functions. All AI functionality flows through the `evaluateWithWorkflow()` function, which delegates to registered workflows that make LLM calls. This is a clean I/O interface that maps to different workflows and enables future external providers.
 
 ## Directory Structure
 ```
@@ -9,21 +9,29 @@ src/ai/
 ├── provider.js           # Single entrypoint router - delegates to workflows with clear I/O
 ├── model-selector.js     # Environment-based model selection
 ├── workflows/            # LangGraph workflows with clear I/O (make actual LLM calls)
+│   └── registry.js       # Workflow discovery and routing registry
 └── schemas/              # JSON Schema validation
 ```
 
 ## Provider Contract
-Clean interface for single statement evaluation:
+Generic workflow routing interface:
 ```javascript
-const result = await provider.review({
-  statement: "Deliver AI-powered advisory review to keep repo aligned",
-  pr_title: 'Add LangGraph integration',
-  pr_body: 'This PR implements...', 
-  diff_summary: '3 files changed (+45 -12)'
+const result = await provider.evaluateWithWorkflow({
+  workflowId: 'single-statement-evaluation',
+  workflowInput: {
+    statement: "Deliver AI-powered advisory review to keep repo aligned",
+    pr_title: 'Add LangGraph integration',
+    pr_body: 'This PR implements...', 
+    diff_summary: '3 files changed (+45 -12)'
+  }
 });
 
 // Returns: { score: 0.85, observations: [], summary: "Brief assessment", provenance: {} }
 ```
+
+Available workflows configured in `workflows/registry.js`:
+- `single-statement-evaluation` - Legacy single statement evaluation
+- `stub-repo-goal-alignment` - Placeholder for future repo-wide goal alignment
 
 ## Model Selection & Temperature Policy
 Models selected automatically by environment via `model-selector.js`:
@@ -48,4 +56,4 @@ Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 ## Constraints
 - No direct LLM calls outside provider.js
 - Gates decide pass/fail from score vs threshold
-- LLM client creation only via provider.js makeLLMClient() (enforces temperature policy)
+- LLM client creation only via provider.js makeLLMClient() (currently, enforces temperature policy. Future: more robust)

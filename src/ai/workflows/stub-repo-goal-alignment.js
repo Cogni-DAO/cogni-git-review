@@ -1,5 +1,5 @@
 /**
- * Single Statement Evaluation Workflow - ReAct Agent with Structured Output
+ * TODO: Goal-alignment workflow - ReAct Agent with Structured Output
  * Called ONLY by src/ai/provider.js
  */
 

@@ -4,12 +4,14 @@
  */
 
 import { evaluate as evalSingle } from './single-statement-evaluation.js';
+import { evaluate as evalStubGoalAlignment } from './stub-repo-goal-alignment.js';
 
 // Note: goal-alignment-v2 will be added in Task 2
 // import { evaluate as evalGoalsV2 } from './goal-alignment-v2.js';
 
 export const WORKFLOWS = Object.freeze({
   "single-statement-evaluation": evalSingle,
+  "stub-repo-goal-alignment": evalStubGoalAlignment,
   // "goal-alignment-v2": evalGoalsV2  // TODO: Add in Task 2
 });
 

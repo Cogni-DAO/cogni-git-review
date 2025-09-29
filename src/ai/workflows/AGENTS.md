@@ -7,7 +7,7 @@ LangGraph workflow implementations called only by `src/ai/provider.js`. Contains
 Each workflow execution evaluates PR against one statement/requirement, defined in each `.cogni/rules/rule.yaml` file
 
 ```javascript
-import { evaluate } from './goal-alignment.js';
+import { evaluate } from './single-statement-evaluation.js';
 import { makeLLMClient } from '../provider.js';
 
 // Client creation handled by provider.js
@@ -29,7 +29,9 @@ const result = await evaluate({
 ## Implementation Details
 - **Client**: Pre-built ChatOpenAI client passed from provider.js (handles model + temperature policy)
 - **Schema**: Zod validation for structured output (score, observations, summary)
-- **Prompt**: Hardcoded template in goal-alignment.js
+- **Prompt**: Hardcoded template in single-statement-evaluation.js
+- **Registry**: Workflows registered explicitly in registry.js (manual registration, unlike gate auto-discovery)
+- **Boundary**: Clean separation enables potential future extraction to separate AI service repo
 - **Requirements**: OPENAI_API_KEY environment variable
 - **Agent Creation**: Uses pre-configured client (no model selection in workflow)
 

@@ -14,6 +14,8 @@ const DETERMINISTIC_MODELS = new Set([
   "gpt-4o-mini"
 ]);
 
+const PROVIDER_VERSION = '1.1.0';
+
 export function makeLLMClient({ model }) {
   if (!model) throw new Error("makeLLMClient: 'model' is required");
 
@@ -59,7 +61,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
       provenance: {
         runId: generateRunId(),
         durationMs: Date.now() - startTime,
-        providerVersion: '1.1.0',
+        providerVersion: PROVIDER_VERSION,
         workflowId,
         modelConfig: modelConfig  // Include entire modelConfig object
       }
@@ -71,22 +73,8 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
   }
 }
 
-/**
- * DEPRECATED: Legacy single-statement interface
- * Use evaluateWithWorkflow() instead
- * 
- * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
- * @param {Object} options - { timeoutMs }
- * @returns {Promise<Object>} { score, observations, summary, provenance }
- */
-export async function review(input, { timeoutMs = 60000 } = {}) {
-  console.warn('provider.review() is deprecated. Use evaluateWithWorkflow() instead.');
-  
-  return evaluateWithWorkflow({
-    workflowId: 'single-statement-evaluation',
-    workflowInput: input
-  }, { timeoutMs });
-}
+// Removed: review() function - no backward compatibility
+// All callers must use evaluateWithWorkflow() interface
 
 
 /**
@@ -106,7 +94,7 @@ function createErrorResponse(code, message, startTime) {
       model: null,
       runId: generateRunId(),
       durationMs: Date.now() - startTime,
-      providerVersion: '1.0.0'
+      providerVersion: PROVIDER_VERSION
     }
   };
 }
