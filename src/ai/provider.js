@@ -5,7 +5,7 @@
  */
 
 import { ChatOpenAI } from "@langchain/openai";
-import { evaluate } from './workflows/goal-alignment.js';
+import { getWorkflow } from './workflows/registry.js';
 import { selectModel, buildContext } from './model-selector.js';
 
 // Models we explicitly want temperature=0 for determinism
@@ -26,21 +26,22 @@ export function makeLLMClient({ model }) {
 }
 
 /**
- * Single AI entrypoint router for all gate evaluations
+ * Generic AI workflow router - NEW INTERFACE
  * 
- * @param {Object} input - Standardized input format
- * @param {string} input.statement - Statement to evaluate PR against
- * @param {string} input.pr_title - Pull request title
- * @param {string} input.pr_body - Pull request body
- * @param {string} input.diff_summary - Summary of PR changes
+ * @param {Object} config - Workflow configuration
+ * @param {string} config.workflowId - Workflow identifier (e.g., 'single-statement-evaluation')
+ * @param {Object} config.workflowInput - Input data for the workflow
  * @param {Object} options - Configuration options
  * @param {number} options.timeoutMs - Timeout in milliseconds (default: 60000)
- * @returns {Promise<Object>} { score: number, observations: [], summary: string, provenance: {} }
+ * @returns {Promise<Object>} Raw workflow output + provenance wrapper
  */
-export async function review(input, { timeoutMs = 60000 } = {}) {
+export async function evaluateWithWorkflow({ workflowId, workflowInput }, { timeoutMs = 60000 } = {}) {
   const startTime = Date.now();
   
   try {
+    // Get workflow from registry
+    const evaluate = getWorkflow(workflowId);
+    
     // Select model based on environment
     const modelConfig = selectModel(buildContext());
     console.log('🤖 AI Provider: ModelConfig:', modelConfig);
@@ -49,16 +50,17 @@ export async function review(input, { timeoutMs = 60000 } = {}) {
     const { client, meta } = makeLLMClient({ model: modelConfig.model });
     console.log(`🤖 LLM Client: model=${meta.model}, temp=${meta.tempPolicy}`);
     
-    // Forward to goal-alignment workflow with pre-built client
-    const result = await evaluate(input, { timeoutMs, client });
+    // Route to selected workflow - preserve exact return format
+    const result = await evaluate(workflowInput, { timeoutMs, client });
     
     // Add provenance wrapper with resolved model info
     return {
-      ...result,
+      ...result, // Raw workflow output
       provenance: {
         runId: generateRunId(),
         durationMs: Date.now() - startTime,
-        providerVersion: '1.0.0',
+        providerVersion: '1.1.0',
+        workflowId,
         modelConfig: modelConfig  // Include entire modelConfig object
       }
     };
@@ -67,6 +69,23 @@ export async function review(input, { timeoutMs = 60000 } = {}) {
     console.error('AI Provider error:', error.message);
     return createErrorResponse('ai_provider_error', `AI evaluation failed: ${error.message}`, startTime);
   }
+}
+
+/**
+ * DEPRECATED: Legacy single-statement interface
+ * Use evaluateWithWorkflow() instead
+ * 
+ * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
+ * @param {Object} options - { timeoutMs }
+ * @returns {Promise<Object>} { score, observations, summary, provenance }
+ */
+export async function review(input, { timeoutMs = 60000 } = {}) {
+  console.warn('provider.review() is deprecated. Use evaluateWithWorkflow() instead.');
+  
+  return evaluateWithWorkflow({
+    workflowId: 'single-statement-evaluation',
+    workflowInput: input
+  }, { timeoutMs });
 }
 
 

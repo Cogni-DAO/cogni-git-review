@@ -1,5 +1,6 @@
 /**
- * Goal Alignment Workflow - ReAct Agent with Structured Output
+ * Single Statement Evaluation Workflow - ReAct Agent with Structured Output
+ * Legacy workflow renamed from goal-alignment.js for backward compatibility
  * Called ONLY by src/ai/provider.js
  */
 

@@ -22,7 +22,7 @@ Tests for individual functions and components in isolation, without external dep
 - `check-contract.min.test.js` - Enforce github Check name follows environment-aware pattern (prod locked, others get suffix)
 - `config-extraction-debug.test.js` - Configuration extraction debugging
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
-- `goal-alignment-workflow.test.js` - Goal alignment workflow tests
+- `single-statement-evaluation-workflow.test.js` - Single statement evaluation workflow tests (renamed from goal-alignment)
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP
 - `make-llm-client.test.js` - LLM client factory whitelist behavior tests

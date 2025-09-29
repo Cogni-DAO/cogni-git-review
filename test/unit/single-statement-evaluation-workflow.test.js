@@ -1,13 +1,13 @@
 /**
- * Unit Test for Goal Alignment Workflow  
- * Tests the hardcoded workflow response
+ * Unit Test for Single Statement Evaluation Workflow  
+ * Tests the legacy workflow response (renamed from goal-alignment)
  */
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { evaluate } from '../../src/ai/workflows/goal-alignment.js';
+import { evaluate } from '../../src/ai/workflows/single-statement-evaluation.js';
 
-describe('Goal Alignment Workflow Unit Tests', () => {
+describe('Single Statement Evaluation Workflow Unit Tests', () => {
 
   test.skip('workflow returns hardcoded response with correct structure (SKIP: mocking issues)', async () => {
     const input = {

@@ -154,7 +154,10 @@ export async function run(ctx, gateConfig) {
       diff_summary: diff_summary
     };
     
-    const providerResult = await aiProvider.review(providerInput, {
+    const providerResult = await aiProvider.evaluateWithWorkflow({
+      workflowId: 'single-statement-evaluation',
+      workflowInput: providerInput
+    }, {
       timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
     });
     
