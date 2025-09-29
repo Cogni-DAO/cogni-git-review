@@ -32,3 +32,4 @@ Tests for individual functions and components in isolation, without external dep
 - `rules-gate-neutral.test.js` - AI rule gate neutral case handling tests
 - `spec-loader.test.js` - Repository specification loading tests
 - `webhook-spec-debug.test.js` - Webhook specification debugging tests
+- `workflow-registry.test.js` - AI workflow registry functionality tests
