@@ -17,10 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production-E2E-testing
     env:
-      APP_ENV: preview
       TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
       TEST_REPO: ${{ vars.TEST_REPO }}
-      TIMEOUT_SEC: "120"
+      APP_ENV: prod # required for e2e-runner.js computing PR_REVIEW_NAME via src/constants.js
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
