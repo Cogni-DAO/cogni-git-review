@@ -3,14 +3,6 @@
 
 schema_version: '0.1.4'
 
-intent:
-  name: my-project
-  goals:
-    - Clear, scoped goals of the project
-  non_goals:
-    - Explicitly out-of-scope items
-
-
 # CI checks that must be required-by-branch-protection and green to merge.
 # These are *status context names*, not workflow file names. 
 # Cogni confirms these are enforced via Allstar.
