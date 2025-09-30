@@ -12,27 +12,28 @@ import { getWorkflow, WORKFLOWS } from '../../src/ai/workflows/registry.js';
 describe('Workflow Registry Unit Tests', () => {
 
   test('registry routes to correct workflow functions', () => {
-    // Test that registry returns the stub workflow function
-    const evalFunc = getWorkflow('stub-repo-goal-alignment');
+    // Test that registry returns the goal-evaluations workflow function
+    const evalFunc = getWorkflow('goal-evaluations');
     assert(typeof evalFunc === 'function', 'Should return a function');
     
     // Don't call it - just verify the registry returns the correct function
     // The actual workflow execution is tested elsewhere with proper fixtures
   });
 
-  test('registry discovery returns single-statement-evaluation workflow', () => {
-    const evalFunc = getWorkflow('single-statement-evaluation');
-    assert(typeof evalFunc === 'function', 'Should return a function for single-statement-evaluation');
+  test('registry discovery returns goal-evaluations workflow', () => {
+    const evalFunc = getWorkflow('goal-evaluations');
+    assert(typeof evalFunc === 'function', 'Should return a function for goal-evaluations');
   });
 
-  test('multi-workflow support returns different workflows', () => {
-    const stubFunc = getWorkflow('stub-repo-goal-alignment');
-    const singleFunc = getWorkflow('single-statement-evaluation');
+  test('unified workflow support replaces old workflows', () => {
+    const goalFunc = getWorkflow('goal-evaluations');
     
-    // Both should be functions but different implementations
-    assert(typeof stubFunc === 'function', 'Stub should be function');
-    assert(typeof singleFunc === 'function', 'Single should be function');
-    assert(stubFunc !== singleFunc, 'Should return different workflow functions');
+    // Should be a function
+    assert(typeof goalFunc === 'function', 'Goal evaluations should be function');
+    
+    // Verify we have unified to single workflow
+    const workflowIds = Object.keys(WORKFLOWS);
+    assert(workflowIds.includes('goal-evaluations'), 'Should contain goal-evaluations');
   });
 
   test('error handling for nonexistent workflow throws proper error', () => {
@@ -78,8 +79,7 @@ describe('Workflow Registry Unit Tests', () => {
     const workflowIds = Object.keys(WORKFLOWS);
     
     // Verify expected workflows are present
-    assert(workflowIds.includes('single-statement-evaluation'), 'Should contain single-statement-evaluation');
-    assert(workflowIds.includes('stub-repo-goal-alignment'), 'Should contain stub-repo-goal-alignment');
+    assert(workflowIds.includes('goal-evaluations'), 'Should contain goal-evaluations');
     
     // Verify it's not empty
     assert(workflowIds.length > 0, 'Should contain at least one workflow');
@@ -89,12 +89,10 @@ describe('Workflow Registry Unit Tests', () => {
     // Test that provider can get workflow from registry
     // Don't actually call the provider - just verify registry lookup works
     
-    // Test with known workflow IDs that should exist
-    const stubFunc = getWorkflow('stub-repo-goal-alignment');
-    const singleFunc = getWorkflow('single-statement-evaluation');
+    // Test with known workflow ID that should exist
+    const goalFunc = getWorkflow('goal-evaluations');
     
-    assert(typeof stubFunc === 'function', 'Provider should be able to get stub workflow from registry');
-    assert(typeof singleFunc === 'function', 'Provider should be able to get single-statement workflow from registry');
+    assert(typeof goalFunc === 'function', 'Provider should be able to get goal-evaluations workflow from registry');
   });
 
 });

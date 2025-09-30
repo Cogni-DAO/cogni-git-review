@@ -76,47 +76,19 @@ The `governance-policy` gate validates CI/CD workflow compliance:
 - Returns violations for missing workflows or name mismatches
 
 ## AI Rule Gate
-The `ai-rule` gate type supports multiple rule types and workflows with standardized evaluation:
-- Each instance loads one rule from `.cogni/rules/*.yaml` specifying `workflow_id`
-- Supports different workflows: `single-statement-evaluation`, `repo-goal-alignment`, etc.
-- Calls `src/ai/provider.evaluateWithWorkflow()` which returns provider-result schema format
-- Decides pass/fail based on standardized `success_criteria` evaluation (not single threshold)
-- Instance ID auto-derives from `rule_file` basename (without .yaml)
-- **Validation**: Rule schema validation in `spec-loader.js`, provider result validation in `rules.js`
-- **Provenance**: Includes model config (provider, model, environment) for audit trails
-- **Recent Enhancement**: Added `gatherEvidence()` function for code-aware capabilities
-  - When rules specify `x_capabilities: ['diff_summary', 'file_patches']`, provides actual file changes to AI
-  - Uses GitHub API (`context.octokit.rest.pulls.listFiles`) to fetch file patches
-  - Applies resource budgets (`x_budgets`) to prevent token/cost overruns
-  - Maintains string-based `diff_summary` contract with AI providers
+The `ai-rule` gate supports dynamic AI evaluation with schema v0.3:
+- Each instance loads a rule from `.cogni/rules/*.yaml` with `evaluations` array
+- Uses `goal-evaluations` workflow for dynamic metric evaluation
+- Calls `src/ai/provider.evaluateWithWorkflow()` which returns provider-result format
+- Pass/fail based on `success_criteria` evaluation against returned metrics
+- **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` provides file changes to AI
+- **Resource budgets**: `x_budgets` prevent token/cost overruns
 
-### Code-Aware Evidence Gathering Details
-
-**Enhanced Diff Summary Format**:
-```
-File Changes Summary (2 files, 75 additions, 17 deletions):
-
-1. src/auth/oauth.js (modified, 45 additions, 12 deletions)
-   @@ -1,6 +1,12 @@
-   function authenticate() {
-   +  // Enhanced auth logic
-     return token;
-   }
-
-2. src/utils/helpers.js (modified, 30 additions, 5 deletions)
-   [Patch content when under budget limits]
-```
-
-**File Selection Algorithm**:
-- Deterministic sorting by change count (descending), then filename (ascending)
-- Respects `max_files` budget limit (default: 25)
-- Includes patch content for top `max_patches` files (default: 3)
-- Truncates patches exceeding `max_patch_bytes_per_file` (default: 16KB)
-
-**Backward Compatibility**:
-- Rules without `x_capabilities` receive simple diff_summary: "2 files changed, 75 additions, 17 deletions"
-- No breaking changes to existing provider contract (string-based evidence)
-- All existing rules continue working without modification
+### Code-Aware Evidence Gathering
+- Deterministic file sorting by change count, then filename
+- Respects budget limits: `max_files` (25), `max_patches` (3), `max_patch_bytes_per_file` (16KB)
+- Enhanced diff includes file patches when under budget
+- Simple diff summary when `x_capabilities` not specified
 
 ## Gate Output Fields
 

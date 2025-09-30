@@ -1,45 +1,30 @@
 # AI Workflows Directory
 
 ## Purpose
-LangGraph workflow implementations called only by `src/ai/provider.js`. Contains AI reasoning logic.
+LangGraph workflow implementations called by `src/ai/provider.js`. Dynamic AI evaluation logic.
 
-## standard_ai_rule_eval Contract
-Each workflow returns standard_ai_rule_eval format: `{ metrics, observations, summary?, provenance? }`
+## Workflow Contract
+Workflows return: `{ metrics: { metricId: {value, observations} }, summary, provenance }`
 
 ```javascript
-import { evaluate } from './single-statement-evaluation.js';
-import { makeLLMClient } from '../provider.js';
-
-// Client creation handled by provider.js
-const { client } = makeLLMClient({ model: 'gpt-4o-mini' });
+import { evaluate } from './goal-evaluations.js';
 
 const result = await evaluate({
-  statement: "Deliver AI-powered advisory review to keep repo aligned",
-  pr_title: 'Add LangGraph integration', 
-  pr_body: 'This PR implements...',
+  evaluations: [
+    { "code-quality": "PR maintains code quality standards" },
+    { "security": "PR contains no security vulnerabilities" }
+  ],
+  pr_title: 'Add feature', 
+  pr_body: 'Implementation details...',
   diff_summary: '3 files changed (+45 -12)'
-}, { 
-  timeoutMs: 60000, 
-  client
-});
+}, { client });
 
-// Returns: { metrics: { score: {value: 0.85, observations: ["Good alignment"]} }, summary: "Brief assessment" }
+// Returns: { metrics: { "code-quality": {value: 0.9, observations: [...]}, "security": {value: 1.0, observations: [...]} }, summary: "..." }
 ```
 
 ## Implementation Details
-- **Client**: Pre-built ChatOpenAI client passed from provider.js (handles model + temperature policy)
-- **Schema**: Zod validation for structured output (score, observations, summary)
-- **Prompt**: Hardcoded template in single-statement-evaluation.js
-- **Registry**: Workflows registered explicitly in registry.js (manual registration, unlike gate auto-discovery)
-- **Boundary**: Clean separation enables potential future extraction to separate AI service repo
+- **Dynamic Schema**: Zod schema generated from `evaluations` array input
+- **Dynamic Prompts**: AI instructions generated based on metric count and statements  
+- **Registry**: Workflows registered in registry.js
 - **Requirements**: OPENAI_API_KEY environment variable
-- **Agent Creation**: Uses pre-configured client (no model selection in workflow)
-
-## Constraints
-- Only called by provider.js
-- Must return standard_ai_rule_eval format with metrics object
-- TODO: Add AbortController timeout support
-
-## Future Improvements
-- External prompt templates (move from hardcoded)
-- Timeout handling with AbortController signals
+- **Unified Approach**: Single `goal-evaluations` workflow handles 1 to N evaluations

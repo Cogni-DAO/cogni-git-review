@@ -1,12 +1,13 @@
 id: single-check-pr-verdict
-schema_version: "0.2"
+schema_version: "0.3"
 blocking: true
-workflow_id: single-statement-evaluation
+workflow_id: goal-evaluations
 
-evaluation-statement: "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates."
+evaluations:
+  - single-verdict: "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates."
 
 success_criteria:
   neutral_on_missing_metrics: true
   require:
-    - metric: score
+    - metric: single-verdict
       gte: 0.8

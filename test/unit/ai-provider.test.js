@@ -18,7 +18,7 @@ describe('AI Provider Unit Tests', () => {
     };
 
     const result = await evaluateWithWorkflow({
-      workflowId: 'single-statement-evaluation',
+      workflowId: 'goal-evaluations',
       workflowInput: input
     });
 
@@ -45,7 +45,7 @@ describe('AI Provider Unit Tests', () => {
     };
 
     const result = await evaluateWithWorkflow({
-      workflowId: 'single-statement-evaluation',
+      workflowId: 'goal-evaluations',
       workflowInput: input
     });
 
@@ -59,7 +59,7 @@ describe('AI Provider Unit Tests', () => {
   test('provider handles errors from workflow', async () => {
     // Test error handling - provider should catch and format errors
     const result = await evaluateWithWorkflow({
-      workflowId: 'single-statement-evaluation',
+      workflowId: 'goal-evaluations',
       workflowInput: null
     });
 

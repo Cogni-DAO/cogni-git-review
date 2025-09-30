@@ -1,12 +1,14 @@
 id: dont-rebuild-oss
-schema_version: "0.2"
+schema_version: "0.3"
 blocking: true
-workflow_id: single-statement-evaluation
+workflow_id: goal-evaluations
 
-evaluation-statement: Does NOT Re-implement mature OSS tools or libraries.
+evaluations:
+  - dont-rebuild-oss: Does NOT Re-implement mature OSS tools or libraries.
+
 
 success_criteria:
   neutral_on_missing_metrics: true
   require:
-    - metric: score
+    - metric: dont-rebuild-oss
       gte: 0.8
