@@ -108,11 +108,22 @@ function renderGate(gate, status) {
   const criteria = gate.rule?.success_criteria?.require || [];
   for (const criterion of criteria) {
     const metricName = criterion.metric;
-    const actualValue = gate.providerResult?.metrics?.[metricName];
-    if (actualValue !== undefined) {
+    const metricData = gate.providerResult?.metrics?.[metricName];
+    if (metricData) {
       const operator = Object.keys(criterion).find(key => key !== 'metric');
       const threshold = criterion[operator];
-      section += `- **${metricName}:** ${actualValue} / ${operator} / ${threshold}\n`;
+      section += `- **${metricName}:** ${metricData.value} / ${operator} / ${threshold}\n`;
+      
+      // Show metric-specific observations
+      if (metricData.observations && metricData.observations.length > 0) {
+        section += `  - **Observations:**\n`;
+        for (const obs of metricData.observations.slice(0, 10)) {
+          section += `    - ${obs}\n`;
+        }
+        if (metricData.observations.length > 10) {
+          section += `    - ...and ${metricData.observations.length - 10} more\n`;
+        }
+      }
     }
   }
   
@@ -136,9 +147,9 @@ function renderGate(gate, status) {
     }
   }
   
-  // Observations
+  // Legacy observations (for non-AI gates only)
   const observations = gate.observations || gate.annotations || [];
-  if (observations.length > 0) {
+  if (observations.length > 0 && !gate.providerResult) {
     section += `- **Observations:**\n`;
     for (const obs of observations.slice(0, 20)) {
       const obsText = typeof obs === 'string' ? obs : (obs.message || obs.code || String(obs));

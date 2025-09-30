@@ -121,6 +121,6 @@ File Changes Summary (2 files, 75 additions, 17 deletions):
 ## Gate Output Fields
 
 **Standard Result Structure**:
-- **AI gates** (rules.js): Return `observations` array containing AI-generated insights
+- **AI gates** (rules.js): Return per-metric observations within providerResult.metrics structure
 - **Stub gates** (goal-declaration-stub.js, forbidden-scopes-stub.js): Return violations with `observation` messages
 - All gates return normalized `{status, violations[], stats, duration_ms}` format

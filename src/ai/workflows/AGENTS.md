@@ -23,7 +23,7 @@ const result = await evaluate({
   client
 });
 
-// Returns: { metrics: { score: 0.85 }, observations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
+// Returns: { metrics: { score: {value: 0.85, observations: ["Good alignment"]} }, summary: "Brief assessment" }
 ```
 
 ## Implementation Details
