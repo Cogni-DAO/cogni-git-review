@@ -4,26 +4,33 @@
   "title": "AI Provider Result Schema",
   "description": "Schema for AI workflow evaluation results with provenance",
   "type": "object",
-  "required": ["metrics", "observations", "summary", "provenance"],
+  "required": ["metrics", "summary", "provenance"],
   "additionalProperties": false,
   "properties": {
     "metrics": {
       "type": "object",
-      "description": "Evaluation metrics - dynamic keys with numeric values",
+      "description": "Evaluation metrics - each metric has value and observations",
       "additionalProperties": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 1,
-        "description": "Metric values between 0 and 1"
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Metric value between 0 and 1"
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of specific observations for this metric"
+          }
+        },
+        "required": ["value", "observations"],
+        "additionalProperties": false
       },
       "minProperties": 1
-    },
-    "observations": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "List of specific observations or issues"
     },
     "summary": {
       "type": "string",

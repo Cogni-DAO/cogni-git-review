@@ -243,7 +243,14 @@ export function evalCriteria(metrics, criteria) {
  * Make gate decision based on standardized evaluation
  */
 function makeGateDecision(providerResult, rule, startTime) {
-  const metrics = providerResult.metrics || {};
+  const metricsRaw = providerResult.metrics || {};
+  const metrics = {};
+  
+  // Extract values from new structure: {metricName: {value: x, observations: []}}
+  for (const [key, metricData] of Object.entries(metricsRaw)) {
+    metrics[key] = metricData.value;
+  }
+  
   const sc = rule.success_criteria;
   if (!sc) return createNeutralResult('missing_success_criteria', 'No success_criteria specified', startTime, providerResult, rule);
 
@@ -252,11 +259,19 @@ function makeGateDecision(providerResult, rule, startTime) {
     return createNeutralResult('missing_metrics', res.failed.join('; '), startTime, providerResult, rule);
   }
 
+  // Collect all observations from metrics
+  const allObservations = [];
+  for (const metricData of Object.values(metricsRaw)) {
+    if (metricData.observations) {
+      allObservations.push(...metricData.observations);
+    }
+  }
+
   return {
     status: res.status,
     passed: res.passed,
     failed: res.failed,
-    observations: providerResult.observations || [],  // TODO: Duplicates providerResult.observations - standardize output formats
+    observations: allObservations,
     res,
     providerResult,
     rule,
@@ -274,7 +289,7 @@ function createNeutralResult(reason, message, startTime, providerResult = null, 
     error: message,
     passed: [],
     failed: [],
-    observations: providerResult?.observations || [], // for backward compatibility
+    observations: [], // no observations in neutral results
     providerResult,
     rule,
     duration_ms: Date.now() - startTime

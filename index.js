@@ -105,11 +105,8 @@ export default (app) => {
       const runResult = await runAllGates(context, pr, spec);
       const checkResult = await createCompletedCheck(context, runResult, pr.head.sha, startTime);
       
-      // Post PR comment if not neutral
-      const conclusion = mapStatusToConclusion(runResult.overall_status);
-      if (conclusion !== 'neutral') {
-        await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number);
-      }
+      // Post PR comment always
+      await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number);
       
       return checkResult;
       

@@ -7,7 +7,7 @@ Reusable test data that eliminates duplication across test suites.
 - **Repository specs**: YAML configurations for different test scenarios (repo-specs.js)
 - **Webhook payloads**: Real GitHub webhook events (check_run, check_suite, pull_request, installation)
 - **AI rule fixtures**: Mock AI evaluation data and contexts (ai-rules.js), matching real spec formats
-  - **Goal Alignment v2 format**: Uses `success_criteria: { require: [{ metric: 'score', gte: X }] }`
+  - **Goal Alignment v2 format**: Uses `success_criteria: { require: [{ metric: 'score', gte: X }] }` with per-metric observations
   - **Reusable mocks**: `createMockAIGateResult()`, `MOCK_AI_GATE_PASS`, `MOCK_AI_GATE_FAIL`
 - **Mock contexts**: GitHub API response simulations
 - **Certificates**: Authentication test files

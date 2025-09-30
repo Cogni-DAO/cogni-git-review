@@ -8,22 +8,17 @@ import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
 // Schema for structured output - matches provider-result format directly
-// TODO: Preferred format (commented out... ProviderResult currently has Observations separated from metrics array):
-// const EvaluationSchema = z.object({
-//   evaluations: z.array(z.object({
-//     key: z.string().describe("Metric key (e.g., 'statement-1')"),
-//     score: z.number().min(0).max(1).describe("Alignment score between 0 and 1"),
-//     observations: z.array(z.string()).describe("List of specific observations"),
-//     summary: z.string().describe("Brief explanation for this evaluation")
-//   })).min(2).max(2).describe("Exactly 2 evaluations for statement-1 and statement-2")
-// });
-
 const EvaluationSchema = z.object({
   metrics: z.object({
-    "statement-1": z.number().min(0).max(1).describe("Score for evaluation statement 1"),
-    "statement-2": z.number().min(0).max(1).describe("Score for evaluation statement 2")
-  }).describe("Metrics for both statements"),
-  observations: z.array(z.string()).describe("Combined observations from both evaluations"),
+    "statement-1": z.object({
+      value: z.number().min(0).max(1).describe("Score for evaluation statement 1"),
+      observations: z.array(z.string()).describe("Observations for statement 1")
+    }),
+    "statement-2": z.object({
+      value: z.number().min(0).max(1).describe("Score for evaluation statement 2"), 
+      observations: z.array(z.string()).describe("Observations for statement 2")
+    })
+  }).describe("Metrics with per-metric observations"),
   summary: z.string().describe("Summary of both evaluations")
 });
 
@@ -85,8 +80,7 @@ For each statement, provide:
 - Brief summary explanation
 
 Expected output format:
-- metrics: {"statement-1": score1, "statement-2": score2}
-- observations: [combined array of all observations from both statements]
+- metrics: {"statement-1": {value: score1, observations: [obs1, obs2]}, "statement-2": {value: score2, observations: [obs3, obs4]}}
 - summary: "Combined summary of both evaluations"`;
 
 

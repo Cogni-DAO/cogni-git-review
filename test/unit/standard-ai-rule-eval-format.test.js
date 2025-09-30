@@ -49,8 +49,12 @@ test('assertRuleSchema: missing success_criteria fails', () => {
 
 test('assertProviderResult: valid standard_ai_rule_eval passes', () => {
   const validResult = {
-    metrics: { score: 0.85 },
-    observations: ['Good alignment'],
+    metrics: { 
+      score: {
+        value: 0.85,
+        observations: ['Good alignment', 'Clear scope']
+      }
+    },
     summary: 'Test passed successfully with good alignment',
     provenance: { 
       runId: 'test-123',
@@ -64,15 +68,25 @@ test('assertProviderResult: valid standard_ai_rule_eval passes', () => {
 });
 
 test('assertProviderResult: missing metrics fails', () => {
-  const invalidResult = { observations: [] };
+  const invalidResult = { summary: 'test' };
   assert.throws(
     () => assertProviderResult(invalidResult),
     (error) => error.message.includes('ProviderResult schema invalid')
   );
 });
 
-test('assertProviderResult: missing observations fails', () => {
-  const invalidResult = { metrics: { score: 0.8 } };
+test('assertProviderResult: invalid metric structure fails', () => {
+  const invalidResult = { 
+    metrics: { score: 0.8 }, // should be {value: 0.8, observations: []}
+    summary: 'test',
+    provenance: { 
+      runId: 'test-123',
+      durationMs: 1500,
+      providerVersion: '1.0.0',
+      workflowId: 'single-statement-evaluation',
+      modelConfig: { provider: 'test', model: 'test-model' }
+    }
+  };
   assert.throws(
     () => assertProviderResult(invalidResult),
     (error) => error.message.includes('ProviderResult schema invalid')
