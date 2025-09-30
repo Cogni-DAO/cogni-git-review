@@ -11,5 +11,7 @@ x_capabilities:
   - file_patches      # Include actual patch content for analysis
 
 success_criteria:
-  metric: score
-  threshold: 0.8
+  neutral_on_missing_metrics: true
+  require:
+    - metric: score
+      gte: 0.8

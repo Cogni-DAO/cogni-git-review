@@ -9,5 +9,7 @@ evaluation-statement: "The repo does not deviate from its goal: a single AI-powe
 variables: [pr_title, pr_body, diff_summary]
 
 success_criteria:
-  metric: score
-  threshold: 0.8
+  neutral_on_missing_metrics: true
+  require:
+    - metric: score
+      gte: 0.8

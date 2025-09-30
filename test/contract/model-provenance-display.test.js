@@ -6,7 +6,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { DONT_REBUILD_OSS_RULE } from '../fixtures/ai-rules.js';
+import { DONT_REBUILD_OSS_RULE, MOCK_AI_GATE_PASS, MOCK_AI_GATE_FAIL, MOCK_AI_GATE_DIFFERENT_MODEL } from '../fixtures/ai-rules.js';
 import { runConfiguredGates } from '../../src/gates/run-configured.js';
 import { renderCheckSummary } from '../../src/summary-adapter.js';
 
@@ -65,23 +65,8 @@ describe('Model Provenance Display Contract Tests', () => {
     // Create mock gate results with provenance (simulating successful AI execution)
     const mockResults = launcherResult.results.map(result => {
       if (result.id === 'dont-rebuild-oss') {
-        // Add mock provenance to AI rule result
-        return {
-          ...result,
-          status: 'pass', 
-          provenance: {
-            runId: 'ai-12345-test',
-            durationMs: 1500,
-            providerVersion: '1.0.0',
-            modelConfig: {
-              provider: 'openai',
-              model: 'gpt-4o-mini',
-              apiVersion: '2024-02-15-preview'
-            }
-          },
-          stats: { score: 0.85, threshold: 0.8 },
-          observations: ['Code looks good']
-        };
+        // Use structured mock AI gate result
+        return { ...result, ...MOCK_AI_GATE_PASS };
       }
       return result; // Non-AI gates unchanged
     });
@@ -154,26 +139,8 @@ describe('Model Provenance Display Contract Tests', () => {
           stats: { changed_files: 2 },
           duration_ms: 5
         },
-        {
-          id: 'dont-rebuild-oss',
-          status: 'pass',
-          observations: ['Looks good'],
-          stats: { score: 0.85, threshold: 0.8 },
-          provenance: {
-            modelConfig: { provider: 'openai', model: 'gpt-4o-mini' }
-          },
-          duration_ms: 1200
-        },
-        {
-          id: 'goal-alignment', 
-          status: 'fail',
-          observations: ['Issues found'],
-          stats: { score: 0.6, threshold: 0.7 },
-          provenance: {
-            modelConfig: { provider: 'openai', model: 'gpt-5-2025-08-07' }
-          },
-          duration_ms: 1800
-        }
+        { ...MOCK_AI_GATE_PASS, id: 'dont-rebuild-oss', observations: ['Looks good'], duration_ms: 1200 },
+        { ...MOCK_AI_GATE_FAIL, id: 'goal-alignment', observations: ['Issues found'], duration_ms: 1800, provenance: { modelConfig: { provider: 'openai', model: 'gpt-5-2025-08-07' } } }
       ],
       duration_ms: 3000
     };

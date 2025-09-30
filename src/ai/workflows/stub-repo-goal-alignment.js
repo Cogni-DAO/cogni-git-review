@@ -7,11 +7,24 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
-// Schema for structured output
+// Schema for structured output - matches provider-result format directly
+// TODO: Preferred format (commented out... ProviderResult currently has Observations separated from metrics array):
+// const EvaluationSchema = z.object({
+//   evaluations: z.array(z.object({
+//     key: z.string().describe("Metric key (e.g., 'statement-1')"),
+//     score: z.number().min(0).max(1).describe("Alignment score between 0 and 1"),
+//     observations: z.array(z.string()).describe("List of specific observations"),
+//     summary: z.string().describe("Brief explanation for this evaluation")
+//   })).min(2).max(2).describe("Exactly 2 evaluations for statement-1 and statement-2")
+// });
+
 const EvaluationSchema = z.object({
-  score: z.number().min(0).max(1).describe("Alignment score between 0 and 1"),
-  observations: z.array(z.string()).describe("List of specific observations or issues"),
-  summary: z.string().describe("Brief explanation of the evaluation")
+  metrics: z.object({
+    "statement-1": z.number().min(0).max(1).describe("Score for evaluation statement 1"),
+    "statement-2": z.number().min(0).max(1).describe("Score for evaluation statement 2")
+  }).describe("Metrics for both statements"),
+  observations: z.array(z.string()).describe("Combined observations from both evaluations"),
+  summary: z.string().describe("Summary of both evaluations")
 });
 
 /**
@@ -24,17 +37,17 @@ function createAgent(client) {
     llm: client,
     tools: [], // No tools - pure reasoning
     responseFormat: {
-      prompt: "Evaluate if the <PR Information> aligns with the given <criteria>.",
+      prompt: "Evaluate the <PR Information> against two separate evaluation statements.",
       schema: EvaluationSchema
     }
   });
 }
 
 /**
- * Evaluate PR against statement using ReAct agent
- * @param {Object} input - { statement, pr_title, pr_body, diff_summary }
+ * Evaluate PR against dual statements using ReAct agent - Goal Alignment v2
+ * @param {Object} input - { evaluation_statement_1, evaluation_statement_2, pr_title, pr_body, diff_summary }
  * @param {Object} options - { timeoutMs, client }
- * @returns {Promise<Object>} { score, observations, summary }
+ * @returns {Promise<Object>} { metrics: { "statement-1": score1, "statement-2": score2 }, observations, summary }
  */
 export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   if (!process.env.OPENAI_API_KEY) {
@@ -50,7 +63,7 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   // Create agent with pre-built client
   const agent = createAgent(client);
 
-  const promptText = `You are an expert in analyzing code pull requests against a given set of criteria. Here is the current PR you are evaluating:
+  const promptText = `You are an expert in analyzing code pull requests against evaluation criteria. Here is the current PR:
 
 <PR Information>
 <PR Title> ${input.pr_title} </PR Title>
@@ -58,14 +71,23 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
 <PR Body> ${input.pr_body} </PR Body>
 
 <Diff Summary> ${input.diff_summary} </Diff Summary>
-
 </PR Information>
 
-Now, evaluate this PR against the following criteria:
-<criteria> ${input.statement} </criteria>
+Evaluate this PR against TWO separate statements. Evaluate each statement separately and independently:
 
-Provide a score from 0.0-1.0, with 1.0 being the best score. 
-Provide a short list (1-5) of concise observations that justify the score.`;
+1. <evaluation_statement_1> ${input.evaluation_statement_1} </evaluation_statement_1>
+
+2. <evaluation_statement_2> ${input.evaluation_statement_2} </evaluation_statement_2>
+
+For each statement, provide:
+- A score from 0.0-1.0 (1.0 = best)
+- Short observations (1-5) justifying the score
+- Brief summary explanation
+
+Expected output format:
+- metrics: {"statement-1": score1, "statement-2": score2}
+- observations: [combined array of all observations from both statements]
+- summary: "Combined summary of both evaluations"`;
 
 
   const message = new HumanMessage(promptText);

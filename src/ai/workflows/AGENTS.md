@@ -3,15 +3,15 @@
 ## Purpose
 LangGraph workflow implementations called only by `src/ai/provider.js`. Contains AI reasoning logic.
 
-## Single Statement Contract
-Each workflow execution evaluates PR against one statement/requirement, defined in each `.cogni/rules/rule.yaml` file
+## standard_ai_rule_eval Contract
+Each workflow returns standard_ai_rule_eval format: `{ metrics, observations, summary?, provenance? }`
 
 ```javascript
 import { evaluate } from './single-statement-evaluation.js';
 import { makeLLMClient } from '../provider.js';
 
 // Client creation handled by provider.js
-const { client } = makeLLMClient({ model: 'gpt-5-2025-08-07' });
+const { client } = makeLLMClient({ model: 'gpt-4o-mini' });
 
 const result = await evaluate({
   statement: "Deliver AI-powered advisory review to keep repo aligned",
@@ -23,7 +23,7 @@ const result = await evaluate({
   client
 });
 
-// Returns: { score: 0.85, observations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
+// Returns: { metrics: { score: 0.85 }, observations: ["Good alignment", "Clear scope"], summary: "Brief assessment" }
 ```
 
 ## Implementation Details
@@ -37,7 +37,7 @@ const result = await evaluate({
 
 ## Constraints
 - Only called by provider.js
-- Must return score (0-1) not verdict
+- Must return standard_ai_rule_eval format with metrics object
 - TODO: Add AbortController timeout support
 
 ## Future Improvements
