@@ -8,17 +8,23 @@ This directory contains YAML rule definitions for AI-powered PR evaluation. Each
 - **Multiple instances supported**: Same rule type can run multiple times with different rule files
 - **Universal application**: Rules apply to all PRs (no file selectors in MVP)
 
-## Rule Schema (MVP)
+## Rule Schema v0.3
 ```yaml
 id: rule-name                    # Unique identifier
-schema_version: '0.1'            # Schema version
+schema_version: "0.3"            # Schema version  
+workflow_id: goal-evaluations    # AI workflow to use
 blocking: true                   # Whether failure blocks PR
-evaluation-statement: "Evaluate XYZ"  # Statement passed to AI provider
+evaluations:                     # Dynamic metric evaluations
+  - code-quality: "PR maintains code quality standards"
+  - security: "PR contains no security vulnerabilities"
 success_criteria:
-  metric: score                  # Only 'score' supported
-  threshold: 0.7                 # Pass threshold (0-1)
+  require:
+    - metric: code-quality
+      gte: 0.8
+    - metric: security  
+      gte: 0.9
 
-# Optional: Code-aware capabilities (experimental)
+# Optional: Code-aware capabilities
 x_capabilities: ['diff_summary', 'file_patches']
 x_budgets:
   max_files: 25
@@ -28,7 +34,7 @@ x_budgets:
 
 ## AI Provider Input
 Rules provide this input to the AI provider:
-- `statement`: The evaluation-statement from the rule
+- `evaluations`: Array mapping metric IDs to evaluation statements
 - `pr_title`: Pull request title
 - `pr_body`: Pull request description  
 - `diff_summary`: Auto-generated change summary (basic or enhanced based on x_capabilities)
