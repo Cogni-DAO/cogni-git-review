@@ -1,25 +1,31 @@
 # lib/AGENTS.md  
 
-Core library implementations for Cogni operations.
+Core library implementations for Cogni operations. Currently, just an e2e test runner.
 
 ## E2E Testing
-- `e2e-runner.js` - Creates test PRs, waits for Cogni checks, and reports results with debugging artifacts. Outputs JSON with `cogniFullOutput`
+- `e2e-runner.js` - Creates test PRs, waits for Cogni checks, reports results, and always cleans up test PRs/branches. Outputs JSON with `cogniFullOutput`
+
+## Environment
+```bash
+    ghToken: env('TEST_REPO_GITHUB_PAT')
+    testRepo: env('TEST_REPO', 'Cogni-DAO/test-repo')
+    checkName: PR_REVIEW_NAME
+```
 
 ### Usage for Agents:
 ```bash
 # Local development testing
-npm run e2e  # Uses APP_ENV=dev by default
+npm run e2e
 
 # The E2E system:
-# 1. Imports PR_REVIEW_NAME from src/constants.js (environment-aware)
-# 2. Clones test repo to OS temp directory  
+# 1. Sets up env
+# 2. Clones TEST_REPO to OS temp directory  
 # 3. Creates test PR to trigger Cogni check
-# 4. Waits for environment-appropriate check name:
-#    - dev: "Cogni Git PR Review (dev)"
-#    - preview: "Cogni Git PR Review (preview)"  
-#    - prod: "Cogni Git PR Review"
-# 5. Reports success/failure and cleans up
+# 4. Waits for Cogni check completion
+# 5. Reports success/failure 
+# 6. Always cleans up test PR and branch
+# 7. Cleans up temp directory
 
 # Required env vars: TEST_REPO_GITHUB_PAT, TEST_REPO
-# Optional: APP_ENV (defaults to 'dev'), TIMEOUT_SEC, SLEEP_MS
+# Optional: TIMEOUT_SEC (default: 120), SLEEP_MS (default: 10000)
 ```
