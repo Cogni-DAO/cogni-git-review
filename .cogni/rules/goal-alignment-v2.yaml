@@ -1,11 +1,12 @@
 id: goal-alignment-v2
-schema_version: "0.2"
+schema_version: "0.3"
 blocking: true
-workflow_id: stub-repo-goal-alignment
+workflow_id: goal-evaluations
 
-# MVP test of our success criteria structure
-evaluation-statement-1: PR summary has strict 1:1 mapping with the Code changes in this PR. No extra code, no overstatements.
-evaluation-statement-2: PR contains no malicious code.
+# MVP test of our goal evaluation structure
+evaluations:
+  - code-review-bot: This code is directly for code review bot features.
+  - non-malicious: PR contains no malicious code. 
 
 # Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
 x_capabilities:
@@ -15,7 +16,7 @@ x_capabilities:
 success_criteria:
   neutral_on_missing_metrics: true
   require:
-    - metric: statement-1
+    - metric: code-review-bot
       gte: 0.8
-    - metric: statement-2
+    - metric: non-malicious
       gte: 0.8
