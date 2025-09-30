@@ -91,7 +91,7 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
     assert.strictEqual(result.neutral_reason, undefined, 'Should not have neutral reason');
     // AI rules use structured format, not stats
     assert.strictEqual(result.stats, undefined, 'AI rules should not have stats field');
-    assert(typeof result.providerResult?.metrics?.score === 'number', 'Should include numeric score in providerResult.metrics');
+    assert(typeof result.providerResult?.metrics?.score?.value === 'number', 'Should include numeric score in providerResult.metrics.score.value');
     assert.strictEqual(result.rule?.success_criteria?.require?.[0]?.gte, 0.85, 'Should include correct threshold in rule.success_criteria');
     assert.strictEqual(result.rule?.id, 'goal-alignment', 'Should include correct rule ID');
     assert(typeof result.duration_ms === 'number', 'Should include duration');

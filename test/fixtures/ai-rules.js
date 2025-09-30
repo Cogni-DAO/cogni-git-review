@@ -179,7 +179,12 @@ export function createMockAIGateResult({
       }
     },
     providerResult: { 
-      metrics: { score } 
+      metrics: { 
+        score: { 
+          value: score, 
+          observations: observations.slice(0, 3) 
+        } 
+      }
     },
     rule: { 
       success_criteria: { 

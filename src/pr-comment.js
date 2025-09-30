@@ -39,11 +39,11 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
           const criteria = gate.rule.success_criteria.require;
           for (const criterion of criteria) {
             const metricName = criterion.metric;
-            const actualValue = gate.providerResult.metrics[metricName];
-            if (actualValue !== undefined) {
+            const metricData = gate.providerResult.metrics[metricName];
+            if (metricData) {
               const operator = Object.keys(criterion).find(key => key !== 'metric');
               const threshold = criterion[operator];
-              body += `  - ${metricName}: ${actualValue} / ${operator} / ${threshold}\n`;
+              body += `  - ${metricName}: ${metricData.value} / ${operator} / ${threshold}\n`;
             }
           }
         } else if (gate.stats?.score != null && gate.stats?.threshold != null) {

@@ -29,9 +29,8 @@ AJV-based JSON schema validation for AI evaluation rules and provider outputs. P
 ### provider-result.schema.json
 **JSON Schema for AI Provider Response Format**
 - Validates responses from `aiProvider.evaluateWithWorkflow()` calls
-- **Required fields**: `metrics`, `observations`, `summary`, `provenance`
-- **Metrics format**: Object with required `score` (0-1) plus additional metrics for matrix evaluation
-- **Observations format**: Array of string insights from AI evaluation
+- **Required fields**: `metrics`, `summary`, `provenance`
+- **Metrics format**: Object with metrics as `{value: number, observations: string[]}` structure
 - **Summary format**: Brief string explanation of the evaluation
 - **Provenance format**: Execution metadata including `runId`, `durationMs`, `workflowId`, `modelConfig`
 
