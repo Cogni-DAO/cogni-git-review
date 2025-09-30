@@ -23,7 +23,6 @@ Tests for individual functions and components in isolation, without external dep
 - `config-extraction-debug.test.js` - Configuration extraction debugging
 - `eval-criteria.test.js` - Success criteria evaluation logic tests for multi-metric evaluation
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
-- `single-statement-evaluation-workflow.test.js` - Single statement evaluation workflow tests (renamed from goal-alignment)
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP
 - `make-llm-client.test.js` - LLM client factory whitelist behavior tests
@@ -34,4 +33,4 @@ Tests for individual functions and components in isolation, without external dep
 - `spec-loader.test.js` - Repository specification loading tests
 - `summary-adapter.test.js` - Summary formatting and operator symbol mapping tests
 - `webhook-spec-debug.test.js` - Webhook specification debugging tests
-- `workflow-registry.test.js` - AI workflow registry functionality tests
+- `workflow-registry.test.js` - AI workflow registry functionality tests for unified goal-evaluations workflow
