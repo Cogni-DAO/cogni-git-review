@@ -149,17 +149,9 @@ export async function run(ctx, gateConfig) {
       diff_summary: diff_summary
     };
 
-    // Add evaluation_statement if present (consistent snake_case)
-    if (rule['evaluation-statement']) {
-      providerInput.evaluation_statement = rule['evaluation-statement'];
-    }
-    
-    // Add dual evaluation statements for goal-alignment-v2 (consistent snake_case)
-    if (rule['evaluation-statement-1']) {
-      providerInput.evaluation_statement_1 = rule['evaluation-statement-1'];
-    }
-    if (rule['evaluation-statement-2']) {
-      providerInput.evaluation_statement_2 = rule['evaluation-statement-2'];
+    // Add evaluations array for schema v0.3 (new dynamic format)
+    if (rule.evaluations) {
+      providerInput.evaluations = rule.evaluations;
     }
 
     const providerResult = await aiProvider.evaluateWithWorkflow({

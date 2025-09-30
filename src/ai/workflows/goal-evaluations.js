@@ -7,42 +7,49 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
-// Schema for structured output - matches provider-result format directly
-const EvaluationSchema = z.object({
-  metrics: z.object({
-    "statement-1": z.object({
-      value: z.number().min(0).max(1).describe("Score for evaluation statement 1"),
-      observations: z.array(z.string()).describe("Observations for statement 1")
-    }),
-    "statement-2": z.object({
-      value: z.number().min(0).max(1).describe("Score for evaluation statement 2"), 
-      observations: z.array(z.string()).describe("Observations for statement 2")
-    })
-  }).describe("Metrics with per-metric observations"),
-  summary: z.string().describe("Summary of both evaluations")
-});
+/**
+ * Create dynamic evaluation schema based on input evaluations
+ * @param {Object} evaluationsObj - Parsed evaluations object
+ * @returns {z.ZodObject} Dynamic Zod schema
+ */
+function createEvaluationSchema(evaluationsObj) {
+  const metricsSchema = {};
+  for (const metricId of Object.keys(evaluationsObj)) {
+    metricsSchema[metricId] = z.object({
+      value: z.number().min(0).max(1).describe(`Score for ${metricId} evaluation`),
+      observations: z.array(z.string()).describe(`Observations for ${metricId}`)
+    });
+  }
+  return z.object({
+    metrics: z.object(metricsSchema).describe("Metrics with per-metric observations"),
+    summary: z.string().describe(`Summary of all ${Object.keys(evaluationsObj).length} evaluations`)
+  });
+}
 
 /**
- * Create ReAct agent with pre-built LLM client
+ * Create ReAct agent with pre-built LLM client and dynamic schema
  * @param {ChatOpenAI} client - Pre-configured OpenAI client
+ * @param {z.ZodObject} schema - Dynamic evaluation schema
+ * @param {number} evalCount - Number of evaluations
  * @returns {Object} Configured ReAct agent
  */
-function createAgent(client) {
+function createAgent(client, schema, evalCount) {
+  const evalText = evalCount === 1 ? "evaluation statement" : `${evalCount} separate evaluation statements`;
   return createReactAgent({
     llm: client,
     tools: [], // No tools - pure reasoning
     responseFormat: {
-      prompt: "Evaluate the <PR Information> against two separate evaluation statements.",
-      schema: EvaluationSchema
+      prompt: `Evaluate the <PR Information> against ${evalText}.`,
+      schema: schema
     }
   });
 }
 
 /**
- * Evaluate PR against dual statements using ReAct agent - Goal Alignment v2
- * @param {Object} input - { evaluation_statement_1, evaluation_statement_2, pr_title, pr_body, diff_summary }
+ * Evaluate PR against dynamic evaluations using ReAct agent
+ * @param {Object} input - { evaluations, pr_title, pr_body, diff_summary }
  * @param {Object} options - { timeoutMs, client }
- * @returns {Promise<Object>} { metrics: { "statement-1": score1, "statement-2": score2 }, observations, summary }
+ * @returns {Promise<Object>} { metrics: { metricId: {value, observations} }, summary }
  */
 export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   if (!process.env.OPENAI_API_KEY) {
@@ -54,9 +61,28 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
   }
 
   const startTime = Date.now();
-  
-  // Create agent with pre-built client
-  const agent = createAgent(client);
+
+  // Parse evaluations array into usable format
+  const evaluationsObj = {};
+  for (const evaluation of input.evaluations) {
+    const [metricId, statement] = Object.entries(evaluation)[0];
+    evaluationsObj[metricId] = statement;
+  }
+
+  // Create dynamic schema and agent
+  const schema = createEvaluationSchema(evaluationsObj);
+  const agent = createAgent(client, schema, Object.keys(evaluationsObj).length);
+
+  // Generate dynamic prompt
+  const statements = Object.entries(evaluationsObj)
+    .map(([id, text], i) => `${i+1}. <${id}> ${text} </${id}>`)
+    .join('\n\n');
+
+  const evalCount = Object.keys(evaluationsObj).length;
+  const evalText = evalCount === 1 ? "statement" : `${evalCount} separate statements`;
+  const exampleMetrics = Object.keys(evaluationsObj)
+    .map(id => `"${id}": {value: scoreX, observations: [obsX]}`)
+    .join(', ');
 
   const promptText = `You are an expert in analyzing code pull requests against evaluation criteria. Here is the current PR:
 
@@ -68,11 +94,9 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
 <Diff Summary> ${input.diff_summary} </Diff Summary>
 </PR Information>
 
-Evaluate this PR against TWO separate statements. Evaluate each statement separately and independently:
+Evaluate this PR against ${evalText}. Evaluate each statement separately and independently:
 
-1. <evaluation_statement_1> ${input.evaluation_statement_1} </evaluation_statement_1>
-
-2. <evaluation_statement_2> ${input.evaluation_statement_2} </evaluation_statement_2>
+${statements}
 
 For each statement, provide:
 - A score from 0.0-1.0 (1.0 = best)
@@ -80,8 +104,8 @@ For each statement, provide:
 - Brief summary explanation
 
 Expected output format:
-- metrics: {"statement-1": {value: score1, observations: [obs1, obs2]}, "statement-2": {value: score2, observations: [obs3, obs4]}}
-- summary: "Combined summary of both evaluations"`;
+- metrics: {${exampleMetrics}}
+- summary: "Combined summary of all evaluations"`;
 
 
   const message = new HumanMessage(promptText);
