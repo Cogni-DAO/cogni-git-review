@@ -5,9 +5,6 @@ workflow_id: single-statement-evaluation
 
 evaluation-statement: Does NOT Re-implement mature OSS tools or libraries.
 
-# Present, but totally unused for now.
-variables: [pr_title, pr_body, diff_summary]
-
 success_criteria:
   neutral_on_missing_metrics: true
   require:
