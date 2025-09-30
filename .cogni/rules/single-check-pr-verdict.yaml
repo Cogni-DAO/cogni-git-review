@@ -5,9 +5,6 @@ workflow_id: single-statement-evaluation
 
 evaluation-statement: "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates."
 
-# Present, but totally unused for now.
-variables: [pr_title, pr_body, diff_summary]
-
 success_criteria:
   neutral_on_missing_metrics: true
   require:
