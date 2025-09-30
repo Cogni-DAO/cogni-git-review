@@ -15,16 +15,13 @@ AJV-based JSON schema validation for AI evaluation rules and provider outputs. P
 - Called early in `spec-loader.js` to prevent `rule_key`/`_metadata` property conflicts
 
 ### rule-spec.schema.json
-**JSON Schema for AI Rule Specifications v0.2**
+**JSON Schema for AI Rule Specifications v0.2/v0.3**
 - Validates `.cogni/rules/*.yaml` files used by the `ai-rule` gate
 - **Required fields**: `id`, `schema_version`, `workflow_id`, `success_criteria`
-- **Schema version**: `"0.2"` (updated from `"0.1"`)
-- **Workflow routing**: `workflow_id` field specifies AI workflow (e.g., `"single-statement-evaluation"`)
-- **Matrix success criteria**: `require` and `any_of` arrays with metric comparisons (`gte`, `gt`, `lte`, `lt`, `eq`)
-- **Evaluation statement**: `evaluation-statement` field passed as `evaluation_statement` parameter to workflows
-- **Vendor extensions**: `patternProperties: {"^x_": {}}` allows experimental fields like `x_capabilities`, `x_budgets`
-- **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` for enhanced evidence gathering
-- **Budget controls**: `x_budgets: {max_files, max_patch_bytes_per_file, max_patches}` for resource limits
+- **Schema v0.3**: Dynamic `evaluations` array maps metric IDs to statement text
+- **Workflow routing**: `workflow_id` specifies AI workflow (typically `goal-evaluations`)
+- **Success criteria**: `require` and `any_of` arrays with metric comparisons (`gte`, `gt`, `lte`, `lt`, `eq`)
+- **Vendor extensions**: `x_capabilities`, `x_budgets` for code-aware evaluation and resource limits
 
 ### provider-result.schema.json
 **JSON Schema for AI Provider Response Format**

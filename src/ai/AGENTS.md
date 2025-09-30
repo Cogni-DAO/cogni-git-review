@@ -17,21 +17,23 @@ src/ai/
 Generic workflow routing interface:
 ```javascript
 const result = await provider.evaluateWithWorkflow({
-  workflowId: 'single-statement-evaluation',
+  workflowId: 'goal-evaluations',
   workflowInput: {
-    evaluation_statement: "Deliver AI-powered advisory review to keep repo aligned",
-    pr_title: 'Add LangGraph integration',
-    pr_body: 'This PR implements...', 
+    evaluations: [
+      { "code-quality": "PR maintains code quality standards" },
+      { "security": "PR contains no security vulnerabilities" }
+    ],
+    pr_title: 'Add feature',
+    pr_body: 'Implementation details...',
     diff_summary: '3 files changed (+45 -12)'
   }
 });
 
-// Returns: { metrics: { score: 0.85 }, observations: [], summary: "Brief assessment", provenance: {} }
+// Returns: { metrics: { "code-quality": {value: 0.9, observations: [...]}, "security": {value: 1.0, observations: [...]} }, summary: "...", provenance: {} }
 ```
 
 Available workflows configured in `workflows/registry.js`:
-- `single-statement-evaluation` - Legacy single statement evaluation
-- `stub-repo-goal-alignment` - Placeholder for future repo-wide goal alignment
+- `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
 
 ## Model Selection & Temperature Policy
 Models selected automatically by environment via `model-selector.js`:

@@ -21,7 +21,7 @@
     },
     "schema_version": {
       "type": "string",
-      "enum": ["0.2"],
+      "enum": ["0.2", "0.3"],
       "description": "Rule schema version"
     },
     "blocking": {
@@ -33,20 +33,19 @@
       "type": "string",
       "description": "Workflow identifier for AI evaluation"
     },
-    "evaluation-statement": {
-      "type": "string",
-      "minLength": 10,
-      "description": "Statement describing what to evaluate in the PR"
-    },
-    "evaluation-statement-1": {
-      "type": "string",
-      "minLength": 10,
-      "description": "First evaluation statement for multi-goal evaluation"
-    },
-    "evaluation-statement-2": {
-      "type": "string", 
-      "minLength": 10,
-      "description": "Second evaluation statement for multi-goal evaluation"
+    "evaluations": {
+      "type": "array",
+      "description": "List of metric evaluations (schema v0.3)",
+      "items": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string",
+          "minLength": 10
+        },
+        "minProperties": 1,
+        "maxProperties": 1
+      },
+      "minItems": 1
     },
     "success_criteria": {
       "type": "object",
