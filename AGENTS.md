@@ -4,7 +4,7 @@
 **cogni-git-review** - CogniDAO's GitHub App that automatically evaluates pull requests against repository-defined quality gates, providing fast feedback on code changes, with the goal of keeping the codebase clean, consistent, and aligned with the project's goals.
 
 ## Core Function
-The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. All gates execute immediately. Results appear as GitHub check runs with pass/fail/neutral status.
+The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. Detailed results appear as GitHub check runs with pass/fail/neutral status, and a brief summary is commented on the PR. 
 
 ## Architecture Overview
 - **Framework**: Probot v13.4.7 (JavaScript ES modules)
