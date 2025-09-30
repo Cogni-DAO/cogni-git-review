@@ -4,7 +4,7 @@ blocking: true
 workflow_id: goal-evaluations
 
 evaluations:
-  - single-verdict: The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates.
+  - single-verdict: "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates."
 
 success_criteria:
   neutral_on_missing_metrics: true
