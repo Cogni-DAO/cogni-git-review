@@ -1,12 +1,14 @@
-id: goal-alignment-v2
+id: cogni-git-review-repo-goal-alignment
 schema_version: "0.3"
 blocking: true
 workflow_id: goal-evaluations
 
 # MVP test of our goal evaluation structure
 evaluations:
-  - code-review-bot: This PR implements, tests, or fixes functionality for a code review bot.
-  - non-malicious: PR contains no malicious code. 
+  - code-review-bot: This PR implements, tests, or fixes functionality for a code review bot, designed to increase syntropy.
+  - single-verdict: "The repo does not deviate from its goal: a single AI-powered Pass/Fail/Neutral verdict on each pull request, derived from potentially multiple rule gates."
+
+
 
 # Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
 x_capabilities:
@@ -18,5 +20,5 @@ success_criteria:
   require:
     - metric: code-review-bot
       gte: 0.8
-    - metric: non-malicious
+    - metric: single-verdict
       gte: 0.8
