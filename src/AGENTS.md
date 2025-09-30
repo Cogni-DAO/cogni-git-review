@@ -30,7 +30,7 @@ src/
   - `renderCheckSummary()` - Main check summary renderer
   - `formatGateResults()` - Detailed per-gate markdown sections with model info for AI rules
   - `formatRunSummaryJSON()` - Debug JSON output
-  - **AI rule formatting**: Displays "metric: value / operator / threshold" from structured data
+  - **AI rule formatting**: Displays "metric: value operator threshold" with mathematical symbols (>=, <=, >, <, =) from structured data
 
 ### Processing Layers
 - **ai/**: AI evaluation system with provider routing and workflows (→ AGENTS.md)

@@ -93,6 +93,20 @@ function getLabel(gate) {
 }
 
 /**
+ * Map comparison operators to mathematical symbols
+ */
+function getOperatorSymbol(operator) {
+  const operatorMap = {
+    'gte': '>=',
+    'lte': '<=', 
+    'gt': '>',
+    'lt': '<',
+    'eq': '='
+  };
+  return operatorMap[operator] || operator;
+}
+
+/**
  * Render a single gate section
  */
 function renderGate(gate, status) {
@@ -112,7 +126,7 @@ function renderGate(gate, status) {
     if (metricData) {
       const operator = Object.keys(criterion).find(key => key !== 'metric');
       const threshold = criterion[operator];
-      section += `- **${metricName}:** ${metricData.value} / ${operator} / ${threshold}\n`;
+      section += `- **${metricName}:** ${metricData.value} ${getOperatorSymbol(operator)} ${threshold}\n`;
       
       // Show metric-specific observations
       if (metricData.observations && metricData.observations.length > 0) {
