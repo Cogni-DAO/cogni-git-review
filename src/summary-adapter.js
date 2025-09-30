@@ -101,15 +101,23 @@ function renderGate(gate, status) {
                 status === 'pass' ? '✅' : '⚠️';
   let section = `### ${emoji} ${getLabel(gate)}\n\n`;
   
-  // AI rule score/threshold/statement
-  if (isFinite(gate.stats?.score)) {
-    const score = gate.stats.score;
-    const threshold = gate.stats.threshold;
-    section += `- **Score:** ${score}/${threshold}\n`;
-    
-    if (gate.stats.statement) {
-      section += `- **Statement:** ${gate.stats.statement}\n`;
+  // DEBUG: Log entire gate object to see actual structure
+  console.log('🔍 Summary-Adapter DEBUG - Full gate object:', JSON.stringify(gate, null, 2));
+  
+  // AI rule metrics from new structured format
+  const criteria = gate.rule?.success_criteria?.require || [];
+  for (const criterion of criteria) {
+    const metricName = criterion.metric;
+    const actualValue = gate.providerResult?.metrics?.[metricName];
+    if (actualValue !== undefined) {
+      const operator = Object.keys(criterion).find(key => key !== 'metric');
+      const threshold = criterion[operator];
+      section += `- **${metricName}:** ${actualValue} / ${operator} / ${threshold}\n`;
     }
+  }
+  
+  if (gate.rule?.['evaluation-statement']) {
+    section += `- **Statement:** ${gate.rule['evaluation-statement']}\n`;
   }
   
   // Violations

@@ -21,6 +21,7 @@ Tests for individual functions and components in isolation, without external dep
 - `ai-rule-input-validation.test.js` - AI rule input assembly and validation tests
 - `check-contract.min.test.js` - Enforce github Check name follows environment-aware pattern (prod locked, others get suffix)
 - `config-extraction-debug.test.js` - Configuration extraction debugging
+- `eval-criteria.test.js` - Success criteria evaluation logic tests for multi-metric evaluation
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
 - `single-statement-evaluation-workflow.test.js` - Single statement evaluation workflow tests (renamed from goal-alignment)
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests

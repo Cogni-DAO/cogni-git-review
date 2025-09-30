@@ -18,17 +18,19 @@ src/
 ### Input Layer
 - **spec-loader.js**: Repository `.cogni/*` file loading
   - `loadRepoSpec()` - Main repository specification loading
-  - `loadSingleRule()` - AI rule file loading for gates
+  - `loadSingleRule()` - AI rule file loading with schema validation for gates
   - `clearSpecCache()`, `getSpecCacheStats()` - Cache management
 
 ### Output Layers  
 - **pr-comment.js**: PR comment publishing with staleness guards
   - `postPRComment()` - Basic comment creation
   - `postPRCommentWithGuards()` - Comment with head SHA validation
+  - **AI rule display**: Uses structured format (`gate.providerResult.metrics` + `gate.rule.success_criteria`) with fallback to legacy `stats`
 - **summary-adapter.js**: Check run summary formatting
   - `renderCheckSummary()` - Main check summary renderer
   - `formatGateResults()` - Detailed per-gate markdown sections with model info for AI rules
   - `formatRunSummaryJSON()` - Debug JSON output
+  - **AI rule formatting**: Displays "metric: value / operator / threshold" from structured data
 
 ### Processing Layers
 - **ai/**: AI evaluation system with provider routing and workflows (→ AGENTS.md)
