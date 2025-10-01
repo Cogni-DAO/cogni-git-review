@@ -48,10 +48,10 @@ function createAgent(client, schema, evalCount) {
 /**
  * Evaluate PR against dynamic evaluations using ReAct agent
  * @param {Object} input - { evaluations, pr_title, pr_body, diff_summary }
- * @param {Object} options - { timeoutMs, client }
+ * @param {Object} options - { timeoutMs, client, callbacks }
  * @returns {Promise<Object>} { metrics: { metricId: {value, observations} }, summary }
  */
-export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
+export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks = [] } = {}) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is missing or empty');
   }
@@ -114,7 +114,7 @@ Expected output format:
   console.log('🤖 LangGraph: Invoking agent...');
   const result = await agent.invoke({
     messages: [message]
-  });
+  }, { callbacks });
   
   console.log(`🤖 LangGraph: Completed in ${Date.now() - startTime}ms`, result.structuredResponse);
   return result.structuredResponse;

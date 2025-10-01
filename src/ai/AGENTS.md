@@ -14,7 +14,7 @@ src/ai/
 ```
 
 ## Provider Contract
-Generic workflow routing interface:
+Generic workflow routing interface with automatic Langfuse tracing:
 ```javascript
 const result = await provider.evaluateWithWorkflow({
   workflowId: 'goal-evaluations',
@@ -31,6 +31,8 @@ const result = await provider.evaluateWithWorkflow({
 
 // Returns: { metrics: { "code-quality": {value: 0.9, observations: [...]}, "security": {value: 1.0, observations: [...]} }, summary: "...", provenance: {} }
 ```
+
+**Observability**: All AI calls automatically traced to Langfuse when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured.
 
 Available workflows configured in `workflows/registry.js`:
 - `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
@@ -54,6 +56,9 @@ Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 - `AI_TIMEOUT_MS=180000` - Per-call timeout
 - `AI_NEUTRAL_ON_ERROR=true` - Error handling policy
 - `OPENAI_API_KEY` - Provider credentials
+- `LANGFUSE_PUBLIC_KEY` - Langfuse observability (optional)
+- `LANGFUSE_SECRET_KEY` - Langfuse observability (optional)
+- `LANGFUSE_BASE_URL` - Langfuse host (optional, defaults to cloud.langfuse.com)
 
 ## Constraints
 - No direct LLM calls outside provider.js

@@ -5,6 +5,7 @@
  */
 
 import { ChatOpenAI } from "@langchain/openai";
+import { CallbackHandler } from "langfuse-langchain";
 import { getWorkflow } from './workflows/registry.js';
 import { selectModel, buildContext } from './model-selector.js';
 
@@ -49,11 +50,16 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     console.log('🤖 AI Provider: ModelConfig:', modelConfig);
     
     // Create LLM client with temperature policy
-    const { client, meta } = makeLLMClient({ model: modelConfig.model });
-    // console.log(`🤖 LLM Client: model=${meta.model}, temp=${meta.tempPolicy}`);
+    const { client } = makeLLMClient({ model: modelConfig.model });
+    
+    // Create Langfuse callback handler if configured
+    const callbacks = [];
+    if (process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY) {
+      callbacks.push(new CallbackHandler());
+    }
     
     // Route to selected workflow - preserve exact return format
-    const result = await evaluate(workflowInput, { timeoutMs, client });
+    const result = await evaluate(workflowInput, { timeoutMs, client, callbacks });
     
     // Add provenance wrapper with resolved model info
     return {
