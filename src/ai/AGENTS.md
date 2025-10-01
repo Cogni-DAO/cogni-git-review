@@ -32,7 +32,7 @@ const result = await provider.evaluateWithWorkflow({
 // Returns: { metrics: { "code-quality": {value: 0.9, observations: [...]}, "security": {value: 1.0, observations: [...]} }, summary: "...", provenance: {} }
 ```
 
-**Observability**: All AI calls automatically traced to Langfuse when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured.
+**Observability**: All AI calls automatically traced to Langfuse when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured. Traces tagged with environment based on `APP_ENV`.
 
 Available workflows configured in `workflows/registry.js`:
 - `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
