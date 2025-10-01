@@ -1,4 +1,4 @@
-// Checks API example
+// Github Checks API example
 // See: https://developer.github.com/v3/checks/ to learn more
 
 import { loadRepoSpec } from './src/spec-loader.js';

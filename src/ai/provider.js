@@ -5,8 +5,10 @@
  */
 
 import { ChatOpenAI } from "@langchain/openai";
+import { CallbackHandler } from "langfuse-langchain";
 import { getWorkflow } from './workflows/registry.js';
 import { selectModel, buildContext } from './model-selector.js';
+import { ENV } from '../constants.js';
 
 // Models we explicitly want temperature=0 for determinism
 const DETERMINISTIC_MODELS = new Set([
@@ -49,11 +51,43 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     console.log('🤖 AI Provider: ModelConfig:', modelConfig);
     
     // Create LLM client with temperature policy
-    const { client, meta } = makeLLMClient({ model: modelConfig.model });
-    console.log(`🤖 LLM Client: model=${meta.model}, temp=${meta.tempPolicy}`);
+    const { client } = makeLLMClient({ model: modelConfig.model });
+    
+    // Create Langfuse callback handler if configured
+    const callbacks = [];
+    if (process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY) {
+      callbacks.push(new CallbackHandler({
+        environment: ENV
+      }));
+    }
+
+    // Unified run context for tracing + filtering
+    const runMeta = {
+      repo: workflowInput.repo,
+      pr_number: workflowInput.pr_number,
+      commit_sha: workflowInput.commit_sha,
+      installation_id: workflowInput.installation_id,
+      repo_owner: workflowInput.repo_owner,
+      repo_name: workflowInput.repo_name,
+      workflow_id: workflowId,
+      rule_id: workflowInput.rule_id,
+      model: modelConfig.model,
+      environment: ENV,
+    };
+    const tags = [
+      `repo:${runMeta.repo}`,
+      `workflow:${workflowId}`,
+      `model:${modelConfig.model}`
+    ].filter(Boolean);
+    const runnableConfig = {
+      callbacks,
+      tags,
+      metadata: runMeta,
+      configurable: { sessionId: runMeta.pr_number ? `pr-${runMeta.pr_number}` : undefined }
+    };
     
     // Route to selected workflow - preserve exact return format
-    const result = await evaluate(workflowInput, { timeoutMs, client });
+    const result = await evaluate(workflowInput, { timeoutMs, client, ...runnableConfig });
     
     // Add provenance wrapper with resolved model info
     return {
@@ -63,7 +97,8 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
         durationMs: Date.now() - startTime,
         providerVersion: PROVIDER_VERSION,
         workflowId,
-        modelConfig: modelConfig  // Include entire modelConfig object
+        modelConfig,
+        meta: runMeta
       }
     };
     

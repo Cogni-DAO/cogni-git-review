@@ -36,6 +36,18 @@ services:
     scope: RUN_TIME
     type: SECRET
     value: ${WEBHOOK_SECRET}
+  - key: LANGFUSE_PUBLIC_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LANGFUSE_PUBLIC_KEY}
+  - key: LANGFUSE_SECRET_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LANGFUSE_SECRET_KEY}
+  - key: LANGFUSE_BASE_URL
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LANGFUSE_BASE_URL}
   github:
     branch: main
     repo: Cogni-DAO/cogni-git-review
