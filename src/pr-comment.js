@@ -34,10 +34,13 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
       const violations = gate.violations || [];
       if (violations.length === 0) {
         // Check if this is an AI gate with structured data
-        if (gate.providerResult?.metrics && gate.rule?.success_criteria?.require) {
+        const requireCriteria = gate.rule?.success_criteria?.require || [];
+        const anyOfCriteria = gate.rule?.success_criteria?.any_of || [];
+        const allCriteria = [...requireCriteria, ...anyOfCriteria];
+        
+        if (gate.providerResult?.metrics && allCriteria.length > 0) {
           // Display structured metrics vs criteria
-          const criteria = gate.rule.success_criteria.require;
-          for (const criterion of criteria) {
+          for (const criterion of allCriteria) {
             const metricName = criterion.metric;
             const metricData = gate.providerResult.metrics[metricName];
             if (metricData) {

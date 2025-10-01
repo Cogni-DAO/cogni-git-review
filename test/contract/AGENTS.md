@@ -123,7 +123,10 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `spec-gate-consistency.test.js` - Gate counting validation
 - `simple-integration.test.js` - Basic success/failure paths
 - `code-aware-ai-gate.test.js` - Integration tests for code-aware AI rule capabilities
-- `welcome-pr-creation.test.js` - Installation workflow verification MVP
+- `welcome-pr-creation.test.js` - Installation workflow verification MVP 
+  - Tests creation of welcome branch, files, and PR for new repository onboarding
+  - Validates all syntropy AI rule templates are copied: avoid-duplication, pr-syntropy-coherence, patterns-and-docs, repo-goal-alignment
+  - Includes filesystem mocks for all AI rule template files
 - `installation-idempotency.test.js` - Installation retry scenarios
 - `template-customization.test.js` - Template replacement validation (repo-spec + CODEOWNERS customization)
 - `agents-sync-integration.test.js` - AGENTS.md synchronization gate integration tests
