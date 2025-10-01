@@ -26,11 +26,13 @@ src/
   - `postPRComment()` - Basic comment creation
   - `postPRCommentWithGuards()` - Comment with head SHA validation
   - **AI rule display**: Uses structured format (`gate.providerResult.metrics` + `gate.rule.success_criteria`) with fallback to legacy `stats`
+  - **Success criteria support**: Handles both `require` and `any_of` criteria types for comprehensive rule metric display
 - **summary-adapter.js**: Check run summary formatting
   - `renderCheckSummary()` - Main check summary renderer
   - `formatGateResults()` - Detailed per-gate markdown sections with model info for AI rules
   - `formatRunSummaryJSON()` - Debug JSON output
   - **AI rule formatting**: Displays "metric: value operator threshold" with mathematical symbols (>=, <=, >, <, =) from structured data
+  - **Success criteria support**: Handles both `require` and `any_of` criteria types for complete rule metric display
 
 ### Processing Layers
 - **ai/**: AI evaluation system with provider routing and workflows (→ AGENTS.md)
