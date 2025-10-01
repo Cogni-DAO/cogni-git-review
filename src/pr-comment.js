@@ -12,14 +12,14 @@
  * @param {number} prNumber - PR number
  */
 export async function postPRComment(context, runResult, checkUrl, headSha, prNumber) {
-  const { gates } = runResult;
+  const { gates, overall_status } = runResult;
   const failed = gates.filter(g => g.status === 'fail');
   const neutral = gates.filter(g => g.status === 'neutral');
   const passed = gates.filter(g => g.status === 'pass');
 
-  const verdict = failed.length > 0 ? '❌ FAIL' 
-                : neutral.length > 0 ? '⚠️ WARN' 
-                : '✅ PASS';
+  const verdict = overall_status === 'fail' ? '❌ FAIL' 
+                : overall_status === 'pass' ? '✅ PASS' 
+                : '⚠️ WARN';
 
   let body = `## Cogni Review — ${verdict}\n\n`;
   body += `**Gates:** ✅ ${passed.length} | ❌ ${failed.length} | ⚠️ ${neutral.length}\n\n`;
