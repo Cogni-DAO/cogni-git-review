@@ -119,8 +119,11 @@ function renderGate(gate, status) {
   console.log('🔍 Summary-Adapter DEBUG - Full gate object:', JSON.stringify(gate, null, 2));
   
   // AI rule metrics from new structured format
-  const criteria = gate.rule?.success_criteria?.require || [];
-  for (const criterion of criteria) {
+  const requireCriteria = gate.rule?.success_criteria?.require || [];
+  const anyOfCriteria = gate.rule?.success_criteria?.any_of || [];
+  const allCriteria = [...requireCriteria, ...anyOfCriteria];
+  
+  for (const criterion of allCriteria) {
     const metricName = criterion.metric;
     const metricData = gate.providerResult?.metrics?.[metricName];
     if (metricData) {
