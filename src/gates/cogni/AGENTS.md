@@ -13,7 +13,7 @@ Gates are implemented by cogni-git-review. The .cogni/repo-spec.yml in a reposit
 - **forbidden-scopes**: Repository non-goals validation  
 - **agents-md-sync**: Ensures AGENTS.md files are updated when code changes
 - **governance-policy**: Validates required GitHub Actions workflows exist and match context names
-- **ai-rule**: AI-powered evaluation using declarative rules (supports multiple instances)
+- **ai-rule**: AI-powered evaluation using declarative rules (supports multiple instances of AI-rules, each running as their own gate). Passes rich context (PR, repo, commit info) to AI workflows for langfuse tracing
 
 ## Gate Implementation Pattern
 ```javascript
