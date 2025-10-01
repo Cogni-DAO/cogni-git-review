@@ -42,6 +42,18 @@ services:
     scope: RUN_TIME
     type: SECRET
     value: ${PRIVATE_KEY} 
+  - key: LANGFUSE_PUBLIC_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LANGFUSE_PUBLIC_KEY}
+  - key: LANGFUSE_SECRET_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LANGFUSE_SECRET_KEY}
+  - key: LANGFUSE_BASE_URL
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LANGFUSE_BASE_URL}
   github:
     branch: main
     deploy_on_push: false

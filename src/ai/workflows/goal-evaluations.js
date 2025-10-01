@@ -48,10 +48,10 @@ function createAgent(client, schema, evalCount) {
 /**
  * Evaluate PR against dynamic evaluations using ReAct agent
  * @param {Object} input - { evaluations, pr_title, pr_body, diff_summary }
- * @param {Object} options - { timeoutMs, client }
+ * @param {Object} options - { timeoutMs, client, callbacks, tags, metadata, configurable }
  * @returns {Promise<Object>} { metrics: { metricId: {value, observations} }, summary }
  */
-export async function evaluate(input, { timeoutMs: _timeoutMs, client } = {}) {
+export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks = [], tags = [], metadata = {}, configurable = {} } = {}) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is missing or empty');
   }
@@ -114,6 +114,16 @@ Expected output format:
   console.log('🤖 LangGraph: Invoking agent...');
   const result = await agent.invoke({
     messages: [message]
+  }, {
+    callbacks,
+    // Extend provider tags with workflow-specific context
+    tags: [...tags, "agent:goal-evaluations"],
+    metadata: { 
+      ...metadata, 
+      // Add workflow-specific metadata to the langfuse trace
+      evaluation_count: Object.keys(evaluationsObj).length
+    },
+    configurable
   });
   
   console.log(`🤖 LangGraph: Completed in ${Date.now() - startTime}ms`, result.structuredResponse);

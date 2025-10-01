@@ -63,6 +63,11 @@
           "type": "object",
           "description": "Model configuration used",
           "additionalProperties": true
+        },
+        "meta": {
+          "type": "object",
+          "description": "Rich metadata for tracing and debugging",
+          "additionalProperties": true
         }
       }
     }

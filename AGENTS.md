@@ -148,6 +148,8 @@ npm run lint  # ESLint for JavaScript code
 npm run lint:workflows  # actionlint for GitHub Actions workflows
 ```
 
+**Optional Observability**: Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` for AI tracing.
+
 
 ## Integration Strategy
 

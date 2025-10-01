@@ -118,13 +118,13 @@ export async function run(ctx, gateConfig) {
 
     // Step 4: Build PR context with enhanced diff summary
     const pr = ctx.pr;
-    console.log('🔍 PR Data Debug:', {
-      title: pr?.title,
-      body: pr?.body?.substring(0, 100),
-      changed_files: pr?.changed_files,
-      additions: pr?.additions,
-      deletions: pr?.deletions
-    });
+    // console.log('🔍 PR Data Debug:', {
+    //   title: pr?.title,
+    //   body: pr?.body?.substring(0, 100),
+    //   changed_files: pr?.changed_files,
+    //   additions: pr?.additions,
+    //   deletions: pr?.deletions
+    // });
 
     // Step 5: Gather evidence based on rule capabilities
     const enhancedDiffSummary = await gatherEvidence(ctx, rule);
@@ -141,12 +141,22 @@ export async function run(ctx, gateConfig) {
     }
 
     // Step 6: Prepare generic workflow input
-    const workflowId = rule.workflow_id || 'single-statement-evaluation';
+    const workflowId = rule.workflow_id;
 
     const providerInput = {
+      // Workflow data
       pr_title: pr?.title || '',
       pr_body: pr?.body || '',
-      diff_summary: diff_summary
+      diff_summary: diff_summary,
+      // TODO - refactor rules.js to be simpler, and this pr info gathering happens in the AI workflow.
+      // Context data for tracing. Temp fix for unblocking telemetry
+      rule_id: rule.rule_key,
+      pr_number: ctx.pr?.number,
+      repo: ctx.payload?.repository?.full_name,
+      commit_sha: ctx.payload?.pull_request?.head?.sha,
+      installation_id: ctx.payload?.installation?.id,
+      repo_owner: ctx.repo().owner,
+      repo_name: ctx.repo().repo
     };
 
     // Add evaluations array for schema v0.3 (new dynamic format)
