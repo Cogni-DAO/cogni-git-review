@@ -46,13 +46,13 @@ function formatGateResults(runResult) {
     neutral: groups.neutral.length
   };
   
-  // Generate summary line
+  // Generate summary line based on overall status
   let summary;
   if (gates.length === 0) {
     summary = 'No gates configured';
-  } else if (counts.fail > 0) {
+  } else if (runResult.overall_status === 'fail') {
     summary = `Gate failures: ${counts.fail}`;
-  } else if (counts.neutral > 0) {
+  } else if (runResult.overall_status === 'neutral') {
     summary = `Gates neutral: ${counts.neutral}`;
   } else {
     summary = 'All gates passed';
