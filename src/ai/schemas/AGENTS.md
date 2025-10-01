@@ -29,7 +29,7 @@ AJV-based JSON schema validation for AI evaluation rules and provider outputs. P
 - **Required fields**: `metrics`, `summary`, `provenance`
 - **Metrics format**: Object with metrics as `{value: number, observations: string[]}` structure
 - **Summary format**: Brief string explanation of the evaluation
-- **Provenance format**: Execution metadata including `runId`, `durationMs`, `workflowId`, `modelConfig`
+- **Provenance format**: Execution metadata including `meta`, `runId`, `durationMs`, `workflowId`, `modelConfig`
 
 ## Validation Flow
 1. **Early validation** in `spec-loader.js loadSingleRule()` on raw YAML data
