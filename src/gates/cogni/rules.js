@@ -118,13 +118,13 @@ export async function run(ctx, gateConfig) {
 
     // Step 4: Build PR context with enhanced diff summary
     const pr = ctx.pr;
-    console.log('🔍 PR Data Debug:', {
-      title: pr?.title,
-      body: pr?.body?.substring(0, 100),
-      changed_files: pr?.changed_files,
-      additions: pr?.additions,
-      deletions: pr?.deletions
-    });
+    // console.log('🔍 PR Data Debug:', {
+    //   title: pr?.title,
+    //   body: pr?.body?.substring(0, 100),
+    //   changed_files: pr?.changed_files,
+    //   additions: pr?.additions,
+    //   deletions: pr?.deletions
+    // });
 
     // Step 5: Gather evidence based on rule capabilities
     const enhancedDiffSummary = await gatherEvidence(ctx, rule);

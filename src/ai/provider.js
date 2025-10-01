@@ -50,7 +50,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     
     // Create LLM client with temperature policy
     const { client, meta } = makeLLMClient({ model: modelConfig.model });
-    console.log(`🤖 LLM Client: model=${meta.model}, temp=${meta.tempPolicy}`);
+    // console.log(`🤖 LLM Client: model=${meta.model}, temp=${meta.tempPolicy}`);
     
     // Route to selected workflow - preserve exact return format
     const result = await evaluate(workflowInput, { timeoutMs, client });

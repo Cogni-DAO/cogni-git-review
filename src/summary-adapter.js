@@ -116,7 +116,7 @@ function renderGate(gate, status) {
   let section = `### ${emoji} ${getLabel(gate)}\n\n`;
   
   // DEBUG: Log entire gate object to see actual structure
-  console.log('🔍 Summary-Adapter DEBUG - Full gate object:', JSON.stringify(gate, null, 2));
+  // console.log('🔍 Summary-Adapter DEBUG - Full gate object:', JSON.stringify(gate, null, 2));
   
   // AI rule metrics from new structured format
   const requireCriteria = gate.rule?.success_criteria?.require || [];
