@@ -64,11 +64,11 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
-    // Determine overall status
+    // Determine overall status - prioritize failures over partial execution
     const hasNoGates = allGates.length === 0;
     const overall_status = hasNoGates ? 'neutral'
-                         : (isPartial && isAborted) ? 'neutral' 
                          : hasFail ? 'fail' 
+                         : (isPartial && isAborted) ? 'neutral'
                          : (hasNeutral ? 'neutral' : 'pass');
 
     clearTimeout(timeoutId);

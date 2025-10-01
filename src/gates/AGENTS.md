@@ -81,7 +81,8 @@ for (const gate of spec.gates) {
 - **Orchestrator** (`index.js`): Sets up AbortController, detects partial results, surfaces neutral status
 - **Launcher** (`run-configured.js`): Checks abort signal before/during each gate, returns partial results  
 - **Partial execution**: When timeout occurs, returns results for gates that completed
-- **Overall status**: Partial + aborted = neutral, otherwise fail > neutral > pass
+- **Overall status logic**: Prioritizes failures over timeout conditions: `hasFail ? 'fail' : (isPartial && isAborted) ? 'neutral' : (hasNeutral ? 'neutral' : 'pass')`
+- **Consistency**: Both PR comments and check summaries reference the same `overall_status` computation
 
 ## Adding New Gates
 1. Create `src/gates/cogni/new-gate.js` with gate implementation:
