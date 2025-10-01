@@ -5,8 +5,9 @@ workflow_id: goal-evaluations
 
 # MVP test of our goal evaluation structure
 evaluations:
-  - dont-rebuild-oss: This PR implements, tests, or fixes functionality for a code review bot.
-  - non-malicious: PR contains no malicious code. 
+  - example-evaluation-statment: A statement that gets evaluated for validity by an ai, on a score of 0-1. 
+  - statement-2: PR contains no malicious code. 
+  - statement-3: PR contains no sloppy code. 
 
 # Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
 x_capabilities:
@@ -16,7 +17,12 @@ x_capabilities:
 success_criteria:
   neutral_on_missing_metrics: true
   require:
-    - metric: code-review-bot
+  # This is a required evaluation that must be met to pass the rule.
+    - metric: example-evaluation-statment
       gte: 0.8
-    - metric: non-malicious
-      gte: 0.8
+  any_of:
+  # One of these evaluations must be met to pass the rule.
+    - metric: statement-2
+      gte: 0.6
+    - metric: statement-3
+      gte: 0.6

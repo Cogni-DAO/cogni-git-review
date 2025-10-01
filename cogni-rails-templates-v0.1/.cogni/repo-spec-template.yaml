@@ -3,6 +3,9 @@
 
 schema_version: '0.1.4'
 
+intent:
+  name: REPO_NAME
+
 # CI checks that must be required-by-branch-protection and green to merge.
 # These are *status context names*, not workflow file names. 
 # Cogni confirms these are enforced via Allstar.
@@ -20,10 +23,6 @@ gates:
       max_changed_files: 30
       max_total_diff_kb: 100
 
-  - type: ai-rule
-    with:
-      rule_file: ai-rule-template.yaml
-
 # Ensure */*/AGENTS.md files are updated when code changes
   - type: agents-md-sync
     id: agents_md_sync
@@ -31,7 +30,22 @@ gates:
     #   code_patterns: ["src/**/*.js", "lib/**/*.ts"]  # Files that require doc updates
     #   doc_pattern: "CLAUDE.md"                       # Documentation file to check. Default is AGENTS.md
 
-  # - type: goal-declaration
-  #   id: goal_declaration
-  # - type: forbidden-scopes
-  #   id: forbidden_scopes
+  - type: ai-rule
+    with:
+      rule_file: avoid-duplication.yaml
+  - type: ai-rule
+    with:
+      rule_file: pr-syntropy-coherence.yaml
+  - type: ai-rule
+    with:
+      rule_file: patterns-and-docs.yaml
+
+  ## TODO - find and customize this rule for your repo!
+  - type: ai-rule
+    with:
+      rule_file: repo-goal-alignment.yaml
+
+  ## template for adding a new rule. 
+  # - type: ai-rule
+  #   with:
+  #     rule_file: ai-rule-template.yaml

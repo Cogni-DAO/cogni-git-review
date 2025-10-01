@@ -18,6 +18,10 @@ installation_repositories.added webhook
         ├── Add .github/CODEOWNERS (customized with repo owner)
         ├── Copy template files from cogni-rails-templates-v0.1/:
         │   ├── .cogni/rules/ai-rule-template.yaml
+        │   ├── .cogni/rules/avoid-duplication.yaml
+        │   ├── .cogni/rules/pr-syntropy-coherence.yaml
+        │   ├── .cogni/rules/patterns-and-docs.yaml
+        │   ├── .cogni/rules/repo-goal-alignment.yaml (from YOUR-repo-goal-alignment.yaml)
         │   ├── .allstar/*.yaml (allstar config)
         │   ├── .github/workflows/*.yaml (CI pipelines)  
         │   └── repolinter.json (policy enforcement)
@@ -33,6 +37,10 @@ installation_repositories.added webhook
 ### Templates Used (from cogni-rails-templates-v0.1/)
 - `.cogni/repo-spec-template.yaml` - Repository specification
 - `.cogni/rules/ai-rule-template.yaml` - AI rule template
+- `.cogni/rules/avoid-duplication.yaml` - Anti-duplication rule
+- `.cogni/rules/pr-syntropy-coherence.yaml` - PR coherence rule
+- `.cogni/rules/patterns-and-docs.yaml` - Pattern adherence rule
+- `.cogni/rules/YOUR-repo-goal-alignment.yaml` - Repo-specific goal alignment template
 - `.allstar/*.yaml` - Allstar configuration bundle
 - `.github/workflows/*.yaml` - CI/security/e2e/deployment workflow templates
 - `.github/CODEOWNERS` - Code ownership template

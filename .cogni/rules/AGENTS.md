@@ -7,6 +7,7 @@ This directory contains YAML rule definitions for AI-powered PR evaluation. Each
 - **Single rule per gate instance**: Each `ai-rule` gate loads exactly one rule file
 - **Multiple instances supported**: Same rule type can run multiple times with different rule files
 - **Universal application**: Rules apply to all PRs (no file selectors in MVP)
+- **Statement Evaluation Workflow**: Currently the only `workflow` supported. AI analyzed a matrix of statements with a 0-1 score, and the gate evaluates these against `success_criteria`
 
 ## Rule Schema v0.3
 ```yaml

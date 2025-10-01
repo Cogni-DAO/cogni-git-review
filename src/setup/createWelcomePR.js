@@ -189,6 +189,26 @@ export async function createWelcomePR(context, repoInfo) {
         message: 'feat(cogni): add AI rule template'
       },
       {
+        source: '.cogni/rules/avoid-duplication.yaml',
+        dest: '.cogni/rules/avoid-duplication.yaml',
+        message: 'feat(cogni): add avoid duplication rule'
+      },
+      {
+        source: '.cogni/rules/pr-syntropy-coherence.yaml',
+        dest: '.cogni/rules/pr-syntropy-coherence.yaml',
+        message: 'feat(cogni): add PR syntropy coherence rule'
+      },
+      {
+        source: '.cogni/rules/patterns-and-docs.yaml',
+        dest: '.cogni/rules/patterns-and-docs.yaml',
+        message: 'feat(cogni): add patterns and docs rule'
+      },
+      {
+        source: '.cogni/rules/YOUR-repo-goal-alignment.yaml',
+        dest: '.cogni/rules/repo-goal-alignment.yaml',
+        message: 'feat(cogni): add repo goal alignment rule template'
+      },
+      {
         source: '.allstar/allstar.yaml',
         dest: '.allstar/allstar.yaml',
         message: 'feat(allstar): add allstar configuration'

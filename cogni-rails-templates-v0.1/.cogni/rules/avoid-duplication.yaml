@@ -1,0 +1,19 @@
+id: avoid-duplication
+schema_version: "0.3"
+blocking: true
+workflow_id: goal-evaluations
+
+evaluations:
+  - dont-rebuild-oss: This PR does not re-implement mature OSS tools or libraries.
+  - avoids-duplication: >
+      This PR adds new capability rather than reimplementing functionality
+      that already exists elsewhere in the codebase.
+
+
+success_criteria:
+  neutral_on_missing_metrics: true
+  require:
+    - metric: dont-rebuild-oss
+      gte: 0.8
+    - metric: avoids-duplication
+      gte: 0.8

@@ -26,6 +26,14 @@ gates:
         return `name: "AI Rule Template"
 description: "Template for AI-powered rules"
 threshold: 0.8`;
+      } else if (path.includes('avoid-duplication.yaml')) {
+        return 'id: avoid-duplication\nschema_version: "0.3"';
+      } else if (path.includes('pr-syntropy-coherence.yaml')) {
+        return 'id: strict-pr-mapping\nschema_version: "0.3"';
+      } else if (path.includes('patterns-and-docs.yaml')) {
+        return 'id: patterns-and-docs\nschema_version: "0.3"';
+      } else if (path.includes('YOUR-repo-goal-alignment.yaml')) {
+        return 'id: repo-goal-alignment\nschema_version: "0.3"';
       } else if (path.includes('.allstar/allstar.yaml')) {
         return 'issue:\n  action: log';
       } else if (path.includes('.allstar/branch_protection.yaml')) {
@@ -194,7 +202,11 @@ threshold: 0.8`;
     
     const expectedFiles = [
       '.cogni/repo-spec.yaml',
-      '.cogni/rules/ai-rule-template.yaml', 
+      '.cogni/rules/ai-rule-template.yaml',
+      '.cogni/rules/avoid-duplication.yaml',
+      '.cogni/rules/pr-syntropy-coherence.yaml',
+      '.cogni/rules/patterns-and-docs.yaml',
+      '.cogni/rules/repo-goal-alignment.yaml',
       '.allstar/allstar.yaml',
       '.allstar/branch_protection.yaml',
       '.github/workflows/ci.yaml',

@@ -1,0 +1,24 @@
+id: cogni-git-review-repo-goal-alignment
+schema_version: "0.3"
+blocking: true
+workflow_id: goal-evaluations
+
+# Edit this! Update it with a clear description of the repo's goal.
+evaluations:
+  - repo-goal: This PR directly advances [DESCRIBE YOUR REPO'S CORE MISSION].
+  # - clear-sub-goals: This PR only uses open source tools and does not introduce new paid dependencies.
+
+
+
+# Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
+x_capabilities:
+  - diff_summary      # Enable enhanced diff summary with file stats
+  - file_patches      # Include actual patch content for analysis
+
+success_criteria:
+  neutral_on_missing_metrics: true
+  require:
+    - metric: repo-goal
+      gte: 0.8
+    # - metric: clear-sub-goal
+    #   gte: 0.8
