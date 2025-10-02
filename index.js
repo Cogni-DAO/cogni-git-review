@@ -7,6 +7,7 @@ import { postPRCommentWithGuards } from './src/pr-comment.js';
 import { renderCheckSummary } from './src/summary-adapter.js';
 import { handleInstallationAdded } from './src/setup/installation-handler.js';
 import { PR_REVIEW_NAME } from './src/constants.js';
+import { getRequestLogger } from './src/logging/index.js';
 
 
 /**
@@ -16,20 +17,23 @@ import { PR_REVIEW_NAME } from './src/constants.js';
 export default (app) => {
   if (process.env.LOG_ALL_EVENTS === '1') {
     app.onAny((context) => {
-      console.log(`🔍 EVENT: ${context.name}.${context.payload.action || 'no-action'}`);
+      const log = getRequestLogger(context, { module: 'webhook-debug' });
+      log.info({ event: context.name, action: context.payload.action || 'no-action' }, 'webhook event');
     });
   }
 
   // Always log rerun events for debugging
   app.on("check_run", (context) => {
     if (context.payload.action === 'rerequested') {
-      console.log(`🔍 RERUN EVENT: check_run.rerequested received for check: "${context.payload.check_run?.name}"`);
+      const log = getRequestLogger(context, { module: 'webhook-debug' });
+      log.info({ check_name: context.payload.check_run?.name }, 'check_run rerequested');
     }
   });
 
   app.on("check_suite", (context) => {
     if (context.payload.action === 'rerequested') {
-      console.log(`🔍 RERUN EVENT: check_suite.rerequested received for suite: ${context.payload.check_suite?.id}`);
+      const log = getRequestLogger(context, { module: 'webhook-debug' });
+      log.info({ suite_id: context.payload.check_suite?.id }, 'check_suite rerequested');
     }
   });
 
@@ -65,7 +69,8 @@ export default (app) => {
       output: { title: PR_REVIEW_NAME, summary, text }
     }));
 
-    console.log(`📝 Created completed check ${checkResult.data.id} for SHA ${headSha} with conclusion: ${conclusion}`);
+    const log = getRequestLogger(context, { module: 'check-create' });
+    log.info({ check_id: checkResult.data.id, sha: headSha?.slice(0, 7), conclusion }, 'created completed check');
     return checkResult;
   }
 
@@ -86,7 +91,8 @@ export default (app) => {
   async function handlePullRequest(context) {
     const pr = context.payload.pull_request;
     const headShaStart = pr.head.sha;
-    console.log(`📝 PR Event: ${context.payload.action} for PR #${pr.number}, SHA: ${headShaStart}`);
+    const log = getRequestLogger(context, { module: 'pr-handler', pr: pr.number });
+    log.info({ action: context.payload.action, sha: headShaStart?.slice(0, 7) }, 'PR event received');
     
     // Create check with in_progress status, skip external gates
     const startTime = new Date();
@@ -99,7 +105,7 @@ export default (app) => {
         throw error;
       }
       const spec = result.spec;
-      console.log(`📄 Spec loaded from probot_config for PR #${pr.number}`);
+      log.info('spec loaded from probot_config');
 
       // Run all gates and create completed check
       const runResult = await runAllGates(context, pr, spec);
@@ -111,7 +117,7 @@ export default (app) => {
       return checkResult;
       
     } catch (error) {
-      console.error(`📄 Spec load failed for PR #${pr.number}:`, error);
+      log.error({ err: error }, 'spec load failed');
       
       const isMissing = error?.code === 'SPEC_MISSING';
       const isInvalid = error?.code === 'SPEC_INVALID';
@@ -141,8 +147,9 @@ export default (app) => {
   async function handleCheckRerun(context) {
     const checkSuite = context.payload.check_suite;
     const { head_sha: headSha } = checkSuite;
+    const log = getRequestLogger(context, { module: 'check-rerun' });
 
-    console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
+    log.info({ sha: headSha?.slice(0, 7) }, 'check_suite rerequested received');
 
     // Rerun does NOT have PR information, just the head SHA. 
     // Find associated PR(s) for this commit SHA using GitHub API
@@ -152,7 +159,7 @@ export default (app) => {
     const prRef = assoc.find(pr => pr.state === 'open') || assoc[0];
 
     if (!prRef) {
-      console.log(`🔄 RERUN: No associated PR found for SHA ${headSha}`);
+      log.info({ sha: headSha?.slice(0, 7) }, 'no associated PR found for rerun');
       return createCheckOnSha(context, {
         sha: headSha,
         conclusion: 'failure',
@@ -161,7 +168,7 @@ export default (app) => {
       });
     }
 
-    console.log(`🔄 RERUN: Found PR #${prRef.number} in check_suite, fetching full PR data`);
+    log.info({ pr: prRef.number }, 'found PR for rerun, fetching full data');
     
     try {
       // Fetch full PR data with file/diff statistics
@@ -169,7 +176,7 @@ export default (app) => {
         context.repo({ pull_number: prRef.number })
       );
       
-      console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
+      log.info({ files: fullPR.changed_files, additions: fullPR.additions, deletions: fullPR.deletions }, 'got full PR data for rerun');
       
       // Enhance context to look like a PR event (following context enhancement pattern)
       context.payload.pull_request = fullPR;
@@ -179,7 +186,7 @@ export default (app) => {
       return handlePullRequest(context);
       
     } catch (error) {
-      console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
+      log.error({ err: error, pr: prRef.number }, 'failed to fetch full PR data for rerun');
       return createCheckOnSha(context, {
         sha: headSha,
         conclusion: 'neutral',
