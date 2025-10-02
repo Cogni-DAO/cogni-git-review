@@ -7,8 +7,8 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { CallbackHandler } from "langfuse-langchain";
 import { getWorkflow } from './workflows/registry.js';
-import { selectModel, buildContext } from './model-selector.js';
-import { ENV } from '../constants.js';
+import { selectModel } from './model-selector.js';
+import { env } from '../env.js';
 
 // Models we explicitly want temperature=0 for determinism
 const DETERMINISTIC_MODELS = new Set([
@@ -47,7 +47,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     const evaluate = getWorkflow(workflowId);
     
     // Select model based on environment
-    const modelConfig = selectModel(buildContext());
+    const modelConfig = selectModel();
     console.log('🤖 AI Provider: ModelConfig:', modelConfig);
     
     // Create LLM client with temperature policy
@@ -57,7 +57,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     const callbacks = [];
     if (process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY) {
       callbacks.push(new CallbackHandler({
-        environment: ENV
+        environment: env.app
       }));
     }
 
@@ -65,7 +65,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     const providerMeta = {
       workflow_id: workflowId,
       model: modelConfig.model,
-      environment: ENV,
+      environment: env.app,
     };
     const tags = [
       `workflow:${workflowId}`,
