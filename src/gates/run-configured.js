@@ -67,15 +67,6 @@ export async function runConfiguredGates(context) {
   for (const gate of allGates) {
     const gateId = deriveGateId(gate);
     
-    // Check for timeout before each gate - return partial results if aborted
-    if (context.abort?.aborted) {
-      context.logger?.('warn', 'Gate execution aborted due to timeout', { 
-        gate_id: gateId, 
-        deadline_ms: context.deadline_ms,
-        partial_results: results.length
-      });
-      return { results };
-    }
 
     const handler = resolveHandler(registry, gate);
     
@@ -90,15 +81,22 @@ export async function runConfiguredGates(context) {
       results.push(finalResult);
       
     } catch (error) {
-      if (error.message === 'aborted') {
-        // Mid-gate abort - return partial results
-        context.logger?.('warn', 'Gate execution aborted mid-gate', { 
-          gate_id: gateId,
-          partial_results: results.length
-        });
-        return { results };
-      }
-      // Non-abort errors are already normalized in safeRunGate; nothing to rethrow here.
+      // Handle unexpected errors from safeRunGate itself (not gate execution errors)
+      context.logger?.('error', `💥 Critical error in gate wrapper for ${gateId}`, { 
+        error: error.message,
+        type: gate.type 
+      });
+      
+      // Push a neutral result to prevent breaking the entire gate chain
+      const neutralResult = {
+        id: gateId,
+        status: 'neutral',
+        neutral_reason: 'wrapper_error',
+        violations: [],
+        stats: { wrapper_error: error.message },
+        duration_ms: 0
+      };
+      results.push(neutralResult);
     }
   }
 
@@ -132,10 +130,6 @@ async function safeRunGate(handler, ctx, gate, gateId) {
       };
     }
 
-    // Check for timeout before executing gate
-    if (ctx.abort?.aborted) {
-      throw new Error('aborted');
-    }
 
     // Execute gate handler
     const result = await handler(ctx, gate);
@@ -167,24 +161,6 @@ async function safeRunGate(handler, ctx, gate, gateId) {
 
   } catch (error) {
     const duration = Date.now() - startTime;
-    
-    // Handle abort vs regular errors differently
-    if (error.message === 'aborted') {
-      // FIXED: Handle abort gracefully instead of re-throwing
-      ctx.logger?.('warn', `⏰ Gate ${gateId} timed out`, { 
-        duration_ms: duration,
-        type: gate.type
-      });
-      
-      return {
-        status: 'neutral',
-        neutral_reason: 'timeout',
-        violations: [],
-        observations: ['Gate execution was aborted due to timeout'],
-        stats: { aborted: true, timeout_ms: duration },
-        duration_ms: duration
-      };
-    }
     
     // Gate crashed - log error and return neutral
     ctx.logger?.('error', `❌ Gate ${gateId} crashed`, { 
