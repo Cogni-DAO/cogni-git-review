@@ -70,6 +70,7 @@ context.payload.pull_request = pr;
 ├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/
 │   ├── spec-loader.js         # Repository specification loading
+    ├── logging/               # Repo-wide logging setup
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
