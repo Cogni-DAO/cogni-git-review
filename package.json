@@ -30,6 +30,7 @@
     "js-yaml": "^4.1.0",
     "langfuse-langchain": "^3.38.5",
     "micromatch": "^4.0.8",
+    "pino": "^9.12.0",
     "probot": "^13.0.1",
     "zod": "^3.25.76"
   },

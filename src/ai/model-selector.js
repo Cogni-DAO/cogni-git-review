@@ -1,9 +1,11 @@
 /**
  * AI Model Selection - Environment-Based Configuration
  * 
- * Selects appropriate AI model based on APP_ENV environment variable.
+ * Selects appropriate AI model based on env.app environment variable.
  * No overrides - only environment-based defaults.
  */
+
+import { env } from "../env.js";
 
 /**
  * Built-in model mapping by environment
@@ -14,68 +16,40 @@ const DEFAULT_MODELS = {
   prod: 'gpt-5-2025-08-07'          // High quality for production
 };
 
-/**
- * Detect execution environment based on APP_ENV
- * @param {Object} context - Execution context
- * @param {Object} context.env - Environment variables
- * @returns {string} Environment: 'dev' | 'preview' | 'prod'
- */
-function detectEnvironment({ env }) {
-  // APP_ENV is configured in preview and prod deployments
-  const appEnv = env.APP_ENV;
-  
-  if (appEnv === 'preview') {
-    return 'preview';
-  }
-  
-  if (appEnv === 'prod' || appEnv === 'production') {
-    return 'prod';
-  }
-  
-  // Default to dev (local development, no APP_ENV configured)
-  return 'dev';
-}
 
 /**
  * Select AI model based on environment
  * 
- * @param {Object} context - Execution context
- * @param {Object} context.env - Environment variables (process.env)
  * @returns {Object} { environment, model, provider, audit }
  */
-export function selectModel(context) {
+export function selectModel() {
   const startTime = Date.now();
   
   try {
-    // Step 1: Detect environment
-    const environment = detectEnvironment(context);
     
-    // Step 2: Get model for environment
-    const model = DEFAULT_MODELS[environment];
+    // Get model for environment 
+    const model = DEFAULT_MODELS[env.app];
     
     if (!model) {
-      throw new Error(`Unknown environment: ${environment}`);
+      throw new Error(`Unknown environment: ${env.app}`);
     }
     
-    // Step 3: Build result with audit info
+    // Step 2: Build result with audit info
     return {
-      environment,
+      environment: env.app,
       model,
       provider: 'openai',
       audit: {
         source: 'built-in-defaults',
-        detectionMs: Date.now() - startTime,
-        context: {
-          appEnv: context.env.APP_ENV || 'undefined'
-        }
+        detectionMs: Date.now() - startTime
       }
     };
     
   } catch (error) {
     // Fallback to dev on any error
     return {
-      environment: 'dev',
-      model: DEFAULT_MODELS.dev,
+      environment: env.app,
+      model: DEFAULT_MODELS[env.app],
       provider: 'openai',
       audit: {
         source: 'fallback-on-error',
@@ -84,14 +58,4 @@ export function selectModel(context) {
       }
     };
   }
-}
-
-/**
- * Build execution context from current environment
- * @returns {Object} Context for selectModel()
- */
-export function buildContext() {
-  return {
-    env: process.env
-  };
 }
