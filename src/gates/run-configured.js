@@ -14,7 +14,7 @@ let registryPromise = null;
  * @param {object} gateSpec - Gate configuration from spec
  * @returns {string} Derived gate ID
  */
-export function deriveGateId(gateSpec) {
+function deriveGateId(gateSpec) {
   if (gateSpec.id) return gateSpec.id;  // Explicit wins
 
   // Auto-derive for ai-rule from rule_file basename
