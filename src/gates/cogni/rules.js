@@ -11,84 +11,6 @@ import { assertProviderResult } from '../../ai/schemas/validators.js';
 
 export const type = 'ai-rule';
 
-/**
- * Gather evidence from PR changes based on rule capabilities
- * Self-contained helper for code-aware AI rules
- */
-async function gatherEvidence(context, rule) {
-  const capabilities = rule.x_capabilities || [];
-  const budgets = rule.x_budgets || {};
-
-  // If no diff_summary capability requested, return simple summary
-  if (!capabilities.includes('diff_summary')) {
-    return null;
-  }
-
-  try {
-    const pullNumber = context.pr?.number;
-    if (!pullNumber) {
-      return 'No PR number available';
-    }
-
-    const { owner, repo } = context.repo();
-    const { data: files } = await context.octokit.rest.pulls.listFiles({
-      owner,
-      repo,
-      pull_number: pullNumber
-    });
-
-    const maxFiles = budgets.max_files || 25;
-    const maxPatchBytes = budgets.max_patch_bytes_per_file || 16000;
-    const maxPatches = budgets.max_patches || 3;
-
-    // Sort files deterministically by churn (changes) then path
-    const sortedFiles = files
-      .slice(0, maxFiles)
-      .sort((a, b) => {
-        const churnDiff = (b.changes || 0) - (a.changes || 0);
-        return churnDiff !== 0 ? churnDiff : a.filename.localeCompare(b.filename);
-      });
-
-    const totals = sortedFiles.reduce((acc, f) => ({
-      files: acc.files + 1,
-      additions: acc.additions + (f.additions || 0),
-      deletions: acc.deletions + (f.deletions || 0)
-    }), { files: 0, additions: 0, deletions: 0 });
-
-    // Build deterministic diff summary string
-    let summary = `${totals.files} file${totals.files === 1 ? '' : 's'} changed, +${totals.additions}/−${totals.deletions} total\n`;
-
-    // Add file list
-    for (const f of sortedFiles) {
-      const status = f.status || 'modified';
-      const adds = f.additions || 0;
-      const dels = f.deletions || 0;
-      summary += `• ${f.filename} (${status}) +${adds}/−${dels}\n`;
-    }
-
-    // Add patch content if file_patches capability requested
-    if (capabilities.includes('file_patches') && maxPatches > 0) {
-      summary += '\nTop patches (truncated):\n';
-
-      const filesToPatch = sortedFiles.slice(0, maxPatches);
-      for (const f of filesToPatch) {
-        if (f.patch) {
-          let patch = f.patch;
-          if (patch.length > maxPatchBytes) {
-            patch = patch.slice(0, maxPatchBytes) + '\n… [truncated]';
-          }
-          summary += `=== ${f.filename} ===\n${patch}\n\n`;
-        }
-      }
-    }
-
-    return summary.trim();
-
-  } catch (error) {
-    // Return error info but don't fail the gate
-    return `Error gathering diff: ${error.message}`;
-  }
-}
 
 /**
  * Evaluate PR against the first enabled AI rule
@@ -116,53 +38,12 @@ export async function run(ctx, gateConfig) {
     // Step 3: Validation
     // No-op:Rule schema validation now happens in spec-loader.js before internal properties are added
 
-    // Step 4: Build PR context with enhanced diff summary
-    const pr = ctx.pr;
-    // console.log('🔍 PR Data Debug:', {
-    //   title: pr?.title,
-    //   body: pr?.body?.substring(0, 100),
-    //   changed_files: pr?.changed_files,
-    //   additions: pr?.additions,
-    //   deletions: pr?.deletions
-    // });
-
-    // Step 5: Gather evidence based on rule capabilities
-    const enhancedDiffSummary = await gatherEvidence(ctx, rule);
-
-    // Fall back to basic summary if evidence gathering disabled or failed
-    let diff_summary;
-    if (enhancedDiffSummary) {
-      diff_summary = enhancedDiffSummary;
-    } else {
-      const fileCount = pr?.changed_files || 0;
-      const totalAdditions = pr?.additions || 0;
-      const totalDeletions = pr?.deletions || 0;
-      diff_summary = `PR "${pr?.title || 'Untitled'}" modifies ${fileCount} file${fileCount === 1 ? '' : 's'} (+${totalAdditions} -${totalDeletions} lines)`;
-    }
-
-    // Step 6: Prepare generic workflow input
+    // Step 4: Prepare clean workflow input - pass context and rule directly
     const workflowId = rule.workflow_id;
-
     const providerInput = {
-      // Workflow data
-      pr_title: pr?.title || '',
-      pr_body: pr?.body || '',
-      diff_summary: diff_summary,
-      // TODO - refactor rules.js to be simpler, and this pr info gathering happens in the AI workflow.
-      // Context data for tracing. Temp fix for unblocking telemetry
-      rule_id: rule.rule_key,
-      pr_number: ctx.pr?.number,
-      repo: ctx.payload?.repository?.full_name,
-      commit_sha: ctx.payload?.pull_request?.head?.sha,
-      installation_id: ctx.payload?.installation?.id,
-      repo_owner: ctx.repo().owner,
-      repo_name: ctx.repo().repo
+      context: ctx,
+      rule: rule
     };
-
-    // Add evaluations array for schema v0.3 (new dynamic format)
-    if (rule.evaluations) {
-      providerInput.evaluations = rule.evaluations;
-    }
 
     const providerResult = await aiProvider.evaluateWithWorkflow({
       workflowId,
@@ -182,7 +63,7 @@ export async function run(ctx, gateConfig) {
       return createNeutralResult('invalid_provider_result', `Provider result validation failed: ${error.message}`, startTime);
     }
 
-    // Step 7: Make gate decision based on provider output
+    // Step 6: Make gate decision based on provider output
     return makeGateDecision(providerResult, rule, startTime);
 
   } catch (error) {

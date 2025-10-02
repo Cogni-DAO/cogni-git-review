@@ -11,6 +11,7 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - **Unified Gate System**: All gates execute immediately
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
+- **AI Provider Architecture**: Generic workflow router with no domain-specific logic
 
 ### Key Resources
 - [Probot Framework Docs](https://probot.github.io/docs/)
