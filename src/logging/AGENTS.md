@@ -103,3 +103,25 @@ log.error({ err: error, pr: prNumber }, 'gate failed');
 - **Policy in one place**: Redaction, pretty vs JSON, fields, and levels live in our factory, not scattered.
 
 - **Single source in code**: Downstream code uses only logger, never context.log. Fewer surprises.
+
+## Probot vs App Logging
+
+**Keep Probot's built-in logs unchanged** - Don't replace them. Use your logger for app events only.
+
+**What you see in logs:**
+- `(server)` and `(http)` lines = Probot internals (already Pino)
+- `(event)` lines = Your app events from `getRequestLogger(context, ...).child(...)`
+
+**Our structured event logs have:** `{id, repo, module, route, event, pr}`
+
+**Development logging:**
+```bash
+npm start  # Raw JSON logs (production-ready for log aggregation)
+
+# Manual pretty formatting when needed:
+npm start | npx pino-pretty --singleLine --ignore pid,hostname
+```
+
+**Dashboard views:**
+- **App Events**: filter `module:*`
+- **Platform Logs**: exclude `module:*` or filter Probot categories
