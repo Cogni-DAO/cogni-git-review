@@ -5,6 +5,7 @@ import { run } from '../../src/gates/cogni/governance-policy.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import { loadRepoSpec } from '../../src/spec-loader.js';
 import { PR_REVIEW_NAME } from '../../src/constants.js';
+import { noopLogger } from '../../src/logging/logger.js';
 
 describe('Governance Policy Gate', () => {
   let mockContext;
@@ -44,10 +45,10 @@ describe('Governance Policy Gate', () => {
   test('passes when all required workflows exist with matching names', async () => {
     // Parse YAML first, following spec-loader.test.js pattern
     const expectedSpec = yaml.load(SPEC_FIXTURES.governance);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'pass');
     assert.strictEqual(result.violations.length, 0);
@@ -57,7 +58,7 @@ describe('Governance Policy Gate', () => {
 
   test('fails when workflow file is missing', async () => {
     const expectedSpec = yaml.load(SPEC_FIXTURES.governance);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
     // Mock missing security workflow
@@ -86,7 +87,7 @@ describe('Governance Policy Gate', () => {
       }
     };
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'fail');
     assert.strictEqual(result.violations.length, 1);
@@ -96,7 +97,7 @@ describe('Governance Policy Gate', () => {
 
   test('fails when workflow name does not match required context', async () => {
     const expectedSpec = yaml.load(SPEC_FIXTURES.governance);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
     // Mock CI workflow with wrong name
@@ -119,7 +120,7 @@ describe('Governance Policy Gate', () => {
       }
     };
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'fail');
     assert.strictEqual(result.violations.length, 1);
@@ -130,10 +131,10 @@ describe('Governance Policy Gate', () => {
 
   test('returns neutral when no required contexts are specified', async () => {
     const expectedSpec = yaml.load(SPEC_FIXTURES.governanceNoContexts);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'neutral');
     assert.strictEqual(result.neutral_reason, 'no_contexts_required');
@@ -157,10 +158,10 @@ gates:
   - type: governance-policy
     id: governance_policy`;
     const expectedSpec = yaml.load(inlineSpec);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'neutral');
     assert.strictEqual(result.neutral_reason, 'no_contexts_required');
@@ -169,10 +170,10 @@ gates:
 
   test('handles unknown contexts gracefully', async () => {
     const expectedSpec = yaml.load(SPEC_FIXTURES.governanceUnknownContext);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'fail');
     assert.strictEqual(result.violations.length, 1);
@@ -182,7 +183,7 @@ gates:
 
   test('handles GitHub API errors gracefully', async () => {
     const expectedSpec = yaml.load(SPEC_FIXTURES.governance);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
     mockContext.octokit.repos.getContent = async () => {
@@ -191,7 +192,7 @@ gates:
       throw error;
     };
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'fail');
     assert.strictEqual(result.violations.length, 2); // All 2 contexts fail
@@ -200,7 +201,7 @@ gates:
 
   test('handles internal errors gracefully', async () => {
     const expectedSpec = yaml.load(SPEC_FIXTURES.governance);
-    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec));
+    const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), noopLogger);
     mockContext.spec = specResult.spec;
 
     // Mock an internal error by breaking the repo function
@@ -208,7 +209,7 @@ gates:
       throw new Error('Internal error');
     };
 
-    const result = await run(mockContext, {});
+    const result = await run(mockContext, {}, noopLogger);
 
     assert.strictEqual(result.status, 'neutral');
     assert.strictEqual(result.neutral_reason, 'internal_error');

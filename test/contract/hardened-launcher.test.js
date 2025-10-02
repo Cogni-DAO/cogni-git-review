@@ -7,6 +7,7 @@ import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { runConfiguredGates } from '../../src/gates/run-configured.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
+import { createGateTestContext } from '../helpers/handler-harness.js';
 import yaml from 'js-yaml';
 
 describe('Hardened Launcher Integration Tests', () => {
@@ -30,20 +31,14 @@ describe('Hardened Launcher Integration Tests', () => {
         ]
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
         pr: { 
           changed_files: 5, 
           additions: 50, 
           deletions: 20 
-        },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-        octokit: {
-          pulls: {
-            get: () => ({ data: { changed_files: 5 } })
-          }
         }
-      };
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -84,20 +79,14 @@ describe('Hardened Launcher Integration Tests', () => {
         ]
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
         pr: { 
           changed_files: 5,
           additions: 50, 
           deletions: 20 
-        },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-        octokit: {
-          pulls: {
-            get: () => ({ data: { changed_files: 5 } })
-          }
         }
-      };
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -123,11 +112,10 @@ describe('Hardened Launcher Integration Tests', () => {
         ]
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
-        pr: { changed_files: 5 },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
-      };
+        pr: { changed_files: 5 }
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -161,11 +149,10 @@ describe('Hardened Launcher Integration Tests', () => {
         ]
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
-        pr: { changed_files: 5 },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
-      };
+        pr: { changed_files: 5 }
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -188,20 +175,14 @@ describe('Hardened Launcher Integration Tests', () => {
       const spec = yaml.load(SPEC_FIXTURES.full);
       spec.gates.push({ type: 'mystery_gate_xyz', id: 'mystery_gate_xyz' });
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec,
         pr: { 
           changed_files: 3,  // Under limits
           additions: 30, 
           deletions: 20 
-        },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-        octokit: {
-          pulls: {
-            get: () => ({ data: { changed_files: 3 } })
-          }
         }
-      };
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -235,11 +216,10 @@ describe('Hardened Launcher Integration Tests', () => {
         ]
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
-        pr: { changed_files: 15 },
-        log: { error: () => {} }
-      };
+        pr: { changed_files: 15 }
+      });
 
       // Should throw error for duplicate IDs (new validation behavior)
       try {
@@ -263,11 +243,10 @@ describe('Hardened Launcher Integration Tests', () => {
         gates: []  // No gates configured
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
-        pr: { changed_files: 5 },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
-      };
+        pr: { changed_files: 5 }
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -286,11 +265,10 @@ describe('Hardened Launcher Integration Tests', () => {
         // No gates property
       };
 
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec: testSpec,
-        pr: { changed_files: 5 },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || '')
-      };
+        pr: { changed_files: 5 }
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;
@@ -303,20 +281,14 @@ describe('Hardened Launcher Integration Tests', () => {
       // Use full spec with limits that will pass
       const spec = yaml.load(SPEC_FIXTURES.full);
       
-      const runCtx = {
+      const runCtx = createGateTestContext({
         spec,
         pr: { 
           changed_files: 10,  // Under 50 limit
           additions: 50,      // Under 200KB limit  
           deletions: 20 
-        },
-        logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-        octokit: {
-          pulls: {
-            get: () => ({ data: { changed_files: 10 } })
-          }
         }
-      };
+      });
 
       const launcherResult = await runConfiguredGates(runCtx);
       const results = launcherResult.results;

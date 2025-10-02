@@ -12,6 +12,7 @@ import assert from 'node:assert';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import { DONT_REBUILD_OSS_RULE, SINGLE_CHECK_PR_VERDICT_RULE } from '../fixtures/ai-rules.js';
 import { runConfiguredGates } from '../../src/gates/run-configured.js';
+import { createGateTestContext } from '../helpers/handler-harness.js';
 import yaml from 'js-yaml';
 
 describe('Multiple AI Rules Integration', () => {
@@ -23,51 +24,60 @@ describe('Multiple AI Rules Integration', () => {
     // Capture log calls to verify execution
     const logCalls = [];
     
+    // Create custom logger that captures calls for testing
+    const customLogger = {
+      debug: (msg, meta) => { logCalls.push({ level: 'debug', msg, meta }); },
+      info: (msg, meta) => { logCalls.push({ level: 'info', msg, meta }); },
+      warn: (msg, meta) => { logCalls.push({ level: 'warn', msg, meta }); },
+      error: (msg, meta) => { logCalls.push({ level: 'error', msg, meta }); },
+      child: () => customLogger // Return self for .child() calls
+    };
+
     // Create run context with mock PR data
     const runCtx = {
-      spec,
-      pr: {
-        title: 'Add new feature for user authentication',
-        body: 'Implements OAuth login flow with proper error handling',
-        changed_files: [
-          {
-            filename: 'src/auth/oauth.js',
-            status: 'added',
-            additions: 45,
-            deletions: 0
-          }
-        ],
-        additions: 45,
-        deletions: 0
-      },
-      repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      logger: (level, msg, meta) => {
-        logCalls.push({ level, msg, meta });
-        console.log(`[${level}] ${msg}`, meta || '');
-      },
-      octokit: {
-        config: {
-          get: async ({ path }) => {
-            // Mock rule file loading for both AI rules
-            if (path === '.cogni/rules/dont-rebuild-oss.yaml') {
-              return { config: DONT_REBUILD_OSS_RULE };
-            }
-            if (path === '.cogni/rules/single-check-pr-verdict.yaml') {
-              return { config: SINGLE_CHECK_PR_VERDICT_RULE };
-            }
-            return { config: null };
-          }
-        },
-        pulls: {
-          get: () => ({ 
-            data: { 
-              changed_files: 1,
+      context: {
+        spec,
+        pr: {
+          title: 'Add new feature for user authentication',
+          body: 'Implements OAuth login flow with proper error handling',
+          changed_files: [
+            {
+              filename: 'src/auth/oauth.js',
+              status: 'added',
               additions: 45,
               deletions: 0
-            } 
-          })
-        }
-      }
+            }
+          ],
+          additions: 45,
+          deletions: 0
+        },
+        repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+        octokit: {
+          config: {
+            get: async ({ path }) => {
+              // Mock rule file loading for both AI rules
+              if (path === '.cogni/rules/dont-rebuild-oss.yaml') {
+                return { config: DONT_REBUILD_OSS_RULE };
+              }
+              if (path === '.cogni/rules/single-check-pr-verdict.yaml') {
+                return { config: SINGLE_CHECK_PR_VERDICT_RULE };
+              }
+              return { config: null };
+            }
+          },
+          pulls: {
+            get: () => ({ 
+              data: { 
+                changed_files: 1,
+                additions: 45,
+                deletions: 0
+              } 
+            })
+          }
+        },
+        abort: new AbortController().signal
+      },
+      logger: customLogger
     };
 
     const launcherResult = await runConfiguredGates(runCtx);
@@ -134,22 +144,32 @@ describe('Multiple AI Rules Integration', () => {
     };
     
     const logCalls = [];
+    
+    // Create custom logger that captures calls for testing
+    const customLogger = {
+      debug: (msg, meta) => { logCalls.push({ level: 'debug', msg, meta }); },
+      info: (msg, meta) => { logCalls.push({ level: 'info', msg, meta }); },
+      warn: (msg, meta) => { logCalls.push({ level: 'warn', msg, meta }); },
+      error: (msg, meta) => { logCalls.push({ level: 'error', msg, meta }); },
+      child: () => customLogger // Return self for .child() calls
+    };
+
     const runCtx = {
-      spec: specWithDuplicates,
-      pr: { changed_files: [], additions: 0, deletions: 0 },
-      repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      logger: (level, msg, meta) => {
-        logCalls.push({ level, msg, meta });
-        console.log(`[${level}] ${msg}`, meta || '');
-      },
-      octokit: {
-        config: {
-          get: async () => ({ config: DONT_REBUILD_OSS_RULE })
+      context: {
+        spec: specWithDuplicates,
+        pr: { changed_files: [], additions: 0, deletions: 0 },
+        repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+        octokit: {
+          config: {
+            get: async () => ({ config: DONT_REBUILD_OSS_RULE })
+          },
+          pulls: {
+            get: () => ({ data: { changed_files: 0 } })
+          }
         },
-        pulls: {
-          get: () => ({ data: { changed_files: 0 } })
-        }
-      }
+        abort: new AbortController().signal
+      },
+      logger: customLogger
     };
 
     try {

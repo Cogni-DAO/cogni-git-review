@@ -4,6 +4,7 @@
  */
 
 import yaml from 'js-yaml';
+import { noopLogger } from '../../src/logging/logger.js';
 
 /**
  * Create a mock context for direct handler testing (same pattern as unit tests)
@@ -136,6 +137,22 @@ export async function testEventHandler(options) {
           return { data: { id: 1 } };
         }
       },
+      pulls: {
+        get: async () => ({ 
+          data: { 
+            head: { sha: payload?.pull_request?.head?.sha || 'abc123' },
+            changed_files: 5,
+            additions: 10,
+            deletions: 5
+          } 
+        })
+      },
+      issues: {
+        createComment: async (params) => {
+          // Mock comment creation for tests
+          return { data: { id: Date.now() } };
+        }
+      },
       ...extraOctokit,
       __debug_extra: extraOctokit
     }
@@ -150,6 +167,34 @@ export async function testEventHandler(options) {
 }
 
 /**
+ * Create a gate test context with noopLogger (for runConfiguredGates)
+ * @param {Object} options
+ * @param {Object} options.spec - Spec object
+ * @param {Object} options.pr - PR data
+ * @param {Object} options.octokit - Optional octokit mock
+ * @returns {Object} Context for runConfiguredGates function
+ */
+export function createGateTestContext(options) {
+  const { spec, pr, octokit = {} } = options;
+  
+  return {
+    context: {
+      spec,
+      pr,
+      repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+      octokit: {
+        pulls: {
+          get: () => ({ data: { changed_files: pr.changed_files || 5 } })
+        },
+        ...octokit
+      },
+      abort: new AbortController().signal
+    },
+    logger: noopLogger
+  };
+}
+
+/**
  * High-level helper for common test patterns (legacy function)
  * @param {Object} options
  * @param {Object} options.payload - PR payload
@@ -159,7 +204,7 @@ export async function testEventHandler(options) {
 export async function testPullRequestHandler(options) {
   const { payload, spec, expectCheck } = options;
   
-  return await testEventHandler({
+  return testEventHandler({
     event: 'pull_request.opened',
     payload,
     spec,
