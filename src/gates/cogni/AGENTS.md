@@ -78,17 +78,22 @@ The `governance-policy` gate validates CI/CD workflow compliance:
 ## AI Rule Gate
 The `ai-rule` gate supports dynamic AI evaluation with schema v0.3:
 - Each instance loads a rule from `.cogni/rules/*.yaml` with `evaluations` array
+- Passes complete `{context, rule}` directly to provider without extraction
 - Uses `goal-evaluations` workflow for dynamic metric evaluation
+- Workflow handles evidence gathering based on rule capabilities
 - Calls `src/ai/provider.evaluateWithWorkflow()` which returns provider-result format
 - Pass/fail based on `success_criteria` evaluation against returned metrics
-- **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` provides file changes to AI
+- **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` enables file changes access
 - **Resource budgets**: `x_budgets` prevent token/cost overruns
 
 ### Code-Aware Evidence Gathering
+**Handled by workflow**, not gate:
+- Workflow reads `x_capabilities` from rule to determine evidence needs
 - Deterministic file sorting by change count, then filename
 - Respects budget limits: `max_files` (25), `max_patches` (3), `max_patch_bytes_per_file` (16KB)
 - Enhanced diff includes file patches when under budget
 - Simple diff summary when `x_capabilities` not specified
+- Evidence gathering logic isolated in `goal-evaluations.js` workflow
 
 ## Gate Output Fields
 

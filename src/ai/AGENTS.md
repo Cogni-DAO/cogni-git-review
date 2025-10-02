@@ -1,7 +1,7 @@
 # AI Directory - Single Entrypoint Pattern
 
 ## Architecture Principle
-**CRITICAL**: `provider.js` is the single entrypoint router to AI functions. All AI functionality flows through the `evaluateWithWorkflow()` function, which delegates to registered workflows that make LLM calls. This is a clean I/O interface that maps to different workflows and enables future external providers.
+**CRITICAL**: `provider.js` is a pure workflow router with no domain knowledge. All AI functionality flows through the `evaluateWithWorkflow()` function, which forwards the complete input directly to workflows without extraction or interpretation. This design enables external endpoint integration and supports any workflow type.
 
 ## Directory Structure
 ```
@@ -19,23 +19,27 @@ Generic workflow routing interface with automatic Langfuse tracing:
 const result = await provider.evaluateWithWorkflow({
   workflowId: 'goal-evaluations',
   workflowInput: {
-    evaluations: [
-      { "code-quality": "PR maintains code quality standards" },
-      { "security": "PR contains no security vulnerabilities" }
-    ],
-    pr_title: 'Add feature',
-    pr_body: 'Implementation details...',
-    diff_summary: '3 files changed (+45 -12)'
+    context: probotContext,  // Full Probot context object
+    rule: ruleObject         // Complete rule configuration
   }
 });
 
-// Returns: { metrics: { "code-quality": {value: 0.9, observations: [...]}, "security": {value: 1.0, observations: [...]} }, summary: "...", provenance: {} }
+// Returns: { metrics: { "metric-id": {value: 0.9, observations: [...]} }, summary: "...", provenance: {} }
 ```
+
+**Key Design Principles**:
+- **No data extraction**: Provider passes input directly to workflows
+- **Workflow-agnostic**: No knowledge of PR, rule, or domain concepts
+- **Full context preservation**: Complete Probot context available to workflows
+- **External endpoint ready**: Simple JSON serializable interface
 
 **Observability**: All AI calls automatically traced to Langfuse when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured. Traces tagged with environment based on `APP_ENV`.
 
 Available workflows configured in `workflows/registry.js`:
 - `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
+  - Handles evidence gathering from PR changes
+  - Extracts PR metadata for Langfuse tracing
+  - STUB: Manages rule capabilities and budget constraints
 
 ## Model Selection & Temperature Policy
 Models selected automatically by environment via `model-selector.js`:
@@ -63,4 +67,6 @@ Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 ## Constraints
 - No direct LLM calls outside provider.js
 - Gates decide pass/fail from score vs threshold
-- LLM client creation only via provider.js makeLLMClient() (currently, enforces temperature policy. Future: more robust)
+- LLM client creation only via provider.js makeLLMClient() (enforces temperature policy)
+- Provider.js contains no domain logic - workflows handle all domain concerns
+- Workflows receive full context objects, not extracted properties

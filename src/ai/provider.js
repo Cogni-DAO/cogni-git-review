@@ -61,29 +61,21 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
       }));
     }
 
-    // Unified run context for tracing + filtering
-    const runMeta = {
-      repo: workflowInput.repo,
-      pr_number: workflowInput.pr_number,
-      commit_sha: workflowInput.commit_sha,
-      installation_id: workflowInput.installation_id,
-      repo_owner: workflowInput.repo_owner,
-      repo_name: workflowInput.repo_name,
+    // Generic provider metadata - workflow-agnostic
+    const providerMeta = {
       workflow_id: workflowId,
-      rule_id: workflowInput.rule_id,
       model: modelConfig.model,
       environment: ENV,
     };
     const tags = [
-      `repo:${runMeta.repo}`,
       `workflow:${workflowId}`,
       `model:${modelConfig.model}`
     ].filter(Boolean);
     const runnableConfig = {
       callbacks,
       tags,
-      metadata: runMeta,
-      configurable: { sessionId: runMeta.pr_number ? `pr-${runMeta.pr_number}` : undefined }
+      metadata: providerMeta,
+      configurable: {}
     };
     
     // Route to selected workflow - preserve exact return format
@@ -98,7 +90,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
         providerVersion: PROVIDER_VERSION,
         workflowId,
         modelConfig,
-        meta: runMeta
+        meta: providerMeta
       }
     };
     
