@@ -39,7 +39,7 @@ export function makeLLMClient({ model }) {
  * @param {number} options.timeoutMs - Timeout in milliseconds (default: 60000)
  * @returns {Promise<Object>} Raw workflow output + provenance wrapper
  */
-export async function evaluateWithWorkflow({ workflowId, workflowInput }, { timeoutMs = 60000 } = {}) {
+export async function evaluateWithWorkflow({ workflowId, workflowInput }, { timeoutMs = 180000 } = {}) {
   const startTime = Date.now();
   
   try {

@@ -33,6 +33,7 @@ const result = await provider.evaluateWithWorkflow({
 ```
 
 **Observability**: All AI calls automatically traced to Langfuse when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured. Traces tagged with environment based on `APP_ENV`.
+**Timeout**: Default provider timeout of 180s. Pass custom `timeoutMs` to override
 
 Available workflows configured in `workflows/registry.js`:
 - `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
@@ -53,8 +54,6 @@ Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 
 ## Environment Configuration
 - `APP_ENV=preview|prod` - Environment detection (dev is default)
-- `AI_TIMEOUT_MS=180000` - Per-call timeout
-- `AI_NEUTRAL_ON_ERROR=true` - Error handling policy
 - `OPENAI_API_KEY` - Provider credentials
 - `LANGFUSE_PUBLIC_KEY` - Langfuse observability (optional)
 - `LANGFUSE_SECRET_KEY` - Langfuse observability (optional)

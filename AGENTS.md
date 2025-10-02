@@ -119,10 +119,12 @@ gates:
 
 ## Key Features
 - **Dynamic gate discovery**: Gates auto-discovered from filesystem
-- **All gates run immediately**: Gates execute directly
+- **All gates run immediately**: Gates execute directly with comprehensive logging
 - **Smart check creation**: Creates completed check for all specs
-- **Timeout handling**: Partial results when execution times out
-- **Robust error handling**: Gate crashes become neutral results
+- **Graceful timeout handling**: Individual gate timeouts return neutral status while allowing remaining gates to execute
+- **Enhanced diagnostics**: Detailed execution summaries with per-gate timeout attribution, pass/fail/neutral counts, and conclusion reasoning
+- **Robust error handling**: Gate crashes become neutral results with preserved diagnostic information
+- **Universal gate logging**: Every gate logs start and completion with status, duration, and diagnostic context
 
 ## Development
 
