@@ -43,13 +43,15 @@ function validateUniqueIds(gates) {
 
 /**
  * Run all configured gates from spec in order with dynamic resolution
- * @param {import('probot').Context} context - Probot context with execution metadata
+ * @param {object} params - Parameters object
+ * @param {import('probot').Context} params.context - Probot context with execution metadata
+ * @param {object} params.logger - Logger instance
  * @returns {Promise<{results: GateResult[]}>} Gate execution results
  */
-export async function runConfiguredGates(context) {
+export async function runConfiguredGates({ context, logger }) {
   // Build registry with logger on first call
   if (!registryPromise) {
-    registryPromise = buildRegistry(context.log || console);
+    registryPromise = buildRegistry(logger);
   }
   const registry = await registryPromise;
   const allGates = Array.isArray(context.spec?.gates) ? context.spec.gates : [];
@@ -58,7 +60,7 @@ export async function runConfiguredGates(context) {
   try {
     validateUniqueIds(allGates);
   } catch (error) {
-    context.log?.error('Gate ID validation failed', { error: error.message });
+    logger.error({ err: error }, 'Gate ID validation failed');
     throw error;
   }
   
@@ -71,7 +73,7 @@ export async function runConfiguredGates(context) {
     const handler = resolveHandler(registry, gate);
     
     try {
-      const result = await safeRunGate(handler, context, gate, gateId);
+      const result = await safeRunGate(handler, context, gate, gateId, logger);
       
       // Force ID normalization - always use derived gate ID
       const finalResult = {
@@ -82,10 +84,11 @@ export async function runConfiguredGates(context) {
       
     } catch (error) {
       // Handle unexpected errors from safeRunGate itself (not gate execution errors)
-      context.logger?.('error', `💥 Critical error in gate wrapper for ${gateId}`, { 
-        error: error.message,
+      logger.error({ 
+        err: error,
+        gate_id: gateId,
         type: gate.type 
-      });
+      }, 'Critical error in gate wrapper');
       
       // Push a neutral result to prevent breaking the entire gate chain
       const neutralResult = {
@@ -109,18 +112,20 @@ export async function runConfiguredGates(context) {
  * @param {object} ctx - Run context
  * @param {object} gate - Gate configuration
  * @param {string} gateId - Derived gate ID for logging
+ * @param {object} logger - Logger instance
  * @returns {Promise<object>} Normalized gate result
  */
-async function safeRunGate(handler, ctx, gate, gateId) {
+async function safeRunGate(handler, ctx, gate, gateId, logger) {
   const startTime = Date.now();
+  const log = logger.child({ module: `gates/${gateId}` });
 
   // Log gate start for ALL gate types
-  ctx.logger?.('info', `🚀 Gate ${gateId} starting`, { type: gate.type });
+  log.info({ type: gate.type }, 'Gate starting');
 
   try {
     // Handle unimplemented gate
     if (!handler) {
-      ctx.logger?.('warn', `⚠️ Gate ${gateId} unimplemented`, { type: gate.type });
+      log.warn({ type: gate.type }, 'Gate unimplemented');
       return {
         status: 'neutral',
         neutral_reason: 'unimplemented_gate',
@@ -132,15 +137,15 @@ async function safeRunGate(handler, ctx, gate, gateId) {
 
 
     // Execute gate handler
-    const result = await handler(ctx, gate);
+    const result = await handler(ctx, gate, logger);
 
     // Log gate completion
     const duration = Date.now() - startTime;
-    ctx.logger?.('info', `✅ Gate ${gateId} completed`, { 
+    log.info({ 
       status: result.status || 'neutral',
       duration_ms: duration,
       violations: result.violations?.length || 0
-    });
+    }, 'Gate completed');
 
     // Normalize result shape (ID will be set by caller)
     return {
@@ -163,11 +168,11 @@ async function safeRunGate(handler, ctx, gate, gateId) {
     const duration = Date.now() - startTime;
     
     // Gate crashed - log error and return neutral
-    ctx.logger?.('error', `❌ Gate ${gateId} crashed`, { 
-      error: error.message,
+    log.error({ 
+      err: error,
       duration_ms: duration,
       type: gate.type
-    });
+    }, 'Gate crashed');
     
     return {
       status: 'neutral',

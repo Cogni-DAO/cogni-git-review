@@ -9,8 +9,9 @@ export const type = 'governance-policy';
  * @param {object} context - Probot context
  * @returns {Promise<GateResult>}
  */
-export async function run(context) {
+export async function run(context, gate, logger) {
   const startTime = Date.now();
+  const log = logger.child({ module: 'gates/governance-policy' });
   
   try {
     // Get required contexts from repo spec
@@ -82,11 +83,11 @@ export async function run(context) {
             meta: { context: contextName }
           });
         } else {
-          context.log?.error('Error checking workflow file', {
+          log.error({
             path: workflowPath,
             context: contextName,
-            error: error.message
-          });
+            err: error
+          }, 'Error checking workflow file');
           violations.push({
             code: 'workflow_check_error',
             message: `Failed to check workflow "${workflowPath}": ${error.message}`,
@@ -112,7 +113,7 @@ export async function run(context) {
     };
     
   } catch (error) {
-    context.log?.error('Governance policy gate crashed', { error: error.message });
+    log.error({ err: error }, 'Governance policy gate crashed');
     
     return {
       status: 'neutral',

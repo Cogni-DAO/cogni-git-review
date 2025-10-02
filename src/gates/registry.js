@@ -9,11 +9,11 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 
 /**
  * Build registry of available gates by scanning gate directories
- * @param {object} logger - Optional Probot-style logger
+ * @param {object} logger - Logger instance
  * @returns {Promise<{cogni: Map<string, Function>}>}
  */
 export async function buildRegistry(logger) {
-  const log = logger || console;
+  const log = logger.child({ module: 'gate-registry' });
   const registry = {
     cogni: new Map()
   };
@@ -42,16 +42,12 @@ export async function buildRegistry(logger) {
         }
 
       } catch (error) {
-        // Log gate loading failures via Probot logger
-        if (log.warn) {
-          log.warn(`Failed to load gate file ${file}`, { 
-            error: error.message, 
-            kind, 
-            file_path: path.join(dir, file)
-          });
-        } else {
-          console.warn(`Failed to load gate file ${file}:`, error.message);
-        }
+        // Log gate loading failures
+        log.warn({ 
+          err: error, 
+          kind, 
+          file_path: path.join(dir, file)
+        }, `Failed to load gate file ${file}`);
       }
     }
   };

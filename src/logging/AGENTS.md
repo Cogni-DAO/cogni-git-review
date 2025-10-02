@@ -90,9 +90,16 @@ log.error({ err: error, pr: prNumber }, 'gate failed');
 - Set `context.logger` (deprecated pattern)
 - Log sensitive data (tokens, full payloads)
 
-## Migration Status
+## Justification
 
-- ✅ Webhook handlers (index.js) 
-- ✅ PR comment system
-- 🔄 Gate system (in progress)
-- ⏳ Setup utilities, AI workflows
+### Why we pass our own logger even though `context.log` exists from Probot:
+
+- **Decoupling**: Modules shouldn't know Probot. They depend on a small logging interface, not a large framework object.
+
+- **Testability**: Unit tests inject a mock logger. No fake Probot context required.
+
+- **Portability**: Same modules run in CLIs, queues, or workers that have no Probot.
+
+- **Policy in one place**: Redaction, pretty vs JSON, fields, and levels live in our factory, not scattered.
+
+- **Single source in code**: Downstream code uses only logger, never context.log. Fewer surprises.
