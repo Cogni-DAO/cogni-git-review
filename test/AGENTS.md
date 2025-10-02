@@ -52,16 +52,19 @@ const spec = SPEC_FIXTURES.minimal;
 
 **Available Fixtures**:
 ```javascript
-import { SPEC_FIXTURES, createMockContext } from './fixtures/repo-specs.js';
+import { SPEC_FIXTURES } from './fixtures/repo-specs.js';
+import { testEventHandler, createGateTestContext } from './helpers/handler-harness.js';
 
+// Spec fixtures
 SPEC_FIXTURES.minimal           // Basic working spec
-SPEC_FIXTURES.customName        // Custom check name
+SPEC_FIXTURES.customName        // Custom check name  
 SPEC_FIXTURES.behaviorTest30_100 // 30 files, 100KB limits
 SPEC_FIXTURES.invalidYaml       // Malformed YAML
 SPEC_FIXTURES.invalidStructure  // Missing sections
 
-createMockContext("org", "repo", "success")   // Working API
-createMockContext("org", "repo", "not_found") // 404 response
+// Test harness helpers (NEW - with logger support)
+testEventHandler({ event, payload, spec, expectCheck })     // Complete webhook testing
+createGateTestContext({ spec, pr, octokit })                // Gate testing with noopLogger
 ```
 
 ### **Webhook Fixtures** - Existing

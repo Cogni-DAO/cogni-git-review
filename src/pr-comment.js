@@ -3,8 +3,6 @@
  * Posts developer-friendly summary comments on PRs
  */
 
-import { getRequestLogger } from './logging/index.js';
-
 /**
  * Post PR comment with gate results summary
  * @param {Object} context - Probot context
@@ -85,9 +83,10 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
  * @param {string} checkUrl - URL to GitHub check details
  * @param {string} headShaStart - Original PR head SHA
  * @param {number} prNumber - PR number
+ * @param {Object} logger - Logger instance from caller
  */
-export async function postPRCommentWithGuards(context, runResult, checkUrl, headShaStart, prNumber) {
-  const log = getRequestLogger(context, { module: "pr-comment", pr: prNumber });
+export async function postPRCommentWithGuards(context, runResult, checkUrl, headShaStart, prNumber, logger) {
+  const log = logger.child({ module: "pr-comment", pr: prNumber });
   
   try {
     // Staleness guard - check if head SHA changed during run

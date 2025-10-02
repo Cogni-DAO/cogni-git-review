@@ -65,7 +65,7 @@ context.payload.pull_request = pr;
 
 ## Repository Structure
 ```
-├── index.js                    # Main bot webhook handlers
+├── index.js                    # Main bot webhook handlers with structured logging
 ├── bin/e2e-runner.js          # CLI for E2E testing (executable)
 ├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/

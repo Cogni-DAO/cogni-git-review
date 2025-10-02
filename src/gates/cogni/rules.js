@@ -15,7 +15,7 @@ export const type = 'ai-rule';
 /**
  * Evaluate PR against the first enabled AI rule
  */
-export async function run(ctx, gateConfig) {
+export async function run(ctx, gateConfig, logger) {
   const startTime = Date.now();
   const config = gateConfig.with || gateConfig; // Handle both formats
 
@@ -25,7 +25,7 @@ export async function run(ctx, gateConfig) {
       rulesDir: config.rules_dir || '.cogni/rules',
       ruleFile: config.rule_file,
       blockingDefault: config.blocking_default !== false
-    });
+    }, logger);
 
     // Step 2: Validate rule loading
     if (!ruleResult.ok) {
@@ -50,7 +50,7 @@ export async function run(ctx, gateConfig) {
       workflowInput: providerInput
     }, {
       timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
-    });
+    }, logger);
 
     // Runtime validation: Ensure provider result follows standard format
     try {

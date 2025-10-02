@@ -19,7 +19,7 @@ Gates are implemented by cogni-git-review. The .cogni/repo-spec.yml in a reposit
 ```javascript
 export const type = 'gate-type-name';
 
-export async function run(context, gateConfig) {
+export async function run(context, gateConfig, logger) {
   return {
     status: 'pass'|'fail'|'neutral',
     neutral_reason?: 'error_code',

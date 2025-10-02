@@ -132,13 +132,35 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `agents-sync-integration.test.js` - AGENTS.md synchronization gate integration tests
 - `model-provenance-display.test.js` - Model provenance display in GitHub Check summaries (uses structured AI gate mocks)
 
+## Logger Requirements
+
+Functions now require logger parameters with `.child()` method support. Use the `noopLogger` for tests:
+
+```javascript
+import { noopLogger } from '../../src/logging/index.js';
+
+// Function calls that need logger
+await loadSingleRule(context, options, noopLogger);
+await runAllGates(context, pr, spec, noopLogger);
+await provider.evaluateWithWorkflow(config, options, noopLogger);
+
+// Context objects for gate tests
+const context = { 
+  context: mockProbotContext, 
+  logger: noopLogger 
+};
+```
+
+**Key Points:**
+- Always use `noopLogger` from the logging system (has proper `.child()` method)
+- Never use simple mock objects like `{ info: () => {}, error: () => {} }` 
+- Gate functions expect `(ctx, gateConfig, logger)` signature
+- Provider functions expect logger as final parameter
+
 ## Known Issues
 
-- Immature logger handling. skipping tests that require it:
-  - `test/contract/cogni-evaluated-gates-behavior.test.js`: Tests 2-4 (valid_spec_under_limits_success, valid_spec_over_files_failure, valid_spec_over_kb_failure) 
-  - `test/contract/legacy-spec-bug.test.js`: Test 1 (TDD: legacy spec format should report neutral when 0 gates run)
-  - Root cause: Tests mock context without `log` property, but gates/index.js:43 assumes `context.log[level]` exists
-  - Solution: Tracked in Cogni memory project for comprehensive logging architecture
+- Some tests still need logger parameter updates (tracked in todo list)
+- Old mock loggers without `.child()` method will cause "logger.child is not a function" errors
 
 ## Adding Tests
 
