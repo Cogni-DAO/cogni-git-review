@@ -3,6 +3,8 @@
  * Posts developer-friendly summary comments on PRs
  */
 
+import { getRequestLogger } from './logging/index.js';
+
 /**
  * Post PR comment with gate results summary
  * @param {Object} context - Probot context
@@ -85,16 +87,18 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
  * @param {number} prNumber - PR number
  */
 export async function postPRCommentWithGuards(context, runResult, checkUrl, headShaStart, prNumber) {
+  const log = getRequestLogger(context, { module: "pr-comment", pr: prNumber });
+  
   try {
     // Staleness guard - check if head SHA changed during run
     const { data: latest } = await context.octokit.pulls.get(context.repo({ pull_number: prNumber }));
     if (latest.head.sha === headShaStart) {
       await postPRComment(context, runResult, checkUrl, headShaStart, prNumber);
-      console.log(`📝 Posted PR comment for PR #${prNumber}, SHA ${headShaStart.slice(0, 7)}`);
+      log.info({ sha: headShaStart?.slice(0, 7) }, "posted PR comment");
     } else {
-      console.log(`📝 Skipping PR comment - head SHA changed during run (${headShaStart.slice(0, 7)} -> ${latest.head.sha.slice(0, 7)})`);
+      log.info({ old_sha: headShaStart?.slice(0, 7), new_sha: latest.head.sha?.slice(0, 7) }, "skipping PR comment: head SHA changed");
     }
   } catch (error) {
-    console.error('📝 Failed to post PR comment:', error);
+    log.error({ err: error }, "failed to post PR comment");
   }
 }
