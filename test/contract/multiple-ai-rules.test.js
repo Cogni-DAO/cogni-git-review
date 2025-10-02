@@ -143,34 +143,16 @@ describe('Multiple AI Rules Integration', () => {
       ]
     };
     
-    const logCalls = [];
-    
-    // Create custom logger that captures calls for testing
-    const customLogger = {
-      debug: (msg, meta) => { logCalls.push({ level: 'debug', msg, meta }); },
-      info: (msg, meta) => { logCalls.push({ level: 'info', msg, meta }); },
-      warn: (msg, meta) => { logCalls.push({ level: 'warn', msg, meta }); },
-      error: (msg, meta) => { logCalls.push({ level: 'error', msg, meta }); },
-      child: () => customLogger // Return self for .child() calls
-    };
-
-    const runCtx = {
-      context: {
-        spec: specWithDuplicates,
-        pr: { changed_files: [], additions: 0, deletions: 0 },
-        repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-        octokit: {
-          config: {
-            get: async () => ({ config: DONT_REBUILD_OSS_RULE })
-          },
-          pulls: {
-            get: () => ({ data: { changed_files: 0 } })
-          }
-        },
-        abort: new AbortController().signal
+    const runCtx = createGateTestContext({
+      spec: specWithDuplicates,
+      pr: { changed_files: [], additions: 0, deletions: 0 },
+      octokit: {
+        config: {
+          get: async () => ({ config: DONT_REBUILD_OSS_RULE })
+        }
       },
-      logger: customLogger
-    };
+      loggerType: 'capturing'
+    });
 
     try {
       await runConfiguredGates(runCtx);

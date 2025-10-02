@@ -5,6 +5,7 @@
 
 import yaml from 'js-yaml';
 import { noopLogger } from '../../src/logging/logger.js';
+import { createCapturingLogger, createNoopLogger } from './mock-logger.js';
 
 /**
  * Create a mock context for direct handler testing (same pattern as unit tests)
@@ -167,15 +168,30 @@ export async function testEventHandler(options) {
 }
 
 /**
- * Create a gate test context with noopLogger (for runConfiguredGates)
+ * Create a gate test context (for runConfiguredGates)
  * @param {Object} options
  * @param {Object} options.spec - Spec object
  * @param {Object} options.pr - PR data
  * @param {Object} options.octokit - Optional octokit mock
+ * @param {string} options.loggerType - 'noop' (default), 'capturing', or 'builtin'
  * @returns {Object} Context for runConfiguredGates function
  */
 export function createGateTestContext(options) {
-  const { spec, pr, octokit = {} } = options;
+  const { spec, pr, octokit = {}, loggerType = 'noop' } = options;
+  
+  let logger;
+  switch (loggerType) {
+    case 'capturing':
+      logger = createCapturingLogger();
+      break;
+    case 'builtin':
+      logger = noopLogger;
+      break;
+    case 'noop':
+    default:
+      logger = createNoopLogger();
+      break;
+  }
   
   return {
     context: {
@@ -190,7 +206,28 @@ export function createGateTestContext(options) {
       },
       abort: new AbortController().signal
     },
-    logger: noopLogger
+    logger
+  };
+}
+
+/**
+ * Create a mock context with custom spec content for spec-loader testing
+ * @param {Object} specContent - Parsed spec object
+ * @returns {Object} Mock context for loadRepoSpec
+ */
+export function createMockContextWithSpec(specContent) {
+  return {
+    repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+    octokit: {
+      config: {
+        get: async ({ path }) => {
+          if (path === '.cogni/repo-spec.yaml') {
+            return { config: specContent };
+          }
+          return { config: null };
+        }
+      }
+    }
   };
 }
 
