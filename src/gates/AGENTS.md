@@ -3,7 +3,7 @@
 ## Structure
 ```
 src/gates/
-├── index.js           # runAllGates() - root orchestrator with timeout handling
+├── index.js           # runAllGates() - root orchestrator
 ├── run-configured.js  # Dynamic gate launcher with registry-based discovery
 ├── registry.js        # Gate discovery and loading system
 └── cogni/
@@ -36,8 +36,8 @@ The launcher (`run-configured.js`) provides:
 - **Multiple instances**: Same gate type can run multiple times with different configurations
 - **Instance ID derivation**: Auto-derive IDs from `rule_file` for ai-rule, explicit IDs for clarity
 - **Duplicate detection**: Error on duplicate instance IDs, no silent suffixing
-- **Timeout handling**: AbortController integration with partial results
-- **Robust error handling**: Gate crashes become neutral results
+- **Universal gate logging**: All gates log start/completion with status, duration, and diagnostics
+- **Robust error handling**: Gate crashes become neutral results with error details
 
 ## Gate Contract
 Individual gates return `GateResult`:
@@ -45,9 +45,9 @@ Individual gates return `GateResult`:
 {
   id: "string",  // Instance identifier (derived or explicit)
   status: "pass" | "fail" | "neutral",
-  neutral_reason?: "oversize_diff" | "internal_error" | "unimplemented_gate" | ...,
+  neutral_reason?: "oversize_diff" | "internal_error" | "unimplemented_gate" | "wrapper_error" | ...,
   violations: [{code, message, path?, meta?}],  // Non-AI gates
-  observations: [string],                       // AI gates  
+  observations: [string],                       // AI gates
   stats?: object,                               // Non-AI gates only
   provenance?: object,                          // AI gates only - model config + audit info
   // AI rules structured format (Goal Alignment v2):
@@ -77,12 +77,27 @@ for (const gate of spec.gates) {
 }
 ```
 
-## Timeout & Orchestration
-- **Orchestrator** (`index.js`): Sets up AbortController, detects partial results, surfaces neutral status
-- **Launcher** (`run-configured.js`): Checks abort signal before/during each gate, returns partial results  
-- **Partial execution**: When timeout occurs, returns results for gates that completed
-- **Overall status logic**: Prioritizes failures over timeout conditions: `hasFail ? 'fail' : (isPartial && isAborted) ? 'neutral' : (hasNeutral ? 'neutral' : 'pass')`
-- **Consistency**: Both PR comments and check summaries reference the same `overall_status` computation
+## Orchestration
+- **Orchestrator** (`index.js`): Coordinates gate execution and provides execution diagnostics
+- **Launcher** (`run-configured.js`): Sequential gate execution with robust error handling
+- **Overall status logic**: Prioritizes failures over neutral conditions: `hasFail ? 'fail' : (hasNeutral ? 'neutral' : 'pass')`
+- **Execution diagnostics**: Detailed logging of execution plan, per-gate outcomes, and summary statistics
+- **Per-gate timeouts**: AI gates handle individual timeouts (110s), synchronous gates run without timeouts
+
+## Gate Execution Logging
+All gates produce consistent structured logs:
+```
+🚀 Gate {id} starting { type: '{type}' }
+✅ Gate {id} completed { status: '{status}', duration_ms: {ms}, violations: {count} }
+❌ Gate {id} crashed { error: '{message}', duration_ms: {ms}, type: '{type}' }
+💥 Critical error in gate wrapper for {id} { error: '{message}', type: '{type}' }
+```
+
+Execution summary provides diagnostic context:
+```
+🎯 Starting gate execution { total_gates: N, gate_list: [...] }
+📊 Gate execution summary { passed: N, failed: N, neutral: N, overall_status: '...', conclusion_reason: '...' }
+```
 
 ## Adding New Gates
 1. Create `src/gates/cogni/new-gate.js` with gate implementation:

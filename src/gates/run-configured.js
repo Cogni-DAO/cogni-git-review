@@ -14,7 +14,7 @@ let registryPromise = null;
  * @param {object} gateSpec - Gate configuration from spec
  * @returns {string} Derived gate ID
  */
-function deriveGateId(gateSpec) {
+export function deriveGateId(gateSpec) {
   if (gateSpec.id) return gateSpec.id;  // Explicit wins
 
   // Auto-derive for ai-rule from rule_file basename
@@ -67,15 +67,6 @@ export async function runConfiguredGates(context) {
   for (const gate of allGates) {
     const gateId = deriveGateId(gate);
     
-    // Check for timeout before each gate - return partial results if aborted
-    if (context.abort?.aborted) {
-      context.logger?.('warn', 'Gate execution aborted due to timeout', { 
-        gate_id: gateId, 
-        deadline_ms: context.deadline_ms,
-        partial_results: results.length
-      });
-      return { results };
-    }
 
     const handler = resolveHandler(registry, gate);
     
@@ -90,15 +81,22 @@ export async function runConfiguredGates(context) {
       results.push(finalResult);
       
     } catch (error) {
-      if (error.message === 'aborted') {
-        // Mid-gate abort - return partial results
-        context.logger?.('warn', 'Gate execution aborted mid-gate', { 
-          gate_id: gateId,
-          partial_results: results.length
-        });
-        return { results };
-      }
-      // Non-abort errors are already normalized in safeRunGate; nothing to rethrow here.
+      // Handle unexpected errors from safeRunGate itself (not gate execution errors)
+      context.logger?.('error', `💥 Critical error in gate wrapper for ${gateId}`, { 
+        error: error.message,
+        type: gate.type 
+      });
+      
+      // Push a neutral result to prevent breaking the entire gate chain
+      const neutralResult = {
+        id: gateId,
+        status: 'neutral',
+        neutral_reason: 'wrapper_error',
+        violations: [],
+        stats: { wrapper_error: error.message },
+        duration_ms: 0
+      };
+      results.push(neutralResult);
     }
   }
 
@@ -116,9 +114,13 @@ export async function runConfiguredGates(context) {
 async function safeRunGate(handler, ctx, gate, gateId) {
   const startTime = Date.now();
 
+  // Log gate start for ALL gate types
+  ctx.logger?.('info', `🚀 Gate ${gateId} starting`, { type: gate.type });
+
   try {
     // Handle unimplemented gate
     if (!handler) {
+      ctx.logger?.('warn', `⚠️ Gate ${gateId} unimplemented`, { type: gate.type });
       return {
         status: 'neutral',
         neutral_reason: 'unimplemented_gate',
@@ -128,13 +130,17 @@ async function safeRunGate(handler, ctx, gate, gateId) {
       };
     }
 
-    // Check for timeout before executing gate
-    if (ctx.abort?.aborted) {
-      throw new Error('aborted');
-    }
 
     // Execute gate handler
     const result = await handler(ctx, gate);
+
+    // Log gate completion
+    const duration = Date.now() - startTime;
+    ctx.logger?.('info', `✅ Gate ${gateId} completed`, { 
+      status: result.status || 'neutral',
+      duration_ms: duration,
+      violations: result.violations?.length || 0
+    });
 
     // Normalize result shape (ID will be set by caller)
     return {
@@ -150,25 +156,25 @@ async function safeRunGate(handler, ctx, gate, gateId) {
       passed: result.passed,
       failed: result.failed,
       error: result.error,
-      duration_ms: Date.now() - startTime
+      duration_ms: duration
     };
 
   } catch (error) {
-    // Handle abort vs regular errors differently
-    if (error.message === 'aborted') {
-      // Re-throw abort to stop execution at launcher level
-      throw error;
-    }
+    const duration = Date.now() - startTime;
     
     // Gate crashed - log error and return neutral
-    ctx.logger?.('error', `Gate ${gateId} crashed`, { error: error.message });
+    ctx.logger?.('error', `❌ Gate ${gateId} crashed`, { 
+      error: error.message,
+      duration_ms: duration,
+      type: gate.type
+    });
     
     return {
       status: 'neutral',
       neutral_reason: 'internal_error',
       violations: [],
       stats: { error: error.message },
-      duration_ms: Date.now() - startTime
+      duration_ms: duration
     };
   }
 }

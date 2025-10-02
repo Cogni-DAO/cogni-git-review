@@ -190,24 +190,6 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
     assert(gateResult.stats.error.includes('GitHub API rate limit'));
   });
 
-  test('gate integrates with timeout handling', async () => {
-    const changedFiles = [
-      { filename: 'src/module.js', status: 'added' }
-    ];
-
-    // Create pre-aborted signal to simulate timeout
-    const abortController = new AbortController();
-    abortController.abort();
-
-    const runCtx = createRunContext(changedFiles);
-    runCtx.abort = abortController.signal;
-
-    const launcherResult = await runConfiguredGates(runCtx);
-    const results = launcherResult.results;
-
-    // Should return empty results due to timeout before gate execution
-    assert.strictEqual(results.length, 0);
-  });
 
   test('gate ID normalization works correctly', async () => {
     const changedFiles = [
