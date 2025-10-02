@@ -104,7 +104,8 @@ Execution summary provides diagnostic context:
    ```javascript
    export const type = 'new-gate-type';
    export async function run(ctx, gateConfig, logger) {
-     // Implementation returns GateResult
+     const log = logger.child({ module: 'gates/new-gate-type' });
+     // Implementation returns GateResult using structured logging
    }
    ```
 2. Registry auto-discovers gates by `type` export

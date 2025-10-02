@@ -22,7 +22,9 @@ const result = await provider.evaluateWithWorkflow({
     context: probotContext,  // Full Probot context object
     rule: ruleObject         // Complete rule configuration
   }
-});
+}, {
+  timeoutMs: 110000
+}, logger);  // Logger parameter for structured logging
 
 // Returns: { metrics: { "metric-id": {value: 0.9, observations: [...]} }, summary: "...", provenance: {} }
 ```

@@ -39,8 +39,9 @@ export function makeLLMClient({ model }) {
  * @param {number} options.timeoutMs - Timeout in milliseconds (default: 60000)
  * @returns {Promise<Object>} Raw workflow output + provenance wrapper
  */
-export async function evaluateWithWorkflow({ workflowId, workflowInput }, { timeoutMs = 180000 } = {}) {
+export async function evaluateWithWorkflow({ workflowId, workflowInput }, { timeoutMs = 180000 } = {}, logger) {
   const startTime = Date.now();
+  const log = logger?.child({ module: 'ai-provider' });
   
   try {
     // Get workflow from registry
@@ -48,7 +49,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     
     // Select model based on environment
     const modelConfig = selectModel();
-    console.log('🤖 AI Provider: ModelConfig:', modelConfig);
+    log?.debug({ model_config: modelConfig, workflow_id: workflowId }, 'AI provider initialized');
     
     // Create LLM client with temperature policy
     const { client } = makeLLMClient({ model: modelConfig.model });
@@ -79,7 +80,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     };
     
     // Route to selected workflow - preserve exact return format
-    const result = await evaluate(workflowInput, { timeoutMs, client, ...runnableConfig });
+    const result = await evaluate(workflowInput, { timeoutMs, client, logger: log, ...runnableConfig });
     
     // Add provenance wrapper with resolved model info
     return {

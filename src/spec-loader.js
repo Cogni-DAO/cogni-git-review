@@ -43,7 +43,9 @@ async function loadCogniFile(context, path) {
  * @param {boolean} options.blockingDefault - Default blocking behavior (default: true)
  * @returns {Promise<{ok: boolean, rule?: Object, error?: object}>} Single rule result
  */
-export async function loadSingleRule(context, { rulesDir = '.cogni/rules', ruleFile, blockingDefault = true }) {
+export async function loadSingleRule(context, { rulesDir = '.cogni/rules', ruleFile, blockingDefault = true }, logger) {
+  const log = logger?.child({ module: 'spec-loader' });
+  
   if (!ruleFile) {
     return { ok: false, error: { code: 'NO_RULE_FILE' } };
   }
@@ -66,10 +68,7 @@ export async function loadSingleRule(context, { rulesDir = '.cogni/rules', ruleF
     try {
       assertRuleSchema(config);
     } catch (error) {
-      console.error('🚨 Rule schema validation failed:', error.message);
-      if (error.details) {
-        console.error('📋 Validation details:', JSON.stringify(error.details, null, 2));
-      }
+      log?.error({ err: error, rule_file: ruleFile, details: error.details }, 'Rule schema validation failed');
       return { ok: false, error: { code: 'RULE_SCHEMA_INVALID', message: error.message, details: error.details } };
     }
     
@@ -84,11 +83,11 @@ export async function loadSingleRule(context, { rulesDir = '.cogni/rules', ruleF
       }
     };
     
-    console.log(`✅ Rule: Loaded '${rule.id}' from ${ruleFile}`);
+    log?.debug({ rule_id: rule.id, rule_file: ruleFile }, 'Rule loaded');
     return { ok: true, rule };
     
   } catch (error) {
-    console.log(`❌ Rule: Error loading ${ruleFile}: ${error.message}`);
+    log?.error({ err: error, rule_file: ruleFile }, 'Rule loading failed');
     return { ok: false, error: { code: 'RULE_LOAD_FAILED', message: error.message } };
   }
 }

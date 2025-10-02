@@ -127,7 +127,7 @@ function createAgent(client, schema, evalCount) {
  * @param {Object} options - { timeoutMs, client, callbacks, tags, metadata, configurable }
  * @returns {Promise<Object>} { metrics: { metricId: {value, observations} }, summary }
  */
-export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks = [], tags = [], metadata = {}, configurable = {} } = {}) {
+export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks = [], tags = [], metadata = {}, configurable = {}, logger } = {}) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is missing or empty');
   }
@@ -137,6 +137,7 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks
   }
 
   const startTime = Date.now();
+  const log = logger?.child({ module: 'ai-workflows/goal-evaluations' });
 
   // Extract context and rule from input
   const { context, rule } = input;
@@ -210,8 +211,8 @@ Expected output format:
 
   const message = new HumanMessage(promptText);
   
-  console.log('🤖 LangGraph: Prompt input:', promptText);
-  console.log('🤖 LangGraph: Invoking agent...');
+  log?.debug({ prompt_length: promptText.length }, 'LangGraph prompt prepared');
+  log?.debug('LangGraph agent starting');
   // Create PR-specific metadata for this workflow
   const workflowMeta = {
     ...metadata, // Generic provider metadata (workflow_id, model, environment)
@@ -239,6 +240,7 @@ Expected output format:
     }
   });
   
-  console.log(`🤖 LangGraph: Completed in ${Date.now() - startTime}ms`, result.structuredResponse);
+  const duration = Date.now() - startTime;
+  log?.debug({ duration_ms: duration, has_metrics: !!result.structuredResponse?.metrics }, 'LangGraph completed');
   return result.structuredResponse;
 }
