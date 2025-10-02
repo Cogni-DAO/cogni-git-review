@@ -6,6 +6,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
 import { runConfiguredGates } from '../../src/gates/run-configured.js';
+import { noopLogger } from '../../src/logging/logger.js';
 import yaml from 'js-yaml';
 
 describe('AGENTS.md Sync Gate Integration Tests', () => {
@@ -30,21 +31,23 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
 
   function createRunContext(changedFiles, spec = createTestSpec()) {
     return {
-      spec,
-      pr: { 
-        number: 123,
-        changed_files: changedFiles.length,
-        additions: 50,
-        deletions: 10
+      context: {
+        spec,
+        pr: { 
+          number: 123,
+          changed_files: changedFiles.length,
+          additions: 50,
+          deletions: 10
+        },
+        repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+        octokit: {
+          pulls: {
+            listFiles: async () => ({ data: changedFiles })
+          }
+        },
+        abort: new AbortController().signal
       },
-      repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
-        pulls: {
-          listFiles: async () => ({ data: changedFiles })
-        }
-      },
-      logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-      abort: new AbortController().signal
+      logger: noopLogger
     };
   }
 
@@ -163,18 +166,20 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
 
   test('gate returns neutral on GitHub API errors', async () => {
     const runCtx = {
-      spec: createTestSpec(),
-      pr: { number: 123, changed_files: 1 },
-      repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
-        pulls: {
-          listFiles: async () => {
-            throw new Error('GitHub API rate limit');
+      context: {
+        spec: createTestSpec(),
+        pr: { number: 123, changed_files: 1 },
+        repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
+        octokit: {
+          pulls: {
+            listFiles: async () => {
+              throw new Error('GitHub API rate limit');
+            }
           }
-        }
+        },
+        abort: new AbortController().signal
       },
-      logger: (level, msg, meta) => console.log(`[${level}] ${msg}`, meta || ''),
-      abort: new AbortController().signal
+      logger: noopLogger
     };
 
     const launcherResult = await runConfiguredGates(runCtx);

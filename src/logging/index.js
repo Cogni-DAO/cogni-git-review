@@ -15,7 +15,7 @@ export function getRequestLogger(context, bindings = {}) {
   const base = context?.log?.child ? context.log : appLogger;
   
   return base.child({ 
-    reqId: context?.id || 'unknown',
+    id: context?.id || 'unknown',
     repo: context?.payload?.repository?.full_name,
     ...bindings 
   });

@@ -9,6 +9,7 @@ import assert from 'node:assert';
 import { DONT_REBUILD_OSS_RULE, MOCK_AI_GATE_PASS, MOCK_AI_GATE_FAIL, MOCK_AI_GATE_DIFFERENT_MODEL } from '../fixtures/ai-rules.js';
 import { runConfiguredGates } from '../../src/gates/run-configured.js';
 import { renderCheckSummary } from '../../src/summary-adapter.js';
+import { createGateTestContext } from '../helpers/handler-harness.js';
 
 describe('Model Provenance Display Contract Tests', () => {
 
@@ -35,7 +36,7 @@ describe('Model Provenance Display Contract Tests', () => {
     };
 
     // Create run context with mock PR data 
-    const runCtx = {
+    const runCtx = createGateTestContext({
       spec,
       pr: {
         title: 'Add authentication feature',
@@ -43,10 +44,6 @@ describe('Model Provenance Display Contract Tests', () => {
         changed_files: 2,
         additions: 25,
         deletions: 5
-      },
-      repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      logger: (level, msg, meta) => {
-        console.log(`[${level}] ${msg}`, meta || '');
       },
       octokit: {
         config: {
@@ -58,7 +55,7 @@ describe('Model Provenance Display Contract Tests', () => {
           }
         }
       }
-    };
+    });
 
     const launcherResult = await runConfiguredGates(runCtx);
     
@@ -106,13 +103,11 @@ describe('Model Provenance Display Contract Tests', () => {
       ]
     };
 
-    const runCtx = {
+    const runCtx = createGateTestContext({
       spec,
       pr: { changed_files: 2, additions: 25, deletions: 5 },
-      repo: () => ({ owner: 'test', repo: 'test' }),
-      logger: () => {},
       octokit: { config: { get: async () => ({ config: null }) } }
-    };
+    });
 
     const launcherResult = await runConfiguredGates(runCtx);
     const runResult = {

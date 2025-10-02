@@ -7,6 +7,7 @@ import { postPRCommentWithGuards } from './src/pr-comment.js';
 import { renderCheckSummary } from './src/summary-adapter.js';
 import { handleInstallationAdded } from './src/setup/installation-handler.js';
 import { PR_REVIEW_NAME } from './src/constants.js';
+import { getRequestLogger } from './src/logging/index.js';
 
 
 /**
@@ -14,22 +15,20 @@ import { PR_REVIEW_NAME } from './src/constants.js';
  * @param {import('probot').Probot} app
  */
 export default (app) => {
-  if (process.env.LOG_ALL_EVENTS === '1') {
-    app.onAny((context) => {
-      console.log(`🔍 EVENT: ${context.name}.${context.payload.action || 'no-action'}`);
-    });
-  }
+  const short = (sha) => sha?.slice(0, 7) || 'unknown';
 
   // Always log rerun events for debugging
   app.on("check_run", (context) => {
     if (context.payload.action === 'rerequested') {
-      console.log(`🔍 RERUN EVENT: check_run.rerequested received for check: "${context.payload.check_run?.name}"`);
+      const log = getRequestLogger(context, { module: 'webhook', code: 'rerun' });
+      log.info({ check_name: context.payload.check_run?.name }, 'check_run rerequested');
     }
   });
 
   app.on("check_suite", (context) => {
     if (context.payload.action === 'rerequested') {
-      console.log(`🔍 RERUN EVENT: check_suite.rerequested received for suite: ${context.payload.check_suite?.id}`);
+      const log = getRequestLogger(context, { module: 'webhook', code: 'rerun' });
+      log.info({ suite_id: context.payload.check_suite?.id }, 'check_suite rerequested');
     }
   });
 
@@ -51,7 +50,7 @@ export default (app) => {
     }));
   }
 
-  async function createCompletedCheck(context, runResult, headSha, startTime) {
+  async function createCompletedCheck(context, runResult, headSha, startTime, log) {
     const conclusion = mapStatusToConclusion(runResult.overall_status);
     const { summary, text } = renderCheckSummary(runResult);
 
@@ -65,7 +64,7 @@ export default (app) => {
       output: { title: PR_REVIEW_NAME, summary, text }
     }));
 
-    console.log(`📝 Created completed check ${checkResult.data.id} for SHA ${headSha} with conclusion: ${conclusion}`);
+    log.info({ check_id: checkResult.data.id, sha: short(headSha), conclusion }, 'created completed check');
     return checkResult;
   }
 
@@ -84,9 +83,11 @@ export default (app) => {
 
 
   async function handlePullRequest(context) {
+    const started = Date.now();
     const pr = context.payload.pull_request;
     const headShaStart = pr.head.sha;
-    console.log(`📝 PR Event: ${context.payload.action} for PR #${pr.number}, SHA: ${headShaStart}`);
+    const log = getRequestLogger(context, { module: 'webhook', code: 'pr-handler', route: 'pull_request', event: context.payload.action, pr: pr.number });
+    log.info({ sha: short(headShaStart) }, 'PR handler started');
     
     // Create check with in_progress status, skip external gates
     const startTime = new Date();
@@ -99,24 +100,24 @@ export default (app) => {
         throw error;
       }
       const spec = result.spec;
-      console.log(`📄 Spec loaded from probot_config for PR #${pr.number}`);
+      log.info('spec loaded from probot_config');
 
       // Run all gates and create completed check
-      const runResult = await runAllGates(context, pr, spec);
-      const checkResult = await createCompletedCheck(context, runResult, pr.head.sha, startTime);
+      const runResult = await runAllGates(context, pr, spec, log);
+      const checkResult = await createCompletedCheck(context, runResult, pr.head.sha, startTime, log);
       
       // Post PR comment always
-      await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number);
+      await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number, log);
       
+      log.info({ duration_ms: Date.now() - started, conclusion: mapStatusToConclusion(runResult.overall_status) }, 'PR handler completed');
       return checkResult;
       
     } catch (error) {
-      console.error(`📄 Spec load failed for PR #${pr.number}:`, error);
+      const conclusion = error?.code === 'SPEC_MISSING' ? 'neutral' : (error?.code === 'SPEC_INVALID' ? 'failure' : 'neutral');
+      log.error({ err: error, duration_ms: Date.now() - started, conclusion }, 'PR handler failed');
       
       const isMissing = error?.code === 'SPEC_MISSING';
       const isInvalid = error?.code === 'SPEC_INVALID';
-      
-      const conclusion = isMissing ? 'neutral' : (isInvalid ? 'failure' : 'neutral');
       const summary = isMissing
         ? 'Cogni needs a repo-spec'
         : (isInvalid ? 'Invalid .cogni/repo-spec.yaml' : 'Spec could not be loaded (transient error)');
@@ -139,10 +140,12 @@ export default (app) => {
   }
 
   async function handleCheckRerun(context) {
+    const started = Date.now();
     const checkSuite = context.payload.check_suite;
     const { head_sha: headSha } = checkSuite;
+    const log = getRequestLogger(context, { module: 'webhook', code: 'rerun-handler', route: 'check_suite', event: 'rerequested' });
 
-    console.log(`🔄 RERUN: Received check_suite.rerequested for suite, SHA: ${headSha}`);
+    log.info({ sha: short(headSha) }, 'check rerun handler started');
 
     // Rerun does NOT have PR information, just the head SHA. 
     // Find associated PR(s) for this commit SHA using GitHub API
@@ -152,7 +155,7 @@ export default (app) => {
     const prRef = assoc.find(pr => pr.state === 'open') || assoc[0];
 
     if (!prRef) {
-      console.log(`🔄 RERUN: No associated PR found for SHA ${headSha}`);
+      log.info({ sha: short(headSha), duration_ms: Date.now() - started }, 'check rerun handler completed: no PR found');
       return createCheckOnSha(context, {
         sha: headSha,
         conclusion: 'failure',
@@ -161,7 +164,7 @@ export default (app) => {
       });
     }
 
-    console.log(`🔄 RERUN: Found PR #${prRef.number} in check_suite, fetching full PR data`);
+    log.info({ pr: prRef.number }, 'found PR for rerun, fetching full data');
     
     try {
       // Fetch full PR data with file/diff statistics
@@ -169,17 +172,19 @@ export default (app) => {
         context.repo({ pull_number: prRef.number })
       );
       
-      console.log(`🔄 RERUN: Got full PR data - files=${fullPR.changed_files}, additions=${fullPR.additions}, deletions=${fullPR.deletions}`);
+      log.info({ files: fullPR.changed_files, additions: fullPR.additions, deletions: fullPR.deletions }, 'got full PR data for rerun');
       
       // Enhance context to look like a PR event (following context enhancement pattern)
       context.payload.pull_request = fullPR;
       context.payload.action = 'rerequested';
       
       // Delegate to existing PR handler - it already has all the logic we need
-      return handlePullRequest(context);
+      const result = await handlePullRequest(context);
+      log.info({ duration_ms: Date.now() - started }, 'check rerun handler completed');
+      return result;
       
     } catch (error) {
-      console.error(`🔄 Failed to fetch full PR data for PR #${prRef.number}:`, error);
+      log.error({ err: error, pr: prRef.number, duration_ms: Date.now() - started }, 'check rerun handler failed');
       return createCheckOnSha(context, {
         sha: headSha,
         conclusion: 'neutral',

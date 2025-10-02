@@ -17,14 +17,14 @@ Tests for individual functions and components in isolation, without external dep
 
 ## Current Test Files
 - `agents-sync.test.js` - AGENTS.md synchronization gate tests
-- `ai-provider.test.js` - AI provider contract validation with observation handling
+- `ai-provider.test.js` - AI provider contract validation with observation handling and logger parameters
 - `ai-rule-input-validation.test.js` - AI rule input assembly and validation tests
 - `check-contract.min.test.js` - Enforce github Check name follows environment-aware pattern (prod locked, others get suffix)
 - `config-extraction-debug.test.js` - Configuration extraction debugging
 - `eval-criteria.test.js` - Success criteria evaluation logic tests for multi-metric evaluation
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
-- `governance-policy.test.js` - Governance policy gate workflow validation tests MVP
+- `governance-policy.test.js` - Governance policy gate workflow validation tests MVP with shared mock utilities
 - `make-llm-client.test.js` - LLM client factory whitelist behavior tests
 - `model-selector.test.js` - Environment-based model selection tests, mocking env.app
 - `pr-structure-validation.test.js` - Pull request structure validation tests

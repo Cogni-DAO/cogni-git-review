@@ -3,18 +3,19 @@
  * Orchestrates all gate evaluations (Cogni local, External, AI advisory)
  */
 
-import { runConfiguredGates, deriveGateId } from './run-configured.js';
+import { runConfiguredGates } from './run-configured.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
  * @param {import('probot').Context} context - Probot context
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
+ * @param {object} logger - Logger instance from caller
  * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
 
 // No global timeout - gates handle their own timeouts individually
-export async function runAllGates(context, pr, spec) {
+export async function runAllGates(context, pr, spec, logger) {
   const started = Date.now();
   
   // Add execution metadata to context
@@ -38,22 +39,21 @@ export async function runAllGates(context, pr, spec) {
     deletions: pr.deletions
   };
   context.spec = spec;
-  context.logger = (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {}));
   context.annotation_budget = 50;
   context.idempotency_key = `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`;
 
 
   try {
+    // Create module-specific logger
+    const log = logger.child({ module: 'gate-orchestrator' });
+    
     // Log execution plan
     const expectedGateCount = spec.gates?.length || 0;
-    const gateList = spec.gates?.map(g => deriveGateId(g)) || [];
-    context.logger('info', `🎯 Starting gate execution`, {
-      total_gates: expectedGateCount,
-      gate_list: gateList
-    });
+    const gateCount = expectedGateCount;
+    log.info({ gate_count: gateCount }, 'Starting gate execution');
 
     // 1) Run all configured gates in spec order
-    const launcherResult = await runConfiguredGates(context);
+    const launcherResult = await runConfiguredGates({ context, pr, spec, logger: log });
     const allGates = launcherResult?.results || [];
     
     // Detect partial execution 
@@ -98,12 +98,11 @@ export async function runAllGates(context, pr, spec) {
     }
     
     // Log execution results
-    context.logger('info', `📊 Gate execution summary`, {
+    log.info({
       ...summary,
       overall_status,
-      conclusion_reason,
-      gates_summary: `✅${passCount} ❌${failCount} ⚠️${neutralCount}`
-    });
+      conclusion_reason
+    }, 'Gate execution summary');
 
     return { 
       overall_status, 
@@ -114,7 +113,8 @@ export async function runAllGates(context, pr, spec) {
     };
 
   } catch (error) {
-    context.logger('error', 'Gate orchestration failed', { error: error?.message || error });
+    const log = logger.child({ module: 'gate-orchestrator' });
+    log.error({ err: error }, 'Gate orchestration failed');
     
     // Return neutral with internal error
     return {

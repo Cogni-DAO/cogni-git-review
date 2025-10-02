@@ -4,7 +4,7 @@
 LangGraph workflow implementations called by `src/ai/provider.js`. Workflows contain all domain-specific logic and evidence gathering, while provider remains a pure router.
 
 ## Workflow Contract
-Workflows receive: `{ context: probotContext, rule: ruleObject }`
+Workflows receive: `{ context: probotContext, rule: ruleObject }` and `{ logger, ... }`
 Workflows return: `{ metrics: { metricId: {value, observations} }, summary }`
 
 The provider adds `provenance` wrapper with runtime metadata.

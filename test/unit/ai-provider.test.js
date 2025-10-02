@@ -6,6 +6,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import { evaluateWithWorkflow } from '../../src/ai/provider.js';
+import { noopLogger } from '../../src/logging/logger.js';
 
 describe('AI Provider Unit Tests', () => {
 
@@ -20,7 +21,9 @@ describe('AI Provider Unit Tests', () => {
     const result = await evaluateWithWorkflow({
       workflowId: 'goal-evaluations',
       workflowInput: input
-    });
+    }, {
+      timeoutMs: 60000
+    }, noopLogger);
 
     // Validate contract structure
     assert.strictEqual(typeof result.score, 'number', 'Should return numeric score');
@@ -47,7 +50,9 @@ describe('AI Provider Unit Tests', () => {
     const result = await evaluateWithWorkflow({
       workflowId: 'goal-evaluations',
       workflowInput: input
-    });
+    }, {
+      timeoutMs: 60000
+    }, noopLogger);
 
     // Should get hardcoded response from goal-alignment workflow
     assert.strictEqual(result.score, 0.85, 'Should return hardcoded score');
@@ -61,7 +66,9 @@ describe('AI Provider Unit Tests', () => {
     const result = await evaluateWithWorkflow({
       workflowId: 'goal-evaluations',
       workflowInput: null
-    });
+    }, {
+      timeoutMs: 60000
+    }, noopLogger);
 
     assert.strictEqual(result.score, null, 'Should return null score on error');
     assert(Array.isArray(result.observations), 'Should return observations array');

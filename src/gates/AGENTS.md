@@ -103,8 +103,9 @@ Execution summary provides diagnostic context:
 1. Create `src/gates/cogni/new-gate.js` with gate implementation:
    ```javascript
    export const type = 'new-gate-type';
-   export async function run(ctx, gateConfig) {
-     // Implementation returns GateResult
+   export async function run(ctx, gateConfig, logger) {
+     const log = logger.child({ module: 'gates/new-gate-type' });
+     // Implementation returns GateResult using structured logging
    }
    ```
 2. Registry auto-discovers gates by `type` export

@@ -10,6 +10,7 @@ src/
 ├── summary-adapter.js  # Check run summary formatting
 ├── ai/                 # AI-specific evaluation files (→ AGENTS.md)
 ├── gates/              # Gate evaluation system (→ AGENTS.md)
+├── logging/            # Structured logging system (→ AGENTS.md)
 └── setup/              # Installation and setup handlers (→ AGENTS.md)
 
 ```
