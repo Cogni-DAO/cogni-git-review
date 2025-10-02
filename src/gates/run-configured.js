@@ -14,7 +14,7 @@ let registryPromise = null;
  * @param {object} gateSpec - Gate configuration from spec
  * @returns {string} Derived gate ID
  */
-function deriveGateId(gateSpec) {
+export function deriveGateId(gateSpec) {
   if (gateSpec.id) return gateSpec.id;  // Explicit wins
 
   // Auto-derive for ai-rule from rule_file basename
@@ -116,9 +116,13 @@ export async function runConfiguredGates(context) {
 async function safeRunGate(handler, ctx, gate, gateId) {
   const startTime = Date.now();
 
+  // Log gate start for ALL gate types
+  ctx.logger?.('info', `🚀 Gate ${gateId} starting`, { type: gate.type });
+
   try {
     // Handle unimplemented gate
     if (!handler) {
+      ctx.logger?.('warn', `⚠️ Gate ${gateId} unimplemented`, { type: gate.type });
       return {
         status: 'neutral',
         neutral_reason: 'unimplemented_gate',
@@ -136,6 +140,14 @@ async function safeRunGate(handler, ctx, gate, gateId) {
     // Execute gate handler
     const result = await handler(ctx, gate);
 
+    // Log gate completion
+    const duration = Date.now() - startTime;
+    ctx.logger?.('info', `✅ Gate ${gateId} completed`, { 
+      status: result.status || 'neutral',
+      duration_ms: duration,
+      violations: result.violations?.length || 0
+    });
+
     // Normalize result shape (ID will be set by caller)
     return {
       status: result.status ?? 'neutral',
@@ -150,25 +162,43 @@ async function safeRunGate(handler, ctx, gate, gateId) {
       passed: result.passed,
       failed: result.failed,
       error: result.error,
-      duration_ms: Date.now() - startTime
+      duration_ms: duration
     };
 
   } catch (error) {
+    const duration = Date.now() - startTime;
+    
     // Handle abort vs regular errors differently
     if (error.message === 'aborted') {
-      // Re-throw abort to stop execution at launcher level
-      throw error;
+      // FIXED: Handle abort gracefully instead of re-throwing
+      ctx.logger?.('warn', `⏰ Gate ${gateId} timed out`, { 
+        duration_ms: duration,
+        type: gate.type
+      });
+      
+      return {
+        status: 'neutral',
+        neutral_reason: 'timeout',
+        violations: [],
+        observations: ['Gate execution was aborted due to timeout'],
+        stats: { aborted: true, timeout_ms: duration },
+        duration_ms: duration
+      };
     }
     
     // Gate crashed - log error and return neutral
-    ctx.logger?.('error', `Gate ${gateId} crashed`, { error: error.message });
+    ctx.logger?.('error', `❌ Gate ${gateId} crashed`, { 
+      error: error.message,
+      duration_ms: duration,
+      type: gate.type
+    });
     
     return {
       status: 'neutral',
       neutral_reason: 'internal_error',
       violations: [],
       stats: { error: error.message },
-      duration_ms: Date.now() - startTime
+      duration_ms: duration
     };
   }
 }

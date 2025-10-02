@@ -3,7 +3,7 @@
  * Orchestrates all gate evaluations (Cogni local, External, AI advisory)
  */
 
-import { runConfiguredGates } from './run-configured.js';
+import { runConfiguredGates, deriveGateId } from './run-configured.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
@@ -53,34 +53,85 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
   }, opts.deadlineMs);
 
   try {
+    // Log execution plan
+    const expectedGateCount = spec.gates?.length || 0;
+    const gateList = spec.gates?.map(g => deriveGateId(g)) || [];
+    context.logger('info', `🎯 Starting gate execution`, {
+      total_gates: expectedGateCount,
+      gate_list: gateList,
+      timeout_ms: opts.deadlineMs
+    });
+
     // 1) Run all configured gates in spec order
     const launcherResult = await runConfiguredGates(context);
     const allGates = launcherResult?.results || [];
     
     // Detect partial execution (timeout/abort)
-    const expectedGateCount = spec.gates?.length || 0;
     const isPartial = allGates.length < expectedGateCount;
     const isAborted = context.abort.aborted;
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
+    // Create execution summary
+    const passCount = allGates.filter(r => r.status === 'pass').length;
+    const failCount = allGates.filter(r => r.status === 'fail').length;
+    const neutralCount = allGates.filter(r => r.status === 'neutral').length;
+    const timeoutCount = allGates.filter(r => r.neutral_reason === 'timeout').length;
+    
+    const summary = {
+      expected: expectedGateCount,
+      completed: allGates.length,
+      passed: passCount,
+      failed: failCount,
+      neutral: neutralCount,
+      timed_out: timeoutCount,
+      partial_execution: isPartial,
+      global_timeout_hit: isAborted,
+      total_duration_ms: Date.now() - started
+    };
+    
     // Determine overall status - prioritize failures over partial execution
     const hasNoGates = allGates.length === 0;
-    const overall_status = hasNoGates ? 'neutral'
-                         : hasFail ? 'fail' 
-                         : (isPartial && isAborted) ? 'neutral'
-                         : (hasNeutral ? 'neutral' : 'pass');
+    let overall_status;
+    let conclusion_reason;
+    
+    if (hasNoGates) {
+      overall_status = 'neutral';
+      conclusion_reason = 'no_gates_executed';
+    } else if (hasFail) {
+      overall_status = 'fail';
+      conclusion_reason = 'gates_failed';
+    } else if (isPartial && isAborted) {
+      overall_status = 'neutral';
+      conclusion_reason = 'global_timeout';
+    } else if (hasNeutral) {
+      overall_status = 'neutral';
+      conclusion_reason = timeoutCount > 0 ? 'gate_timeouts' : 'gates_neutral';
+    } else {
+      overall_status = 'pass';
+      conclusion_reason = 'all_gates_passed';
+    }
+    
+    // Log execution results
+    context.logger('info', `📊 Gate execution summary`, {
+      ...summary,
+      overall_status,
+      conclusion_reason,
+      gates_summary: `✅${passCount} ❌${failCount} ⚠️${neutralCount}`
+    });
 
     clearTimeout(timeoutId);
     return { 
       overall_status, 
       gates: allGates,
-      duration_ms: Date.now() - started 
+      duration_ms: Date.now() - started,
+      execution_summary: summary,
+      conclusion_reason
     };
 
   } catch (error) {
     clearTimeout(timeoutId);
-    context.logger('error', 'Gate orchestration failed', { error: error.message });
+    context.logger('error', 'Gate orchestration failed', { error: error?.message || error });
     
     // Return neutral with internal error
     return {
