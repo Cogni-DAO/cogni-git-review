@@ -103,22 +103,21 @@ export default (app) => {
       log.info('spec loaded from probot_config');
 
       // Run all gates and create completed check
-      const runResult = await runAllGates(context, pr, spec);
+      const runResult = await runAllGates(context, pr, spec, log);
       const checkResult = await createCompletedCheck(context, runResult, pr.head.sha, startTime, log);
       
       // Post PR comment always
-      await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number);
+      await postPRCommentWithGuards(context, runResult, checkResult.data.html_url, headShaStart, pr.number, log);
       
       log.info({ duration_ms: Date.now() - started, conclusion: mapStatusToConclusion(runResult.overall_status) }, 'PR handler completed');
       return checkResult;
       
     } catch (error) {
-      log.error({ err: error, duration_ms: Date.now() - started }, 'PR handler failed');
+      const conclusion = error?.code === 'SPEC_MISSING' ? 'neutral' : (error?.code === 'SPEC_INVALID' ? 'failure' : 'neutral');
+      log.error({ err: error, duration_ms: Date.now() - started, conclusion }, 'PR handler failed');
       
       const isMissing = error?.code === 'SPEC_MISSING';
       const isInvalid = error?.code === 'SPEC_INVALID';
-      
-      const conclusion = isMissing ? 'neutral' : (isInvalid ? 'failure' : 'neutral');
       const summary = isMissing
         ? 'Cogni needs a repo-spec'
         : (isInvalid ? 'Invalid .cogni/repo-spec.yaml' : 'Spec could not be loaded (transient error)');

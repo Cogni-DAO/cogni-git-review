@@ -1,147 +1,98 @@
-# Logger Usage for Agents
+# Structured Logging Architecture
 
-**Purpose:** Consistent, structured logging that scales. One root logger, request-scoped children, dependency injection everywhere. No `console.*`.
-
-## Goals
-
-- JSON logs in prod. Pretty logs in dev.
-- Stable keys for indexing: time, level, msg, plus your bindings.
-- Redaction for secrets and cookies.
-- Request correlation via reqId.
+**Principle**: One logger per webhook handler, passed as parameters. No deep fetching.
 
 ## Setup
 
-Create a central factory and an app logger:
-- `/src/logging/logger.js`
-- `/src/logging/index.js`
+- `src/logging/logger.js` - Pino factory with redaction and environment handling
+- `src/logging/index.js` - Exports `appLogger` and `getRequestLogger(context, bindings)`
 
-## How to use
+## Core Pattern
 
-### 1) Create a request-scoped child in handlers
+### 1. Webhook Handlers - Create Once, Pass Down
 
 ```javascript
-// src/webhooks/pull_request.js
-import { appLogger } from "../logging/index.js";
-
+// index.js
 export async function handlePullRequest(context) {
-  const logger = (context.log?.child ? context.log : appLogger)
-    .child({ route: "pull_request", reqId: context.id, repo: context.payload.repository.full_name });
-
-  // inject for downstream functions
-  context.logger = logger;
-
-  logger.info({ action: context.payload.action }, "pull_request received");
-  await runGates({ context, logger });
+  const log = getRequestLogger(context, { 
+    module: 'webhook', route: 'pull_request', event: context.payload.action, pr: pr.number 
+  });
+  
+  // Pass to all downstream functions
+  const runResult = await runAllGates(context, pr, spec, log);
+  await postPRCommentWithGuards(context, runResult, checkUrl, headSha, prNumber, log);
 }
 ```
 
-### 2) Accept a logger in modules and gates
+### 2. Gate System - Accept Logger, Create Module Children
 
 ```javascript
-// src/gates/review-limits.js
-import { noop as noopLogger } from "../logging/index.js";
+// src/gates/index.js
+export async function runAllGates(context, pr, spec, logger) {
+  const log = logger.child({ module: 'gates' });
+  return await runConfiguredGates({ context, pr, spec, logger: log });
+}
 
-export async function reviewLimits({ logger = noopLogger, prNumber, config }) {
-  const log = logger.child({ module: "gates/review-limits" });
-  log.info({ pr: prNumber }, "start");
-  // ... implementation ...
-  log.info({ pr: prNumber, allowed: true }, "pass");
+// Individual gates
+export async function reviewLimitsGate({ context, config, logger }) {
+  const log = logger.child({ module: 'gates/review-limits' });
+  log.info({ max_files: config.max_files }, 'gate started');
 }
 ```
 
-### 3) Utilities without request context
+### 3. Helper Functions - Accept Logger Parameter
 
 ```javascript
-// src/util/hash.js
-import { appLogger } from "../logging/index.js";
-const log = appLogger.child({ module: "util/hash" });
-
-export function sha(input) {
-  log.debug({ len: input?.length }, "hashing");
-  // ...
+// src/pr-comment.js  
+export async function postPRCommentWithGuards(context, runResult, checkUrl, headSha, prNumber, logger) {
+  const log = logger.child({ module: 'pr-comment', pr: prNumber });
+  // Use log.info/error - don't call getRequestLogger
 }
 ```
 
-### 4) Tests
-
-Default to silence. Use noopLogger or a mocked shape.
-
-If you need assertions, pass a jest mock.
+### 4. Tests - Inject Mock Logger
 
 ```javascript
-// example.test.ts
-const mockLogger = {
+const mockLogger = { 
   info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(),
-  child() { return this; },
+  child() { return this; } 
 };
 
-await reviewLimits({ logger: mockLogger, prNumber: 42, config: {} });
-expect(mockLogger.info).toHaveBeenCalledWith({ pr: 42 }, "start");
+await runAllGates(context, pr, spec, mockLogger);
 ```
 
-### 5) Probot compatibility
+## Logging Call Signature
 
-If Probot provides `context.log`, it is already a Pino child. Prefer it, then `.child({...})` per request. Otherwise use appLogger.
+**Pattern**: `log.level({ structured_data }, 'message')`
 
 ```javascript
-const base = context?.log?.child ? context.log : appLogger;
-const logger = base.child({ reqId: context.id });
+log.info({ gate_id: 'review-limits', duration_ms: 250, violations: 0 }, 'gate completed');
+log.error({ err: error, pr: prNumber }, 'gate failed');
 ```
 
-## Logging patterns
+## Environment Behavior
 
-**Call signature:** `(metaObject, messageString)`
+- **dev**: Pretty printed logs via pino-pretty
+- **prod/preview**: JSON to stdout for log aggregation  
+- **test**: Disabled (`enabled: false`) - use mock loggers in tests
 
-Use structured fields. Avoid string concatenation.
+## Architecture Rules
 
-```javascript
-logger.info({ gate: "avoid-duplication", duration_ms: 3200 }, "gate finished");
-logger.warn({ missing: ["AGENTS.md"] }, "policy file missing");
-logger.error({ err }, "gate failed");
-```
+✅ **Do:**
+- Create logger in webhook handlers with `getRequestLogger()`
+- Pass logger as function parameters 
+- Use `.child({ module: '...' })` for module-specific logging
+- Log structured data with consistent keys
 
-## Redaction and PII
+❌ **Don't:**
+- Call `getRequestLogger()` in gates or helper functions
+- Use `console.*` anywhere
+- Set `context.logger` (deprecated pattern)
+- Log sensitive data (tokens, full payloads)
 
-- Add new sensitive paths in REDACT only.
-- Never log raw headers, tokens, or cookies.
-- Log IDs, counts, and hashes, not full payloads.
+## Migration Status
 
-## Levels
-
-- **info:** normal control flow.
-- **debug:** noisy internals, disabled in prod by level.
-- **warn:** recoverable issues or degraded behavior.
-- **error:** failures requiring operator attention.
-
-## Do / Don't
-
-### Do
-
-- Create one appLogger.
-- Derive children per request and per module.
-- Inject logger via function params.
-- Keep messages short and consistent.
-- Bind reqId, route, module, gate, pr, repo.
-
-### Don't
-
-- Don't `console.log`.
-- Don't instantiate a logger at the top of every file that has request context.
-- Don't log secrets or entire payloads.
-- Don't build dynamic method names; call `.info/.warn/.error/.debug`.
-
-## Environment
-
-- **NODE_ENV=development:** pretty output via pino-pretty.
-- **NODE_ENV=production:** JSON to stdout for shipping to OpenSearch or similar.
-- **NODE_ENV=test:** `enabled: false` keeps tests quiet unless you inject a mock.
-
-## Minimal integration checklist
-
-1. Add `/src/logging/logger.js` and `/src/logging/index.js`.
-2. Replace any `console.*` with injected logger.
-3. In each webhook handler, set `context.logger = base.child({ reqId, route })`.
-4. Update gates and utilities to accept `{ logger }`.
-5. Verify redaction by logging a request with headers in dev and confirming they are censored.
-
-That's it. One root. Children per request. DI through the stack. Clean, safe, indexable logs.
+- ✅ Webhook handlers (index.js) 
+- ✅ PR comment system
+- 🔄 Gate system (in progress)
+- ⏳ Setup utilities, AI workflows
