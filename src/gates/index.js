@@ -10,14 +10,12 @@ import { runConfiguredGates, deriveGateId } from './run-configured.js';
  * @param {import('probot').Context} context - Probot context
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
- * @param {object} opts - Options { deadlineMs: 8000 }
  * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
 
-// hardcode 120s deadline for now, giving time for AI gate.
-export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000 }) {
+// No global timeout - gates handle their own timeouts individually
+export async function runAllGates(context, pr, spec) {
   const started = Date.now();
-  const abortCtl = new AbortController();
   
   // Add execution metadata to context
   // Note: pr parameter might be the same object as context.payload.pull_request for rerun events
@@ -41,16 +39,9 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
   };
   context.spec = spec;
   context.logger = (level, msg, meta) => context.log[level || 'info'](Object.assign({ msg }, meta || {}));
-  context.deadline_ms = opts.deadlineMs;
   context.annotation_budget = 50;
   context.idempotency_key = `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`;
-  context.abort = abortCtl.signal;
 
-  // Set up timeout handler
-  const timeoutId = setTimeout(() => {
-    context.logger('warn', 'Gate execution timeout, aborting remaining gates', { deadline_ms: opts.deadlineMs });
-    abortCtl.abort();
-  }, opts.deadlineMs);
 
   try {
     // Log execution plan
@@ -58,17 +49,15 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
     const gateList = spec.gates?.map(g => deriveGateId(g)) || [];
     context.logger('info', `🎯 Starting gate execution`, {
       total_gates: expectedGateCount,
-      gate_list: gateList,
-      timeout_ms: opts.deadlineMs
+      gate_list: gateList
     });
 
     // 1) Run all configured gates in spec order
     const launcherResult = await runConfiguredGates(context);
     const allGates = launcherResult?.results || [];
     
-    // Detect partial execution (timeout/abort)
+    // Detect partial execution 
     const isPartial = allGates.length < expectedGateCount;
-    const isAborted = context.abort.aborted;
     const hasFail = allGates.some(r => r.status === 'fail');
     const hasNeutral = allGates.some(r => r.status === 'neutral');
     
@@ -86,7 +75,6 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
       neutral: neutralCount,
       timed_out: timeoutCount,
       partial_execution: isPartial,
-      global_timeout_hit: isAborted,
       total_duration_ms: Date.now() - started
     };
     
@@ -101,9 +89,6 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
     } else if (hasFail) {
       overall_status = 'fail';
       conclusion_reason = 'gates_failed';
-    } else if (isPartial && isAborted) {
-      overall_status = 'neutral';
-      conclusion_reason = 'global_timeout';
     } else if (hasNeutral) {
       overall_status = 'neutral';
       conclusion_reason = timeoutCount > 0 ? 'gate_timeouts' : 'gates_neutral';
@@ -120,7 +105,6 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
       gates_summary: `✅${passCount} ❌${failCount} ⚠️${neutralCount}`
     });
 
-    clearTimeout(timeoutId);
     return { 
       overall_status, 
       gates: allGates,
@@ -130,7 +114,6 @@ export async function runAllGates(context, pr, spec, opts = { deadlineMs: 120000
     };
 
   } catch (error) {
-    clearTimeout(timeoutId);
     context.logger('error', 'Gate orchestration failed', { error: error?.message || error });
     
     // Return neutral with internal error

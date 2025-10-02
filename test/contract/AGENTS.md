@@ -118,7 +118,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 
 - `webhook-handlers.test.js` - Basic webhook → check flows
 - `cogni-evaluated-gates-behavior.test.js` - Gate execution behavior
-- `hardened-launcher.test.js` - Timeout/error scenarios
+- `hardened-launcher.test.js` - Error handling scenarios
 - `spec-aware-webhook.test.js` - Spec loading scenarios
 - `spec-gate-consistency.test.js` - Gate counting validation
 - `simple-integration.test.js` - Basic success/failure paths
