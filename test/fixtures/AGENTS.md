@@ -22,6 +22,8 @@ Reusable test data that eliminates duplication across test suites.
 - `multipleAIRules` - Multiple AI rule instances
 - `agentsSync`, `agentsSyncWithCustomConfig`, `agentsSyncWithOtherGates` - AGENTS.md sync testing
 - `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing MVP
+- `minimalErrorOnNeutral` - Minimal spec with `fail_on_error: true` flag for blocking error behavior testing
+- `errorOnNeutralDefault`, `errorOnNeutralTrue` - Specs with unknown gates for testing neutral→failure conversion behavior
 
 ## Principles
 - Use fixtures instead of inline test data
