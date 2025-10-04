@@ -11,10 +11,8 @@ export const noop = noopLogger;
  * @returns {Object} Pino logger instance
  */
 export function getRequestLogger(context, bindings = {}) {
-  // Prefer Probot's context.log (already a Pino child) over appLogger
-  const base = context?.log?.child ? context.log : appLogger;
-  
-  return base.child({ 
+  // Always use appLogger (with Loki transport) instead of Probot's context.log
+  return appLogger.child({ 
     id: context?.id || 'unknown',
     repo: context?.payload?.repository?.full_name,
     ...bindings 
