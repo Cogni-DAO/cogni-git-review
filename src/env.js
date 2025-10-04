@@ -27,8 +27,13 @@ const loki = z.object({
   LOKI_TOKEN: z.string().optional(),
 });
 
+// Check if we're in development/test mode (for CI/testing environments)
+// In development/test, make required fields optional to allow linting without production secrets
+// This prevents CI failures when ESLint imports trigger environment validation
+const isDevelopmentMode = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test");
+
 const ai = z.object({
-  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_API_KEY: isDevelopmentMode ? z.string().optional() : z.string().min(1),
   LANGFUSE_PUBLIC_KEY: z.string().optional(),
   LANGFUSE_SECRET_KEY: z.string().optional(),
   LANGFUSE_BASE_URL: urlOrUndef(),
@@ -40,9 +45,9 @@ const testing = z.object({
 });
 
 const github = z.object({
-  APP_ID: z.coerce.number().min(1),
-  PRIVATE_KEY: z.string().min(1),
-  WEBHOOK_SECRET: z.string().min(1),
+  APP_ID: isDevelopmentMode ? z.coerce.number().optional() : z.coerce.number().min(1),
+  PRIVATE_KEY: isDevelopmentMode ? z.string().optional() : z.string().min(1),
+  WEBHOOK_SECRET: isDevelopmentMode ? z.string().optional() : z.string().min(1),
   WEBHOOK_PROXY_URL: urlOrUndef(),
 });
 
