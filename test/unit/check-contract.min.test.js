@@ -62,8 +62,22 @@ describe('Check Contract — Minimal Drift Guard', () => {
       "Missing required mapping: fail → failure"
     );
     assert.ok(
-      /case\s*['"]neutral['"]\s*:\s*return\s*['"]neutral['"]/.test(indexSource),
-      "Missing required mapping: neutral → neutral"
+      /case\s*['"]neutral['"]\s*:\s*return\s*default_response/.test(indexSource),
+      "Missing required mapping: neutral → default_response"
+    );
+  });
+
+  test('fail_on_error flag controls neutral conclusion behavior', () => {
+    // Verify the function takes errorOnNeutral parameter
+    assert.ok(
+      /function\s+mapStatusToConclusion\s*\(\s*status\s*,\s*errorOnNeutral\s*\)/.test(indexSource),
+      "mapStatusToConclusion must accept errorOnNeutral parameter"
+    );
+    
+    // Verify default_response logic uses the flag
+    assert.ok(
+      /const\s+default_response\s*=\s*errorOnNeutral\s*\?\s*['"]failure['"]\s*:\s*['"]neutral['"]/.test(indexSource),
+      "default_response must use errorOnNeutral flag to choose failure vs neutral"
     );
   });
 
