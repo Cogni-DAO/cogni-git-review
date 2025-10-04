@@ -39,8 +39,6 @@ export function makeLogger(bindings = {}) {
     base: {
       app: PR_REVIEW_NAME,
       env: environment.APP_ENV,
-      version: environment.SERVICE_VERSION,
-      commit: environment.COMMIT_SHA,
       ...bindings,
     },
 
