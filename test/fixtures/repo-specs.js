@@ -19,6 +19,25 @@ gates:
       max_changed_files: 100
       max_total_diff_kb: 500`,
 
+  // Minimal spec with fail_on_error: true
+  minimalErrorOnNeutral: `schema_version: '0.2.1'
+
+intent:
+  name: minimal-project
+  goals:
+    - Basic project functionality
+  non_goals:
+    - Complex features
+
+fail_on_error: true
+
+gates:
+  - type: review-limits
+    id: review_limits
+    with:
+      max_changed_files: 100
+      max_total_diff_kb: 500`,
+
   // Valid full spec with all gates enabled
   full: `schema_version: '0.2.1'
 
@@ -432,7 +451,36 @@ required_status_contexts:
 
 gates:
   - type: governance-policy
-    id: governance_policy`
+    id: governance_policy`,
+
+  // Error on neutral testing fixtures
+  errorOnNeutralDefault: `schema_version: '0.2.1'
+
+intent:
+  name: test-neutral-default
+  goals:
+    - Test neutral behavior with default flag
+  non_goals:
+    - Blocking behavior
+
+gates:
+  - type: unknown-gate-type
+    id: unknown_gate`,
+
+  errorOnNeutralTrue: `schema_version: '0.2.1'
+
+intent:
+  name: test-neutral-blocking
+  goals:
+    - Test neutral behavior with fail_on_error true
+  non_goals:
+    - Non-blocking behavior
+
+fail_on_error: true
+
+gates:
+  - type: unknown-gate-type
+    id: unknown_gate`
 };
 
 // Helper for accessing specs by key  

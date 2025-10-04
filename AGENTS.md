@@ -90,6 +90,10 @@ context.payload.pull_request = pr;
 ## Gate Configuration
 Quality gates are configured in each repository's `.cogni/repo-spec.yaml`:
 ```yaml
+# GitHub Check Behavior Control
+fail_on_error: false     # Default: cogni Github response is Neutral when the app/gate hits errors 
+                         # true: neutral errors become failure (blocking)
+
 gates:
   # Built-in gates with explicit type + id
   - type: review-limits
@@ -127,6 +131,7 @@ gates:
 - **Enhanced diagnostics**: Detailed execution summaries with per-gate timeout attribution, pass/fail/neutral counts, and conclusion reasoning
 - **Robust error handling**: Gate crashes become neutral results with preserved diagnostic information
 - **Universal gate logging**: Every gate logs start and completion with status, duration, and diagnostic context
+- **Configurable neutral handling**: `fail_on_error` flag controls whether gate errors/timeouts block merges (failure) or allow them (neutral)
 
 ## Development
 

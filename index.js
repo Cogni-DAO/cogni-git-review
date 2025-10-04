@@ -51,7 +51,7 @@ export default (app) => {
   }
 
   async function createCompletedCheck(context, runResult, headSha, startTime, log) {
-    const conclusion = mapStatusToConclusion(runResult.overall_status);
+    const conclusion = mapStatusToConclusion(runResult.overall_status, context.spec.fail_on_error);
     const { summary, text } = renderCheckSummary(runResult);
 
     const checkResult = await context.octokit.checks.create(context.repo({
@@ -72,12 +72,14 @@ export default (app) => {
   /**
    * Map tri-state status to GitHub check conclusion
    */
-  function mapStatusToConclusion(status) {
+  function mapStatusToConclusion(status, errorOnNeutral) {
+    const default_response = errorOnNeutral ? 'failure' : 'neutral';
+
     switch (status) {
       case 'pass': return 'success';
       case 'fail': return 'failure';
-      case 'neutral': return 'neutral';
-      default: return 'neutral';
+      case 'neutral': return default_response;
+      default: return default_response;
     }
   }
 
