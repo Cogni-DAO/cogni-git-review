@@ -8,7 +8,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { CallbackHandler } from "langfuse-langchain";
 import { getWorkflow } from './workflows/registry.js';
 import { selectModel } from './model-selector.js';
-import { env } from '../env.js';
+import { environment } from '../env.js';
 
 // Models we explicitly want temperature=0 for determinism
 const DETERMINISTIC_MODELS = new Set([
@@ -56,9 +56,9 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     
     // Create Langfuse callback handler if configured
     const callbacks = [];
-    if (process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY) {
+    if (environment.langfuse.enabled) {
       callbacks.push(new CallbackHandler({
-        environment: env.app
+        environment: environment.APP_ENV
       }));
     }
 
@@ -66,7 +66,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     const providerMeta = {
       workflow_id: workflowId,
       model: modelConfig.model,
-      environment: env.app,
+      environment: environment.APP_ENV,
     };
     const tags = [
       `workflow:${workflowId}`,

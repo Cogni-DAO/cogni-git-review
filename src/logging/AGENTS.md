@@ -4,7 +4,7 @@
 
 ## Setup
 
-- `src/logging/logger.js` - Pino factory with redaction, environment handling, and Loki transport configuration
+- `src/logging/logger.js` - Pino factory with redaction, environment handling, and Loki transport configuration. Imports `environment` from `../env.js` for centralized configuration access.
 - `src/logging/index.js` - Exports `appLogger` and `getRequestLogger(context, bindings)` which always uses appLogger
 
 ## Core Pattern
@@ -72,26 +72,33 @@ log.error({ err: error, pr: prNumber }, 'gate failed');
 
 ## Environment Behavior
 
-- **dev**: Pretty printed logs via pino-pretty transport
-- **prod/preview**: 
-  - With Loki configuration: Logs sent to Grafana Cloud Loki for centralized aggregation
-  - Without Loki configuration: JSON to stdout fallback
-- **test**: Disabled (`enabled: false`) - use mock loggers in tests
+Logging behavior determined by centralized environment configuration from `/src/env.js`:
+
+- **development** (`NODE_ENV=development`): Pretty printed logs via pino-pretty transport
+- **production/preview** (`NODE_ENV=production` or `APP_ENV=preview`): 
+  - With `environment.loki.enabled=true`: Logs sent to Grafana Cloud Loki for centralized aggregation
+  - With `environment.loki.enabled=false`: JSON to stdout fallback
+- **test** (`NODE_ENV=test`): Disabled (`enabled: false`) - use mock loggers in tests
 
 ### Loki Integration
 
-Production and preview environments support centralized logging to Grafana Cloud Loki when configured:
+Production and preview environments support centralized logging to Grafana Cloud Loki when configured.
 
-**Required Environment Variables:**
-- `LOKI_URL`: The Loki endpoint URL
+**Configuration through `/src/env.js`:**
+The centralized environment system validates Loki configuration as an all-or-nothing group:
+- `LOKI_URL`: The Loki endpoint URL (validated as URL)
 - `LOKI_USER`: Authentication username
 - `LOKI_TOKEN`: Authentication token
+
+All three variables must be set together or all must be empty. The logger accesses configuration through `environment.loki` which provides:
+- `enabled`: Boolean flag indicating if Loki is configured
+- `url`, `user`, `token`: Configuration values when enabled
 
 **Loki Transport Features:**
 - Batching enabled for efficient log transmission
 - 5-second timeout for resilience
-- Automatic labels: `app` (PR_REVIEW_NAME) and `env` (environment name)
-- Falls back to JSON stdout if any Loki variable is missing
+- Automatic labels: `app` (from PR_REVIEW_NAME constant) and `env` (from environment.APP_ENV)
+- Falls back to JSON stdout when `environment.loki.enabled` is false
 
 ## Architecture Rules
 

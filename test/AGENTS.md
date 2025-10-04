@@ -4,6 +4,14 @@
 
 **Key Principle**: Reuse and build reusable test fixtures whenever possible. Avoid duplicating YAML specs, mock contexts, or test data.
 
+## Environment Configuration in Tests
+
+**Test Environment Handling:**
+- Tests are exempted from the ESLint `n/no-process-env` rule and may access `process.env` directly
+- The centralized `/src/env.js` module sets `NODE_ENV=test` by default when testing
+- Mock environment values can be set directly in test files when needed
+- The `environment` object from `/src/env.js` provides `isTest` flag for test detection
+
 ## Current Test Architecture
 
 ### **Unit Tests** - Spec Loader & Gates
