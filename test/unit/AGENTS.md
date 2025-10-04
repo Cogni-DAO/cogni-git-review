@@ -15,6 +15,9 @@ Tests for individual functions and components in isolation, without external dep
 - Use shared fixtures to avoid duplication
 - Cover both success and failure scenarios
 
+## Environment Configuration in Tests
+Tests can access `process.env` directly (ESLint exempted) and may mock environment variables. The centralized `/src/env.js` module provides validated configuration via the `environment` export. Unit tests primarily test isolated logic rather than full environment validation.
+
 ## Current Test Files
 - `agents-sync.test.js` - AGENTS.md synchronization gate tests
 - `ai-provider.test.js` - AI provider contract validation with observation handling and logger parameters

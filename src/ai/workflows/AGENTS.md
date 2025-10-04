@@ -15,7 +15,7 @@ The provider adds `provenance` wrapper with runtime metadata.
 - **Dynamic Schema**: Zod schema generated from rule's `evaluations` array
 - **Dynamic Prompts**: AI instructions generated based on metric count and statements  
 - **Registry**: Workflows registered in registry.js for discovery
-- **Requirements**: OPENAI_API_KEY environment variable
+- **Environment**: Uses centralized `/src/env.js` for configuration. OPENAI_API_KEY validation handled at module level.
 - **Observability**: Langfuse callbacks with provider metadata. Workflows extend with PR-specific context (repo, PR number, commit SHA)
 - **Unified Approach**: Single `goal-evaluations` workflow handles 1 to N evaluations
 - **Capability Handling**: Workflows interpret rule capabilities (`x_capabilities`) and budgets (`x_budgets`)

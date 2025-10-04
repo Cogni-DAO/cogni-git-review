@@ -1,9 +1,9 @@
-import { env } from "./env.js";
+import { environment } from "./env.js";
 
 const BASE_CHECK_NAME = 'Cogni Git PR Review';
 
 export const PR_REVIEW_NAME =
-  env.app === 'prod' ? BASE_CHECK_NAME : `${BASE_CHECK_NAME} (${env.app})`;
+  environment.APP_ENV === 'prod' ? BASE_CHECK_NAME : `${BASE_CHECK_NAME} (${environment.APP_ENV})`;
 
 // Context name → workflow file mapping for governance policy
 export const CONTEXT_TO_WORKFLOW = {

@@ -3,8 +3,8 @@ import js from '@eslint/js';
 import globals from 'globals';
 import promise from 'eslint-plugin-promise';
 import yml from 'eslint-plugin-yml';
+import n from 'eslint-plugin-n';
 import { RAILS_TEMPLATE_PATH } from './src/constants.js';
-// import n from 'eslint-plugin-n'; // optional; see note below
 
 export default [
   // Global options
@@ -38,16 +38,27 @@ export default [
       sourceType: 'module',
       globals: { ...globals.node }
     },
+    plugins: { n },
     rules: {
       'no-console': 'off',
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-use-before-define': ['error', { functions: false }]
+      'no-use-before-define': ['error', { functions: false }],
+      'n/no-process-env': 'error'
     }
   },
 
   // Tests: even more permissive
   {
     files: ['test/**/*.js'],
-    rules: { 'no-unused-vars': 'off' }
+    rules: { 
+      'no-unused-vars': 'off',
+      'n/no-process-env': 'off'  // Tests may need direct env access
+    }
+  },
+  
+  // Allow process.env only in env.js and E2E infrastructure
+  {
+    files: ['src/env.js', 'lib/e2e-runner.js', 'bin/e2e-runner.js'],
+    rules: { 'n/no-process-env': 'off' }
   }
 ];
