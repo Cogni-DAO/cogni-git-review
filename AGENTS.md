@@ -12,6 +12,7 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
 - **AI Provider Architecture**: Generic workflow router with no domain-specific logic
+- **Centralized Logging**: Grafana Cloud Loki integration for production log aggregation
 
 ### Key Resources
 - [Probot Framework Docs](https://probot.github.io/docs/)
@@ -70,7 +71,7 @@ context.payload.pull_request = pr;
 ├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/
 │   ├── spec-loader.js         # Repository specification loading
-    ├── logging/               # Repo-wide logging setup
+    ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
@@ -157,7 +158,9 @@ npm run lint  # ESLint for JavaScript code
 npm run lint:workflows  # actionlint for GitHub Actions workflows
 ```
 
-**Optional Observability**: Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` for AI tracing.
+**Optional Observability**: 
+- **AI Tracing**: Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` for AI tracing
+- **Centralized Logging**: Set `LOKI_URL`, `LOKI_USER`, and `LOKI_TOKEN` for Grafana Cloud Loki integration
 
 
 ## Integration Strategy

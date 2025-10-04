@@ -54,6 +54,17 @@ services:
     scope: RUN_TIME
     type: SECRET
     value: ${LANGFUSE_BASE_URL}
+  - key: LOKI_URL
+    scope: RUN_TIME
+    value: ${LOKI_URL}
+  - key: LOKI_USER
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LOKI_USER}
+  - key: LOKI_TOKEN
+    scope: RUN_TIME
+    type: SECRET
+    value: ${LOKI_TOKEN}
   github:
     branch: main
     deploy_on_push: false
