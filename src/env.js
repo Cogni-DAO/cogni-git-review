@@ -107,11 +107,3 @@ export const environment = Object.freeze({
   } : { enabled: false },
 });
 
-// Legacy export for backward compatibility (remove after migration)
-export const env = {
-  node: environment.NODE_ENV,
-  app: environment.APP_ENV,
-  isDev: environment.isDev,
-  isTest: environment.isTest,
-  isProd: environment.isProd,
-};

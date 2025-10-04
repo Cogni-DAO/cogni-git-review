@@ -1,11 +1,11 @@
 /**
  * AI Model Selection - Environment-Based Configuration
  * 
- * Selects appropriate AI model based on env.app environment variable.
+ * Selects appropriate AI model based on environment.APP_ENV environment variable.
  * No overrides - only environment-based defaults.
  */
 
-import { env } from "../env.js";
+import { environment } from "../env.js";
 
 /**
  * Built-in model mapping by environment
@@ -28,15 +28,15 @@ export function selectModel() {
   try {
     
     // Get model for environment 
-    const model = DEFAULT_MODELS[env.app];
+    const model = DEFAULT_MODELS[environment.APP_ENV];
     
     if (!model) {
-      throw new Error(`Unknown environment: ${env.app}`);
+      throw new Error(`Unknown environment: ${environment.APP_ENV}`);
     }
     
     // Step 2: Build result with audit info
     return {
-      environment: env.app,
+      environment: environment.APP_ENV,
       model,
       provider: 'openai',
       audit: {
@@ -48,8 +48,8 @@ export function selectModel() {
   } catch (error) {
     // Fallback to dev on any error
     return {
-      environment: env.app,
-      model: DEFAULT_MODELS[env.app],
+      environment: environment.APP_ENV,
+      model: DEFAULT_MODELS[environment.APP_ENV],
       provider: 'openai',
       audit: {
         source: 'fallback-on-error',

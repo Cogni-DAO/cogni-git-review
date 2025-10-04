@@ -23,7 +23,6 @@ src/
   - Pre-filters environment to only validate declared variables
   - Exports two objects:
     - `environment` - Frozen object with all validated configuration including helper properties (isDev, isTest, isProd, isPreview, loki, langfuse)
-    - `env` - Legacy compatibility object for migration (contains node, app, isDev, isTest, isProd)
   - All-or-nothing validation for grouped variables (Loki, Langfuse)
   - Type coercion for numeric values (PORT, APP_ID)
   - URL validation with optional empty string handling
