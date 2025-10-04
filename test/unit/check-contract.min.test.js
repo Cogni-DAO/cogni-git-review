@@ -13,9 +13,10 @@ const indexPath = path.resolve(repoRoot, 'index.js');
 const indexSource = fs.readFileSync(indexPath, 'utf8');
 
 describe('Check Contract — Minimal Drift Guard', () => {
-  test('constant value is locked (branch protection)', () => {
+  test('constant value is locked (branch protection)', async () => {
     // Test environment-aware behavior: dev gets (dev), prod gets locked base name
-    const env = process.env.APP_ENV || 'dev';
+    const { environment } = await import('../../src/env.js');
+    const env = environment.APP_ENV;
     const expectedName = env === 'prod' ? 'Cogni Git PR Review' : `Cogni Git PR Review (${env})`;
     assert.strictEqual(
       PR_REVIEW_NAME,

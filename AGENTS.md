@@ -70,6 +70,7 @@ context.payload.pull_request = pr;
 ├── bin/e2e-runner.js          # CLI for E2E testing (executable)
 ├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/
+│   ├── env.js                 # Centralized environment configuration with Zod validation
 │   ├── spec-loader.js         # Repository specification loading
     ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
@@ -134,6 +135,33 @@ gates:
 - **Universal gate logging**: Every gate logs start and completion with status, duration, and diagnostic context
 - **Configurable neutral handling**: `fail_on_error` flag controls whether gate errors/timeouts block merges (failure) or allow them (neutral)
 
+## Environment Configuration
+
+### Centralized Environment Management
+All environment variables are managed through `/src/env.js` with Zod schema validation. The system validates all environment variables on startup with fail-fast behavior.
+
+**Key Features:**
+- **Single source of truth**: All environment variables defined in one place
+- **Type-safe validation**: Zod schemas ensure correct types and formats
+- **Pre-filtering**: Only declared variables are validated (prevents host pollution)
+- **ESLint enforcement**: `n/no-process-env` rule prevents direct `process.env` access
+- **Fail-fast behavior**: Invalid configuration stops the application immediately
+
+**Adding New Environment Variables:**
+1. Add the variable to the appropriate schema section in `/src/env.js`
+2. Export through the `environment` object
+3. Import and use via `import { environment } from './src/env.js'`
+
+**Available Exports:**
+- `environment` - Main frozen object with all validated configuration
+- `env` - Legacy compatibility export (use during migration only)
+
+**ESLint Exemptions:**
+Direct `process.env` access allowed only in:
+- `/src/env.js` - Environment definition file
+- `/lib/e2e-runner.js` and `/bin/e2e-runner.js` - E2E test infrastructure
+- `/test/**/*.js` - Test files may need direct environment access
+
 ## Development
 
 ### Common Commands (for AI Agents)
@@ -158,9 +186,9 @@ npm run lint  # ESLint for JavaScript code
 npm run lint:workflows  # actionlint for GitHub Actions workflows
 ```
 
-**Optional Observability**: 
-- **AI Tracing**: Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` for AI tracing
-- **Centralized Logging**: Set `LOKI_URL`, `LOKI_USER`, and `LOKI_TOKEN` for Grafana Cloud Loki integration
+**Observability Configuration**: 
+- **AI Tracing**: Configure `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` for AI tracing. The system validates these as a group - all must be set for tracing to enable.
+- **Centralized Logging**: Configure `LOKI_URL`, `LOKI_USER`, and `LOKI_TOKEN` for Grafana Cloud Loki integration. These variables must all be set together or all be empty.
 
 
 ## Integration Strategy

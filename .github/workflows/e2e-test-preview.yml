@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: preview-E2E-testing
     env:
+      NODE_ENV: test # E2E test runner environment (separate from preview deployment being validated)
       TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
       TEST_REPO: ${{ vars.TEST_REPO }}
       APP_ENV: preview # required for e2e-runner.js computing PR_REVIEW_NAME via src/constants.js

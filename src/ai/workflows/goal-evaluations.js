@@ -128,9 +128,7 @@ function createAgent(client, schema, evalCount) {
  * @returns {Promise<Object>} { metrics: { metricId: {value, observations} }, summary }
  */
 export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks = [], tags = [], metadata = {}, configurable = {}, logger } = {}) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is missing or empty');
-  }
+  // Note: OPENAI_API_KEY validation now handled in centralized env module
 
   if (!client) {
     throw new Error('Pre-built LLM client is required');

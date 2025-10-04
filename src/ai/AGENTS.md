@@ -35,7 +35,7 @@ const result = await provider.evaluateWithWorkflow({
 - **Full context preservation**: Complete Probot context available to workflows
 - **External endpoint ready**: Simple JSON serializable interface
 
-**Observability**: All AI calls automatically traced to Langfuse when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured. Traces tagged with environment based on `env.app`.
+**Observability**: All AI calls automatically traced to Langfuse when configured through the centralized environment system. The `environment.langfuse` object provides enabled status and configuration. Traces tagged with environment based on `environment.APP_ENV`.
 
 Available workflows configured in `workflows/registry.js`:
 - `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
@@ -44,10 +44,10 @@ Available workflows configured in `workflows/registry.js`:
   - STUB: Manages rule capabilities and budget constraints
 
 ## Model Selection & Temperature Policy
-Models selected automatically by environment via `model-selector.js`:
-- **dev**: `gpt-4o-mini` (local development, no env.app) + `temperature=0`
-- **preview**: `gpt-5-2025-08-07` (env.app=preview) + default temperature
-- **prod**: `gpt-5-2025-08-07` (env.app=prod) + default temperature
+Models selected automatically by environment via `model-selector.js` using the centralized `env` export:
+- **dev**: `gpt-4o-mini` (local development, APP_ENV=dev) + `temperature=0`
+- **preview**: `gpt-5-2025-08-07` (APP_ENV=preview) + default temperature
+- **prod**: `gpt-5-2025-08-07` (APP_ENV=prod) + default temperature
 
 **Temperature Policy**: 
 - **Whitelisted models** (`gpt-4o-mini`, `4o-mini`): `temperature=0` for deterministic, repeatable results
@@ -58,13 +58,14 @@ LLM client creation centralized in `provider.js makeLLMClient({ model })` with e
 Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 
 ## Environment Configuration
-- `APP_ENV=preview|prod` - Environment detection (dev is default)
-- `AI_TIMEOUT_MS=180000` - Per-call timeout
-- `AI_NEUTRAL_ON_ERROR=true` - Error handling policy
-- `OPENAI_API_KEY` - Provider credentials
-- `LANGFUSE_PUBLIC_KEY` - Langfuse observability (optional)
-- `LANGFUSE_SECRET_KEY` - Langfuse observability (optional)
-- `LANGFUSE_BASE_URL` - Langfuse host (optional, defaults to cloud.langfuse.com)
+All AI environment variables are validated and accessed through the centralized `/src/env.js` module:
+- `APP_ENV` - Environment detection (dev|preview|prod, default: dev)
+- `OPENAI_API_KEY` - Required provider credentials (validated as non-empty string)
+- `LANGFUSE_PUBLIC_KEY` - Langfuse observability (optional, requires all Langfuse vars)
+- `LANGFUSE_SECRET_KEY` - Langfuse observability (optional, requires all Langfuse vars)
+- `LANGFUSE_BASE_URL` - Langfuse host (optional, validated as URL)
+
+The provider imports `environment` from `../env.js` and accesses configuration through validated, type-safe properties.
 
 ## Constraints
 - No direct LLM calls outside provider.js

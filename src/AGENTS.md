@@ -4,7 +4,7 @@
 ```
 src/
 ├── constants.js        # Global app constants (environment-aware PR_REVIEW_NAME, CONTEXT_TO_WORKFLOW for CI/Security, RAILS_TEMPLATE_PATH)
-├── env.js              # Exports frozen `env` object for reference throughout the app
+├── env.js              # Centralized environment configuration with Zod validation and type-safe exports
 ├── spec-loader.js      # Repository configuration I/O layer
 ├── pr-comment.js       # PR comment publishing
 ├── summary-adapter.js  # Check run summary formatting
@@ -16,6 +16,17 @@ src/
 ```
 
 ## Core Modules
+
+### Environment Management
+- **env.js**: Centralized environment configuration
+  - Schema-based validation using Zod with fail-fast behavior
+  - Pre-filters environment to only validate declared variables
+  - Exports two objects:
+    - `environment` - Frozen object with all validated configuration including helper properties (isDev, isTest, isProd, isPreview, loki, langfuse)
+  - All-or-nothing validation for grouped variables (Loki, Langfuse)
+  - Type coercion for numeric values (PORT, APP_ID)
+  - URL validation with optional empty string handling
+  - ESLint `n/no-process-env` rule enforces usage of this module
 
 ### Input Layer
 - **spec-loader.js**: Repository `.cogni/*` file loading
