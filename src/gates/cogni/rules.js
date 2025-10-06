@@ -158,6 +158,7 @@ function makeGateDecision(providerResult, rule, startTime) {
     res,
     providerResult,
     rule,
+    provenance: providerResult.provenance,
     duration_ms: Date.now() - startTime
   };
 }
