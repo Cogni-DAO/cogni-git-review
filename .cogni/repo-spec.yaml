@@ -10,6 +10,7 @@ required_status_contexts:
   - CI - PR
   - Security
   - Cogni Git PR Review
+  # - SonarCloud Code Analysis  // symbolic. Required check, cogni-git-review doesn't have dynamicbranch protection check yet (Allstar)
 
 # Control GitHub check conclusion behavior for gate errors/timeouts
 # false (default): errors/timeouts result in 'neutral' conclusion (non-blocking)
