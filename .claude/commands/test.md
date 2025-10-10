@@ -6,4 +6,4 @@ Summarize a brief report of the current state of the test suite and linter resul
 
 Assume every failure is your fault. For any failures, identify the root cause. Ensure you look at the immediate git history of the files involved, as important clues.
 
-Refer to test/AGENTS.md for testing + linting best practices.T
+Refer to test/AGENTS.md for testing + linting best practices.
