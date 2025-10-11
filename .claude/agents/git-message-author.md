@@ -1,7 +1,7 @@
 ---
 name: git-message-author
 description: Use this agent when you are about to write ANY git message - commits or Pull Request titles and summaries. This agent MUST be called before creating any commit or PR to ensure proper analysis of changes and adherence to evaluation criteria. Examples: <example>Context: User has completed implementing a new GitHub webhook handler and is ready to commit. user: 'I've finished implementing the webhook handler. Let me commit this.' assistant: 'I'll use the git-message-author agent to analyze all the changes and create a proper commit message that meets the evaluation criteria.' <commentary>Since the user is about to commit, use the git-message-author agent to analyze all file changes and create a compliant commit message.</commentary></example> <example>Context: User has made multiple changes across different files and wants to create a PR. user: 'I've updated the authentication system and also fixed some documentation. Ready to submit this.' assistant: 'Let me use the git-message-author agent to review all your changes and determine if they should be in one commit/PR or split into separate ones.' <commentary>The user has made changes that might be disjoint, so use the git-message-author agent to analyze and potentially identify the need to split changes.</commentary></example>
-tools: Bash, Edit, MultiEdit, Write, NotebookEdit
+tools: Bash, Edit, MultiEdit, Read, Write, NotebookEdit
 color: pink
 ---
 
