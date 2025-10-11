@@ -98,6 +98,6 @@ The `ai-rule` gate supports dynamic AI evaluation with schema v0.3:
 ## Gate Output Fields
 
 **Standard Result Structure**:
-- **AI gates** (rules.js): Return per-metric observations within providerResult.metrics structure
+- **AI gates** (rules.js): Return per-metric observations within providerResult.metrics structure, plus `provenance` field containing provider/model configuration for display purposes
 - **Stub gates** (goal-declaration-stub.js, forbidden-scopes-stub.js): Return violations with `observation` messages
 - All gates return normalized `{status, violations[], stats, duration_ms}` format
