@@ -14,6 +14,15 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - **AI Provider Architecture**: Generic workflow router with no domain-specific logic
 - **Centralized Logging**: Grafana Cloud Loki integration for production log aggregation
 
+## Agent Team
+You are on a team full of specialized agents. If you have access use agents, do it!
+- code-reviewer.md
+- docs-synchronizer.md
+- senior-developer.md
+- system-architect.md
+- test-strategist.md
+- validation-engineer.md
+
 ### Key Resources
 - [Probot Framework Docs](https://probot.github.io/docs/)
 - [GitHub Checks API](https://docs.github.com/en/rest/checks)

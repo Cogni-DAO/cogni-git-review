@@ -53,8 +53,6 @@ Scroll down on your apps settings page to → "Generate a private key" (download
 
 Now, in your repo, fill out your .env file
 
-**Tip**: Open the .pem file in your IDE (File → Open → Downloads → your_key.pem), copy the ENTIRE key value, then paste it in the .env file with leading `"` and trailing `"`
-
 Your fork of `cogni-git-review` should have a `.env.example` file in it. In your IDE:
 ```bash
 cp .env.example .env
@@ -66,9 +64,19 @@ APP_ID=123456  # from your app page
 WEBHOOK_SECRET=your-password-from-step-1
 WEBHOOK_PROXY_URL=https://smee.io/your-channel
 LOG_LEVEL=debug
-PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----
-...paste entire .pem file contents here...
------END RSA PRIVATE KEY-----"
+PRIVATE_KEY=""
+```
+
+Use this command to populate the private key in your .env:
+```bash
+# Convert to base64, add quotes, add to .env var PRIVATE_KEY
+sh -lc 'printf "PRIVATE_KEY=%s\n" "$(base64 < </path/to/key.pem> | tr -d "\n")"' >> .env
+```
+
+Using a github preview deployment? do this:
+```bash
+# Note: the quotes are essential for .do appspec parsing via github actions
+echo "\"$(base64 -i /path/to/key.pem)\"" | gh secret set PRIVATE_KEY --env Preview
 ```
 
 ### 3. Run with Smee
@@ -78,7 +86,7 @@ npm install -g smee-client
 smee --url https://smee.io/your-channel --target http://localhost:3000/api/github/webhooks
 ```
 
-It might not seem like it, but you can close this terminal window now. SMEE is set up.
+It might not seem like it, but you can close this terminal window now. SMEE is set up (`npm start` will run it under the hood).
 
 **Note**: You should open the URL `https://smee.io/your-channel` in your browser. You can see the webhook events being triggered by Github, and `Re-Deliver` any of the payloads to your localhost app!
 
