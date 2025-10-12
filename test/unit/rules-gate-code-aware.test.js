@@ -128,13 +128,11 @@ describe('Rules Gate Code-Aware Enhancement Unit Tests', () => {
   test('vendor-prefixed extension fields are supported', async () => {
     const rule = {
       id: 'test-rule',
-      x_capabilities: ['diff_summary', 'file_patches'],
-      x_budgets: { max_files: 25 }
+      x_capabilities: ['diff_summary', 'file_patches']
     };
     
     // Should be able to access vendor-prefixed fields
     assert(Array.isArray(rule.x_capabilities));
     assert.strictEqual(rule.x_capabilities.includes('diff_summary'), true);
-    assert.strictEqual(rule.x_budgets.max_files, 25);
   });
 });

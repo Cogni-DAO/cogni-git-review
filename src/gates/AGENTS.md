@@ -79,6 +79,8 @@ for (const gate of spec.gates) {
 
 ## Orchestration
 - **Orchestrator** (`index.js`): Coordinates gate execution and provides execution diagnostics
+  - Enriches context with PR metadata and review-limits configuration
+  - Passes `reviewLimitsConfig` to context for AI workflow budget calculations
 - **Launcher** (`run-configured.js`): Sequential gate execution with robust error handling
 - **Overall status logic**: Prioritizes failures over neutral conditions: `hasFail ? 'fail' : (hasNeutral ? 'neutral' : 'pass')`
 - **Execution diagnostics**: Detailed logging of execution plan, per-gate outcomes, and summary statistics

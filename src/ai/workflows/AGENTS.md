@@ -18,4 +18,11 @@ The provider adds `provenance` wrapper with runtime metadata.
 - **Environment**: Uses centralized `/src/env.js` for configuration. OPENAI_API_KEY validation handled at module level.
 - **Observability**: Langfuse callbacks with provider metadata. Workflows extend with PR-specific context (repo, PR number, commit SHA)
 - **Unified Approach**: Single `goal-evaluations` workflow handles 1 to N evaluations
-- **Capability Handling**: Workflows interpret rule capabilities (`x_capabilities`) and budgets (`x_budgets`)
+- **Capability Handling**: Workflows interpret rule capabilities (`x_capabilities`)
+
+## Budget Calculation
+The `goal-evaluations` workflow calculates evidence gathering budgets with the following precedence:
+1. **Review-limits configuration** (`context.reviewLimitsConfig.max_changed_files`) - used as `max_files`
+2. **Workflow defaults** - fallback values (25 files, 16KB patches, 3 patches)
+
+This integration ensures AI workflows respect repository-configured review limits consistently across all rules.

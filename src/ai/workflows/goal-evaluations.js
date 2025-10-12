@@ -145,9 +145,7 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks
     // Use review-limits max_changed_files as max_files, fallback to hardcoded default
     max_files: context.reviewLimitsConfig?.max_changed_files || 25,
     max_patch_bytes_per_file: 16000,  // Keep workflow-specific default
-    max_patches: 3,                   // Keep workflow-specific default
-    // Allow rule-specific overrides
-    ...rule.x_budgets
+    max_patches: 3                    // Keep workflow-specific default
   };
 
   // Gather evidence based on rule capabilities

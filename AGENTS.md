@@ -72,6 +72,18 @@ const pr = assoc.find(pr => pr.state === 'open') || assoc[0];
 context.payload.pull_request = pr;
 ```
 
+### Context Enrichment by Gate Orchestrator
+The gate orchestrator (`src/gates/index.js`) enriches the Probot context with execution metadata:
+```javascript
+context.pr = { /* PR metadata extracted from payload */ }
+context.spec = spec  // Repository specification
+context.annotation_budget = 50  // GitHub annotation limit
+context.idempotency_key = /* unique execution key */
+context.reviewLimitsConfig = /* review-limits gate configuration */
+```
+
+The `reviewLimitsConfig` property provides review-limits gate configuration to AI workflows, enabling budget-aware evidence gathering that respects repository-configured file limits.
+
 
 ## Repository Structure
 ```

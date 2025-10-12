@@ -41,7 +41,7 @@ Available workflows configured in `workflows/registry.js`:
 - `goal-evaluations` - Dynamic evaluation workflow supporting 1 to N metrics
   - Handles evidence gathering from PR changes
   - Extracts PR metadata for Langfuse tracing
-  - STUB: Manages rule capabilities and budget constraints
+  - Manages rule capabilities and budget constraints with review-limits integration
 
 ## Model Selection & Temperature Policy
 Models selected automatically by environment via `model-selector.js` using the centralized `env` export:

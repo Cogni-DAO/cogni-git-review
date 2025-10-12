@@ -35,6 +35,7 @@ The `review-limits` gate enforces PR size constraints:
 - Validates maximum number of changed files and total diff size
 - Configurable thresholds for `max_changed_files` and `max_total_diff_kb`
 - Uses GitHub API PR statistics (`changed_files`, `additions`, `deletions`)
+- Configuration shared with AI workflows: `max_changed_files` serves as the authoritative budget limit for AI evidence gathering
 
 ## STUB: Goal Declaration Gate  
 The `goal-declaration` gate validates repository intent specification:
@@ -84,13 +85,15 @@ The `ai-rule` gate supports dynamic AI evaluation with schema v0.3:
 - Calls `src/ai/provider.evaluateWithWorkflow()` which returns provider-result format
 - Pass/fail based on `success_criteria` evaluation against returned metrics
 - **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` enables file changes access
-- **Resource budgets**: `x_budgets` prevent token/cost overruns
 
 ### Code-Aware Evidence Gathering
 **Handled by workflow**, not gate:
 - Workflow reads `x_capabilities` from rule to determine evidence needs
 - Deterministic file sorting by change count, then filename
-- Respects budget limits: `max_files` (from review-limits or 25 default), `max_patches` (3), `max_patch_bytes_per_file` (16KB)
+- Respects budget limits:
+  - `max_files`: Uses `review-limits` gate's `max_changed_files` if configured, otherwise 25 default
+  - `max_patches`: 3 (workflow default)
+  - `max_patch_bytes_per_file`: 16KB (workflow default)
 - Enhanced diff includes file patches when under budget
 - Simple diff summary when `x_capabilities` not specified
 - Evidence gathering logic isolated in `goal-evaluations.js` workflow
