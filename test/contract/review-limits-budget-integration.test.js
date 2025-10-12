@@ -35,7 +35,6 @@ describe('Review Limits Budget Integration Contract Tests', () => {
   }
 
   test('AI workflow executes successfully with 30-file review-limits configuration', async () => {
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     await testEventHandler({
       event: 'pull_request.opened',
       payload,
