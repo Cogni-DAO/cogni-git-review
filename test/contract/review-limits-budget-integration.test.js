@@ -12,25 +12,40 @@ import payload from '../fixtures/pull_request.opened.complete.json' with { type:
 
 describe('Review Limits Budget Integration Contract Tests', () => {
 
+  // Helper function to perform standard contract assertions
+  function assertStandardContract(params, expectedConclusion, additionalChecks = () => { }) {
+    assert.strictEqual(params.name, PR_REVIEW_NAME);
+    assert.strictEqual(params.status, 'completed');
+    assert(['success', 'failure', 'neutral'].includes(params.conclusion));
+
+    if (expectedConclusion) {
+      assert.strictEqual(params.conclusion, expectedConclusion);
+    }
+
+    additionalChecks(params);
+  }
+
+  // Helper function for full PR contract checks (includes head_sha and title)
+  function assertFullPRContract(params, expectedConclusion, additionalChecks = () => { }) {
+    assertStandardContract(params, expectedConclusion, (params) => {
+      assert.strictEqual(params.head_sha, payload.pull_request.head.sha);
+      assert.strictEqual(params.output.title, PR_REVIEW_NAME);
+      additionalChecks(params);
+    });
+  }
+
   test('AI workflow executes successfully with 30-file review-limits configuration', async () => {
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     await testEventHandler({
       event: 'pull_request.opened',
       payload,
       spec: 'reviewLimitsBudget30', // Fixture with max_changed_files: 30
       expectCheck: (params) => {
-        // Standard contract assertions
-        assert.strictEqual(params.name, PR_REVIEW_NAME);
-        assert.strictEqual(params.head_sha, payload.pull_request.head.sha);
-        assert.strictEqual(params.status, 'completed');
-        assert(['success', 'failure', 'neutral'].includes(params.conclusion));
-        assert.strictEqual(params.output.title, PR_REVIEW_NAME);
-        
-        // Verify AI workflow ran (should create neutral due to missing rule file)
-        assert.strictEqual(params.conclusion, 'neutral');
-        
-        // Basic validation that check was created successfully
-        const text = params.output.text || '';
-        console.log('Review-limits 30 check output length:', text.length);
+        assertFullPRContract(params, 'neutral', () => {
+          // Basic validation that check was created successfully
+          const text = params.output.text || '';
+          console.log('Review-limits 30 check output length:', text.length);
+        });
       }
     });
   });
@@ -41,15 +56,9 @@ describe('Review Limits Budget Integration Contract Tests', () => {
       payload,
       spec: 'reviewLimitsBudgetNone', // Fixture without review-limits gate
       expectCheck: (params) => {
-        assert.strictEqual(params.name, PR_REVIEW_NAME);
-        assert.strictEqual(params.head_sha, payload.pull_request.head.sha);
-        assert.strictEqual(params.status, 'completed');
-        assert(['success', 'failure', 'neutral'].includes(params.conclusion));
-        
-        // Should handle missing review-limits gracefully
-        assert.strictEqual(params.conclusion, 'neutral');
-        
-        console.log('No review-limits check conclusion:', params.conclusion);
+        assertFullPRContract(params, 'neutral', () => {
+          console.log('No review-limits check conclusion:', params.conclusion);
+        });
       }
     });
   });
@@ -60,14 +69,9 @@ describe('Review Limits Budget Integration Contract Tests', () => {
       payload,
       spec: 'reviewLimitsSmall10', // Fixture with max_changed_files: 10
       expectCheck: (params) => {
-        assert.strictEqual(params.name, PR_REVIEW_NAME);
-        assert.strictEqual(params.status, 'completed');
-        assert(['success', 'failure', 'neutral'].includes(params.conclusion));
-        
-        // Should execute successfully even with small limit
-        assert.strictEqual(params.conclusion, 'neutral');
-        
-        console.log('Small review-limits (10) check conclusion:', params.conclusion);
+        assertStandardContract(params, 'neutral', () => {
+          console.log('Small review-limits (10) check conclusion:', params.conclusion);
+        });
       }
     });
   });
@@ -89,17 +93,12 @@ describe('Review Limits Budget Integration Contract Tests', () => {
       payload: largePayload,
       spec: 'reviewLimitsSmall10', // Has max_changed_files: 10
       expectCheck: (params) => {
-        assert.strictEqual(params.name, PR_REVIEW_NAME);
-        assert.strictEqual(params.status, 'completed');
-        
-        // Should fail because PR has 15 files but limit is 10
-        assert.strictEqual(params.conclusion, 'failure', 
-          'Should fail when PR exceeds review-limits max_changed_files');
-        
-        // Check that the violation is reported
-        const text = params.output.text || '';
-        assert(text.includes('review_limits') || text.includes('max_changed_files'),
-          'Should mention review-limits violation in output');
+        assertStandardContract(params, 'failure', () => {
+          // Check that the violation is reported
+          const text = params.output.text || '';
+          assert(text.includes('review_limits') || text.includes('max_changed_files'),
+            'Should mention review-limits violation in output');
+        });
       }
     });
   });
@@ -119,15 +118,11 @@ describe('Review Limits Budget Integration Contract Tests', () => {
       },
       spec: 'reviewLimitsSmall10',
       expectCheck: (params) => {
-        assert.strictEqual(params.name, PR_REVIEW_NAME);
-        assert.strictEqual(params.status, 'completed');
-        
-        // Should be neutral (AI gate neutral due to missing rule file, but review-limits passes)
-        assert.strictEqual(params.conclusion, 'neutral');
-        
-        // Verify both gates ran
-        const text = params.output.text || '';
-        console.log('Both gates integration - gates executed');
+        assertStandardContract(params, 'neutral', () => {
+          // Verify both gates ran
+          const text = params.output.text || '';
+          console.log('Both gates integration - gates executed');
+        });
       }
     });
   });
