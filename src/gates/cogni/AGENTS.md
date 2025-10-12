@@ -90,7 +90,7 @@ The `ai-rule` gate supports dynamic AI evaluation with schema v0.3:
 **Handled by workflow**, not gate:
 - Workflow reads `x_capabilities` from rule to determine evidence needs
 - Deterministic file sorting by change count, then filename
-- Respects budget limits: `max_files` (25), `max_patches` (3), `max_patch_bytes_per_file` (16KB)
+- Respects budget limits: `max_files` (from review-limits or 25 default), `max_patches` (3), `max_patch_bytes_per_file` (16KB)
 - Enhanced diff includes file patches when under budget
 - Simple diff summary when `x_capabilities` not specified
 - Evidence gathering logic isolated in `goal-evaluations.js` workflow

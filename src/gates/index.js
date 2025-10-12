@@ -41,6 +41,10 @@ export async function runAllGates(context, pr, spec, logger) {
   context.spec = spec;
   context.annotation_budget = 50;
   context.idempotency_key = `${context.payload.repository.full_name}:${pr.number}:${pr.head?.sha || pr.head_sha}:${spec?._hash || 'nospec'}`;
+  
+  // Pass review-limits config for AI workflow budget calculations
+  const reviewLimitsConfig = spec.gates?.find(g => g.type === 'review-limits')?.with;
+  context.reviewLimitsConfig = reviewLimitsConfig;
 
 
   try {
