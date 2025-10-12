@@ -21,7 +21,8 @@ AJV-based JSON schema validation for AI evaluation rules and provider outputs. P
 - **Schema v0.3**: Dynamic `evaluations` array maps metric IDs to statement text
 - **Workflow routing**: `workflow_id` specifies AI workflow (typically `goal-evaluations`)
 - **Success criteria**: `require` and `any_of` arrays with metric comparisons (`gte`, `gt`, `lte`, `lt`, `eq`)
-- **Vendor extensions**: `x_capabilities`, `x_budgets` for code-aware evaluation and resource limits
+- **Vendor extensions**: 
+  - `x_capabilities`: Array of capabilities like `['diff_summary', 'file_patches']` for code-aware evaluation
 
 ### provider-result.schema.json
 **JSON Schema for AI Provider Response Format**

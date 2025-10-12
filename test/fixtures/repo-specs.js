@@ -480,7 +480,60 @@ fail_on_error: true
 
 gates:
   - type: unknown-gate-type
-    id: unknown_gate`
+    id: unknown_gate`,
+
+  // Review-limits budget integration test fixtures
+  reviewLimitsBudget30: `schema_version: '0.2.1'
+
+intent:
+  name: budget-30-test-project
+  goals:
+    - Test 30-file budget integration with AI workflows
+  non_goals:
+    - Large file limits
+
+gates:
+  - type: review-limits
+    id: review_limits
+    with:
+      max_changed_files: 30
+      max_total_diff_kb: 100
+  - type: ai-rule
+    with:
+      rule_file: goal-alignment.yaml`,
+
+  reviewLimitsBudgetNone: `schema_version: '0.2.1'
+
+intent:
+  name: no-budget-test-project
+  goals:
+    - Test fallback behavior without review-limits gate
+  non_goals:
+    - File limits enforcement
+
+gates:
+  - type: ai-rule
+    with:
+      rule_file: goal-alignment.yaml`,
+
+  reviewLimitsSmall10: `schema_version: '0.2.1'
+
+intent:
+  name: small-budget-test-project
+  goals:
+    - Test 10-file budget integration with AI workflows
+  non_goals:
+    - Large file limits
+
+gates:
+  - type: review-limits
+    id: review_limits
+    with:
+      max_changed_files: 10
+      max_total_diff_kb: 50
+  - type: ai-rule
+    with:
+      rule_file: goal-alignment.yaml`
 };
 
 // Helper for accessing specs by key  

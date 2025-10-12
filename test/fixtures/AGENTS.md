@@ -24,6 +24,7 @@ Reusable test data that eliminates duplication across test suites.
 - `governance`, `governanceNoContexts`, `governanceUnknownContext` - Governance policy testing MVP
 - `minimalErrorOnNeutral` - Minimal spec with `fail_on_error: true` flag for blocking error behavior testing
 - `errorOnNeutralDefault`, `errorOnNeutralTrue` - Specs with unknown gates for testing neutral→failure conversion behavior
+- `reviewLimitsBudget30`, `reviewLimitsBudgetNone`, `reviewLimitsSmall10` - Review-limits budget integration testing with AI workflows
 
 ## Principles
 - Use fixtures instead of inline test data
