@@ -60,3 +60,10 @@ gates:
 
 ## Code-Aware Enhancement
 Rules with `x_capabilities: ['diff_summary', 'file_patches']` receive enhanced diff_summary containing actual file changes and patch content, subject to budget limits.
+
+### Budget Integration with Review-Limits
+AI workflows automatically integrate with the `review-limits` gate configuration:
+- `max_files` budget inherits from `review-limits` gate's `max_changed_files` setting
+- Falls back to 25-file default when `review-limits` gate is not configured
+
+This ensures AI evaluation respects repository-wide file limits consistently across all rules.

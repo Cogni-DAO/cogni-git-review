@@ -140,11 +140,19 @@ export async function evaluate(input, { timeoutMs: _timeoutMs, client, callbacks
   // Extract context and rule from input
   const { context, rule } = input;
 
+  // Build budget configuration with review-limits as authoritative source for file limits
+  const budgets = {
+    // Use review-limits max_changed_files as max_files, fallback to hardcoded default
+    max_files: context.reviewLimitsConfig?.max_changed_files || 25,
+    max_patch_bytes_per_file: 16000,  // Keep workflow-specific default
+    max_patches: 3                    // Keep workflow-specific default
+  };
+
   // Gather evidence based on rule capabilities
   const enhancedDiffSummary = await gatherEvidence(
     context, 
     rule.x_capabilities || [], 
-    rule.x_budgets || {}
+    budgets
   );
 
   // Get basic PR data from context

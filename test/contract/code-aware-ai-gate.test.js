@@ -74,11 +74,6 @@ describe('Code-Aware AI Gate Integration Tests', () => {
         threshold: 0.5
       },
       x_capabilities: ['diff_summary', 'file_patches'],
-      x_budgets: {
-        max_files: 25,
-        max_patch_bytes_per_file: 16000,
-        max_patches: 3
-      },
       prompt: {
         template: '.cogni/prompts/code-aware-lite.md',
         variables: ['pr_title', 'pr_body', 'diff_summary', 'statement']
