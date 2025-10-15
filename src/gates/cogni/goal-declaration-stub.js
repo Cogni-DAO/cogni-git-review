@@ -9,7 +9,7 @@ export const type = 'goal-declaration';
 /**
  * Evaluate goal declaration requirement - STUB VERSION
  * Simply passes if repo spec has at least 1 goal defined
- * @param {import('probot').Context} context - Probot context (unused)
+ * @param {import('../../adapters/base-context.d.ts').BaseContext} context - Base context interface (unused)
  * @param {object} pr - Pull request object from webhook (unused)  
  * @param {object} spec - Repository specification
  * @returns {Promise<{violations: Array, stats: object, oversize: boolean}>}

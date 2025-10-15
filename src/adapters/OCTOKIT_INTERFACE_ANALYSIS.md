@@ -1,8 +1,51 @@
-# Octokit Interface Analysis for LocalContext Implementation
+# VCS Interface Analysis for LocalContext Implementation
+
+**Architecture Change**: Gates now use `context.vcs` (host-agnostic) instead of `context.octokit` (GitHub-specific). The GitHub adapter maps `context.vcs` → `context.octokit` internally.
 
 ## Complete Octokit Usage Survey
 
-Based on codebase scan, here are **all** octokit methods used across the entire project:
+Based on comprehensive codebase scan, here are **all** octokit methods used across the entire project:
+
+### 📋 VCS Interface Mapping (16 unique patterns found)
+
+**Old Pattern** (GitHub-specific):
+```javascript
+context.octokit.* 
+```
+
+**New Pattern** (Host-agnostic):
+```javascript
+context.vcs.*
+```
+
+**Complete VCS Interface Methods**:
+```javascript
+// Core Configuration & Data Access (5)
+context.vcs.config.get({ owner, repo, path })
+context.vcs.pulls.get(context.repo({ pull_number }))
+context.vcs.pulls.listFiles({ owner, repo, pull_number })
+context.vcs.rest.pulls.listFiles({ owner, repo, pull_number })
+context.vcs.repos.getContent({ owner, repo, path })
+
+// Repository Operations (2)
+context.vcs.repos.compareCommits(context.repo({ base, head }))
+context.vcs.repos.listPullRequestsAssociatedWithCommit({ commit_sha })
+
+// Review Platform Features (1)
+context.vcs.checks.create({...})
+
+// Issue/Comment Platform Features (2)
+context.vcs.issues.createComment({...})
+context.vcs.issues.addLabels({...})
+
+// Repository Management (6)
+context.vcs.pulls.create({...})
+context.vcs.pulls.list({...})
+context.vcs.repos.get({ owner, repo })
+context.vcs.repos.createOrUpdateFileContents({...})
+context.vcs.git.getRef({...})
+context.vcs.git.createRef({...})
+```
 
 ### ✅ Core Gate Operations (MUST implement in LocalContext)
 
@@ -10,37 +53,38 @@ These are used by gates and core logic - **required for LocalContext**:
 
 ```javascript
 // Configuration
-context.octokit.config.get({ owner, repo, path })        // src/spec-loader.js:33
+context.vcs.config.get({ owner, repo, path })        // src/spec-loader.js:33
 
 // Pull Request Data  
-context.octokit.pulls.get(context.repo({ pull_number })) // src/pr-comment.js:93, review-limits.js:20, index.js:173
-context.octokit.pulls.listFiles({ owner, repo, pull_number }) // agents-md-sync.js:26, goal-evaluations.js:27
+context.vcs.pulls.get(context.repo({ pull_number })) // src/pr-comment.js:93, review-limits.js:20, index.js:173
+context.vcs.pulls.listFiles({ owner, repo, pull_number }) // agents-md-sync.js:26
+context.vcs.rest.pulls.listFiles({ owner, repo, pull_number }) // goal-evaluations.js:27
 
 // Repository Data
-context.octokit.repos.compareCommits(context.repo({ base, head })) // (implied usage)
-context.octokit.repos.getContent({ owner, repo, path })  // governance-policy.js:51, createWelcomePR.js:24,78,138,160
-context.octokit.repos.listPullRequestsAssociatedWithCommit({ commit_sha }) // index.js:154
+context.vcs.repos.compareCommits(context.repo({ base, head })) // (implied usage)
+context.vcs.repos.getContent({ owner, repo, path })  // governance-policy.js:51, createWelcomePR.js:24,78,138,160
+context.vcs.repos.listPullRequestsAssociatedWithCommit({ commit_sha }) // index.js:154
 ```
 
-### 🚫 GitHub-Specific Operations (LocalContext should NO-OP or throw)
+### 🔄 Platform-Specific Operations (LocalContext graceful degradation)
 
-These are GitHub-only features that don't have local equivalents:
+These have host-specific implementations:
 
 ```javascript
-// GitHub Checks API - No local equivalent
-context.octokit.checks.create({...})                     // index.js:42,57,132
+// Review Platform Features - Different per platform
+context.vcs.checks.create({...})                     // index.js:42,57,132
 
-// GitHub Issues/PR Comments - No local equivalent  
-context.octokit.issues.createComment({...})              // src/pr-comment.js:73
-context.octokit.issues.addLabels({...})                  // createWelcomePR.js:256
+// Issue/Comment Platform Features - Different per platform  
+context.vcs.issues.createComment({...})              // src/pr-comment.js:73
+context.vcs.issues.addLabels({...})                  // createWelcomePR.js:256
 
-// Setup/Installation Operations - GitHub-only
-context.octokit.repos.createOrUpdateFileContents({...})  // createWelcomePR.js:35,148,174
-context.octokit.git.getRef({...})                        // createWelcomePR.js:118  
-context.octokit.git.createRef({...})                     // createWelcomePR.js:125
-context.octokit.pulls.create({...})                      // createWelcomePR.js:246
-context.octokit.pulls.list({...})                        // createWelcomePR.js:91
-context.octokit.repos.get({ owner, repo })               // createWelcomePR.js:108
+// Repository Management Operations - Host-specific
+context.vcs.repos.createOrUpdateFileContents({...})  // createWelcomePR.js:35,148,174
+context.vcs.git.getRef({...})                        // createWelcomePR.js:118  
+context.vcs.git.createRef({...})                     // createWelcomePR.js:125
+context.vcs.pulls.create({...})                      // createWelcomePR.js:246
+context.vcs.pulls.list({...})                        // createWelcomePR.js:91
+context.vcs.repos.get({ owner, repo })               // createWelcomePR.js:108
 ```
 
 ## LocalContext Implementation Strategy
@@ -127,6 +171,11 @@ interface BaseContext {
       get(params: { owner: string; repo: string; pull_number: number }): Promise<{ data: any }>;
       listFiles(params: { owner: string; repo: string; pull_number: number }): Promise<{ data: any[] }>;
     };
+    rest: {
+      pulls: {
+        listFiles(params: { owner: string; repo: string; pull_number: number }): Promise<{ data: any[] }>;
+      };
+    };
     repos: {
       compareCommits(params: { owner: string; repo: string; base: string; head: string }): Promise<{ data: any }>;
       getContent(params: { owner: string; repo: string; path: string }): Promise<{ data: any }>;
@@ -171,10 +220,39 @@ export function validateOctokitUsage(context) {
 
 ## Key Insights
 
-1. **13+ octokit methods used** - Much more than initial 5 method estimate
+1. **15 octokit methods found** - Complete survey shows exact scope (was 13+ estimate)
 2. **Core vs GitHub-specific split** - Some methods are essential, others are GitHub-only features
 3. **Setup operations are GitHub-only** - createWelcomePR.js won't work locally (that's OK)
 4. **Graceful degradation needed** - LocalContext should handle GitHub-specific methods gracefully
+
+## Final Clean List: All VCS Interface Usage (One Line Per Call Type)
+
+**Gates should use** (host-agnostic):
+```
+context.vcs.config.get
+context.vcs.pulls.get
+context.vcs.pulls.listFiles
+context.vcs.rest.pulls.listFiles
+context.vcs.repos.getContent
+context.vcs.repos.compareCommits
+context.vcs.repos.listPullRequestsAssociatedWithCommit
+context.vcs.checks.create
+context.vcs.issues.createComment
+context.vcs.issues.addLabels
+context.vcs.pulls.create
+context.vcs.pulls.list
+context.vcs.repos.get
+context.vcs.repos.createOrUpdateFileContents
+context.vcs.git.getRef
+context.vcs.git.createRef
+```
+
+**GitHub adapter maps internally**:
+```
+context.vcs.* → context.octokit.*
+```
+
+**Total**: 16 unique VCS interface methods across entire codebase
 
 ## Next Steps
 

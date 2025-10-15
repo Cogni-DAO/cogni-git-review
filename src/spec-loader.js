@@ -2,7 +2,7 @@ import { assertRuleSchema } from './ai/schemas/validators.js';
 
 /**
  * Load and parse repository spec using Probot's built-in config loader
- * @param {import('probot').Context} context - Probot context with repository info
+ * @param {import('./adapters/base-context.d.ts').BaseContext} context - Base context interface with repository info
  * @returns {Promise<{ok: boolean, spec?: object, error?: object}>}
  */
 export async function loadRepoSpec(context) {
@@ -19,7 +19,7 @@ export async function loadRepoSpec(context) {
 
 /**
  * Safe loader for any .cogni/* file - single source of truth for repo I/O
- * @param {import('probot').Context} context - Probot context with repository info
+ * @param {import('./adapters/base-context.d.ts').BaseContext} context - Base context interface with repository info
  * @param {string} path - Path relative to repo root (must start with '.cogni/')
  * @returns {Promise<{config: object|null}>}
  */
@@ -36,7 +36,7 @@ async function loadCogniFile(context, path) {
 /**
  * Load a single rule from .cogni/rules/ directory
  * Each gate instance loads exactly one rule file
- * @param {import('probot').Context} context - Probot context with repository info
+ * @param {import('./adapters/base-context.d.ts').BaseContext} context - Base context interface with repository info
  * @param {Object} options - Rule loading options
  * @param {string} options.rulesDir - Rules directory (default: '.cogni/rules')
  * @param {string} options.ruleFile - Single rule file to load

@@ -8,7 +8,7 @@ export const type = 'review-limits';
 
 /**
  * Evaluate review limits for a PR against configured limits
- * @param {import('probot').Context} context - Probot context
+ * @param {import('../../adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @param {object} pr - Pull request object from webhook
  * @param {object} limits - review_limits from repo spec
  * @returns {Promise<{violations: Array, stats: object, oversize: boolean}>}

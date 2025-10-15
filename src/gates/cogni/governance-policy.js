@@ -6,7 +6,7 @@ export const type = 'governance-policy';
  * Governance Policy Gate - MVP version
  * Checks that required workflow files exist and have matching names
  * 
- * @param {object} context - Probot context
+ * @param {import('../../adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @returns {Promise<GateResult>}
  */
 export async function run(context, gate, logger) {
