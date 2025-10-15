@@ -1,6 +1,17 @@
 # Context Interface Specification
 
-This document defines the minimal context interface that must be implemented for Cogni to work with any git hosting provider.
+## Two-Layer Interface Design
+
+Cogni uses **two interface layers** for complete host abstraction:
+
+1. **CogniBaseApp** (`base-app.d.ts`) - App/event system abstraction (app.on() method)
+2. **BaseContext** (`base-context.d.ts`) - Context/payload abstraction ← **THIS DOCUMENT**
+
+Both layers must be implemented by host adapters for full host independence.
+
+---
+
+This document defines the **BaseContext interface** - the minimal context interface that must be implemented for Cogni to work with any git hosting provider.
 
 ## Required Context Properties & Methods
 

@@ -6,27 +6,29 @@ GitHub flagged and blocked Cogni installs. Need host-agnostic policy enforcement
 ## Solution: Host-Agnostic App Core
 **Key Principle**: `index.js` exports THE APP (host-agnostic), not a host entry point. **5-7 days implementation**.
 
-## Architecture: App Inversion with Host Entry Points
+## Architecture: Two-Layer Interface Abstraction
 ```
-HOST ENTRY POINTS (adapters)
-├── github.js (Probot setup) ──┐
-└── cli.js (Commander setup) ──┤
-                               │
-                               ▼
-                    APP CORE (index.js)
-                    ├── runCogniApp(context, options)
-                    ├── Zero host dependencies  
-                    ├── Works with any BaseContext
-                    └── Pure gate orchestration
-                               │
-                               ▼
-                    CORE LOGIC (src/)
-                    ├── Gate Orchestrator (src/gates/)
-                    ├── AI Provider (src/ai/) 
-                    ├── Spec Loader (src/spec-loader.js)
-                    └── Context Implementations
-                        ├── BaseContext (interface)
-                        └── LocalContext (git CLI)
+HOST ENTRY POINTS (adapters) - Implement both interfaces
+├── github.js (Probot → CogniBaseApp + Probot Context → BaseContext) ──┐
+└── cli.js (Commander → CogniBaseApp + LocalContext → BaseContext) ────┤
+                                                                       │
+                                                                       ▼
+                             APP CORE (index.js) - UNCHANGED LOGIC!
+                             ├── export default (app) => { app.on(...) }
+                             ├── Receives CogniBaseApp interface (not Probot)
+                             ├── Handlers receive BaseContext interface
+                             ├── Zero host dependencies
+                             └── Same event-driven logic as before
+                                                       │
+                                                       ▼
+                             CORE LOGIC (src/) - UNCHANGED
+                             ├── Gate Orchestrator (src/gates/)
+                             ├── AI Provider (src/ai/)
+                             ├── Spec Loader (src/spec-loader.js)
+                             └── Interface Implementations
+                                 ├── CogniBaseApp (app abstraction)
+                                 ├── BaseContext (context abstraction)
+                                 └── LocalContext (git CLI implementation)
 ```
 
 **Key Insight**: Probot context already IS BaseContext. LocalContext implements the same interface. Entry points are the adapters, not the app.
@@ -39,8 +41,9 @@ HOST ENTRY POINTS (adapters)
 github.js                        // Probot app setup → calls index.runCogniApp
 cli.js                           // Thin CLI entry point (#!/usr/bin/env node)
 
-// Context implementation  
-src/context/base-context.d.ts    // TypeScript interface for BaseContext
+// Interface definitions (two layers)
+src/adapters/base-app.d.ts       // CogniBaseApp interface (app.on() abstraction)  
+src/context/base-context.d.ts    // BaseContext interface (context abstraction)
 
 // CLI adapter structure (keeps cli.js clean)
 src/adapters/cli/
@@ -89,6 +92,7 @@ src/gates/cogni/review-limits.js
 ## Context Interface Requirements
 
 **📋 See [CONTEXT_INTERFACE_SPEC.md](./CONTEXT_INTERFACE_SPEC.md) for complete interface definition**
+**🔍 See [OCTOKIT_INTERFACE_ANALYSIS.md](./OCTOKIT_INTERFACE_ANALYSIS.md) for complete octokit method survey and LocalContext implementation strategy**
 
 LocalContext must implement the same interface as Probot context:
 
@@ -110,10 +114,36 @@ LocalContext must implement the same interface as Probot context:
 - **Outputs**: JSON reports in `.cogni/reports/`, git notes
 - **Offline Mode**: AI toggle for zero-network operation
 
-## Migration Strategy
-1. **Create adapter interface** (1-2 days)
-2. **Modify entry points** (1 day) 
-3. **Implement LocalGitAdapter** (2-3 days)
+## Critical Implementation Order ⚠️
+
+**The order matters! Each step enables the next:**
+
+### Step 1: Foundation ✅ COMPLETE
+- ✅ Create `src/context/base-context.d.ts` interface
+- ✅ Validate Probot context implements BaseContext  
+- ✅ Prove `runAllGates` works with real webhook fixtures
+
+### Step 2: Abstract Probot FIRST 🔄 **NEXT**
+**Why First**: Creates host-agnostic app core with interface abstraction
+- Create `src/adapters/base-app.d.ts` - CogniBaseApp interface
+- Update `index.js` JSDoc: `@param {CogniBaseApp} app` (logic unchanged!)
+- Create `github.js` with Probot wrapper: `probotApp → CogniBaseApp`
+- Update `package.json` exports: `"./github": "./github.js"`
+- **Result**: App core receives abstract interfaces, not Probot objects
+
+### Step 3: LocalContext Implementation  
+**Why After**: Now has host-agnostic `runCogniApp` to call
+- Implement `src/adapters/cli/local-context.js` with git CLI
+- Call the same `runCogniApp` that GitHub uses
+- Test identical results between GitHub and local contexts
+
+### Step 4: CLI Entry Point
+**Why Last**: Needs LocalContext + runCogniApp to exist first  
+- Create thin `cli.js` entry point
+- Implement `src/adapters/cli/` command structure
+- Package as executable: `cogni gate --base main --head feature`
+
+**⚠️ WRONG ORDER = FAILURE**: Trying to build LocalContext before extracting `runCogniApp` leaves nowhere to plug it in.
 
 ## Success Criteria
 - Zero GitHub dependencies
