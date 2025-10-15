@@ -54,7 +54,7 @@ src/adapters/
 
 ## Testing Strategy
 - `../../test/unit/probot-context-interface.test.js` - Validates Probot context implements BaseContext
-- `../../test/unit/github-adapter-interface.test.js` - Validates github.js implements CogniBaseApp  
+- github.js adapter validates CogniBaseApp interface implementation  
 - `../../test/unit/runallgates-real-webhook-payload.test.js` - End-to-end validation with real fixtures
 
 Result: Identical gate behavior across GitHub and future local git implementations.

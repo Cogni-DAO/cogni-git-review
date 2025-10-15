@@ -27,7 +27,6 @@ Tests can access `process.env` directly (ESLint exempted) and may mock environme
 - `config-extraction-debug.test.js` - Configuration extraction debugging
 - `eval-criteria.test.js` - Success criteria evaluation logic tests for multi-metric evaluation
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
-- `github-adapter-interface.test.js` - Validates github.js implements CogniBaseApp interface correctly
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP with shared mock utilities
 - `make-llm-client.test.js` - LLM client factory whitelist behavior tests

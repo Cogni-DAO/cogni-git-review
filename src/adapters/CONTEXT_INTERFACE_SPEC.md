@@ -236,7 +236,7 @@ The captured fixtures enable comprehensive LocalContext validation:
 
 **Two Interface Validation Tests:**
 
-1. **`test/unit/github-adapter-interface.test.js`** - Tests that GitHubAdapter wraps Probot context and correctly delegates all BaseContext methods. Validates the wrapper pattern preserves all functionality.
+1. **GitHub adapter function** - The github.js adapter directly passes Probot contexts to the core application logic.
 
 2. **`test/unit/probot-context-interface.test.js`** - Tests that Probot context **directly implements BaseContext interface** without any wrapper needed. Validates that existing Probot contexts already have all required properties and methods.
 

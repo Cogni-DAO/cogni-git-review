@@ -3,7 +3,7 @@
  * This is the adapter that allows the host-agnostic index.js to work with Probot
  */
 
-import runCogniApp from './index.js';
+import runCogniApp from '../../index.js';
 
 /**
  * Probot app entry point
