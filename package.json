@@ -18,6 +18,7 @@
     "start": "probot run ./index.js",
     "test": "node --test",
     "e2e": "node -r dotenv/config bin/e2e-runner.js",
+    "dev:capture": "tsx tools/dev/webhook-capture/capture-server.ts",
     "lint": "eslint . --ext .js,.yaml,.yml",
     "lint:fix": "eslint . --ext .js,.yaml,.yml --fix",
     "lint:workflows": "actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml"
@@ -43,8 +44,11 @@
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-yml": "^1.18.0",
     "globals": "^16.3.0",
+    "mkdirp": "^3.0.1",
+    "nanoid": "^5.1.6",
     "nock": "^14.0.10",
-    "smee-client": "^2.0.0"
+    "smee-client": "^2.0.0",
+    "tsx": "^4.20.6"
   },
   "engines": {
     "node": ">= 18"
