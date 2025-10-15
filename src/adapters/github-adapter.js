@@ -1,59 +1,50 @@
 /**
- * GitHub Adapter - Wraps Probot context for host abstraction
- * Minimal wrapper preserving existing GitHub functionality
+ * GitHub Adapter - Implements Context interface by delegating to Probot context
+ * Preserves existing GitHub functionality while providing host abstraction
+ * @typedef {import('./base-context.d.ts').BaseContext} BaseContext
  */
 
-import { HostAdapter } from './host-adapter.js';
-
-export class GitHubAdapter extends HostAdapter {
+/**
+ * GitHub implementation of BaseContext interface
+ * @implements {BaseContext}
+ */
+export class GitHubAdapter {
+  /**
+   * @param {import('probot').Context} probotContext - Probot context from webhook
+   */
   constructor(probotContext) {
-    super();
-    this.context = probotContext;
+    this._probotContext = probotContext;
   }
 
-  async getFileList(prNumber) {
-    const { owner, repo } = this.context.repo();
-    const { data: files } = await this.context.octokit.rest.pulls.listFiles({
-      owner,
-      repo,
-      pull_number: prNumber
-    });
-    return files;
+  // Delegate payload directly to Probot context
+  get payload() {
+    return this._probotContext.payload;
   }
 
-  async getDiff(baseRef, headRef) {
-    const { data: comparison } = await this.context.octokit.repos.compareCommits(
-      this.context.repo({ base: baseRef, head: headRef })
-    );
-    return comparison;
+  // Delegate repo method directly to Probot context
+  repo(options = {}) {
+    return this._probotContext.repo(options);
   }
 
-  async loadConfig(path) {
-    // Security: only allow .cogni/ prefix, forbid traversal
-    if (!path.startsWith('.cogni/') || path.includes('..')) {
-      throw new Error(`Invalid cogni path: ${path}`);
-    }
-    
-    const { owner, repo } = this.context.repo();
-    return await this.context.octokit.config.get({ owner, repo, path });
+  // Delegate octokit directly to Probot context
+  get octokit() {
+    return this._probotContext.octokit;
   }
 
-  async publishResults(results) {
-    // This will be implemented to maintain existing GitHub Checks API logic
-    // For now, this is a placeholder that will delegate to existing check creation
-    throw new Error('publishResults not yet implemented for GitHub adapter');
+  // Delegate logging directly to Probot context
+  get log() {
+    return this._probotContext.log;
   }
 
-  getLogger() {
-    return this.context.log;
-  }
+  // Runtime properties (set by gate orchestrator)
+  pr = undefined;
+  spec = undefined;
+  annotation_budget = undefined;
+  idempotency_key = undefined;
+  reviewLimitsConfig = undefined;
 
-  getRepoInfo() {
-    return this.context.repo();
-  }
-
-  // Additional helper for backward compatibility
+  // Backward compatibility helper
   getProbotContext() {
-    return this.context;
+    return this._probotContext;
   }
 }

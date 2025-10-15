@@ -220,3 +220,13 @@ The captured fixtures enable comprehensive LocalContext validation:
 2. **Field Mapping Tests** - Ensure all gate-required fields are present
 3. **Action Coverage Tests** - Test all captured event/action combinations
 4. **Signature Skip Tests** - Verify LocalContext bypasses signature verification gracefully
+
+## Context Implementation Testing
+
+**Two Interface Validation Tests:**
+
+1. **`test/unit/github-adapter-interface.test.js`** - Tests that GitHubAdapter wraps Probot context and correctly delegates all BaseContext methods. Validates the wrapper pattern preserves all functionality.
+
+2. **`test/unit/probot-context-interface.test.js`** - Tests that Probot context **directly implements BaseContext interface** without any wrapper needed. Validates that existing Probot contexts already have all required properties and methods.
+
+**Key Insight**: Test #2 proves that **Probot context IS BaseContext**. No wrapper classes needed - we can pass Probot contexts directly to core logic. This validates the JSON specification's principle that "Context is already the interface." LocalContext simply needs to implement the same interface that Probot context already provides.
