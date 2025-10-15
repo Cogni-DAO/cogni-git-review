@@ -51,12 +51,12 @@ The `forbidden-scopes` gate enforces project boundaries:
 
 ## AGENTS.md Sync Gate
 The `agents-md-sync` gate enforces documentation synchronization:
-- Analyzes PR file changes using GitHub API (`context.octokit.pulls.listFiles`)
+- Analyzes PR file changes using VCS interface (`context.vcs.pulls.listFiles`)
 - When code files change in a directory, requires corresponding `AGENTS.md` to be updated
 - Configurable code patterns (default: `**/*.*`) and doc pattern (default: `AGENTS.md`)
 - Uses `micromatch` library for robust glob pattern matching
 - Excludes documentation files (.md, README, CHANGELOG) from triggering violations
-- Returns neutral status on GitHub API errors to avoid blocking PRs
+- Returns neutral status on VCS API errors to avoid blocking PRs
 
 Configuration example:
 ```yaml

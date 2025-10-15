@@ -35,12 +35,14 @@ You are on a team full of specialized agents. If you have access use agents, do 
 
 ## Context Architecture
 
-### Probot Context Object
-All webhook handlers receive a Probot `context` object containing:
+### Context Object Architecture
+All webhook handlers receive a `context` object containing:
 - **context.payload**: GitHub webhook payload (varies by event type)  
-- **context.octokit**: Authenticated GitHub API client
+- **context.vcs**: Host-agnostic VCS interface (abstracts GitHub/GitLab/local git)
 - **context.repo()**: Method returning `{ owner, repo }` from payload
 - **context.log**: Structured logger
+
+**VCS Interface**: The `context.vcs.*` interface provides host-agnostic access to version control operations. The GitHub adapter internally maps these calls to `context.octokit.*`, while future adapters will implement the same interface for other hosts.
 
 ### Context Variations by Event Type
 
@@ -66,8 +68,8 @@ context.payload = {
 ### Rerun Event Handling
 `check_suite.rerequested` events lack PR association data. The rerun handler:
 ```javascript
-// Use GitHub API to find PR associated with commit SHA
-const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+// Use VCS interface to find PR associated with commit SHA
+const { data: assoc } = await context.vcs.repos.listPullRequestsAssociatedWithCommit(
   context.repo({ commit_sha: headSha })
 );
 const pr = assoc.find(pr => pr.state === 'open') || assoc[0];

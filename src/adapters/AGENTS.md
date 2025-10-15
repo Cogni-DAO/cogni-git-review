@@ -8,7 +8,7 @@ The adapters directory implements the host abstraction architecture that enables
 **See complete design documentation:**
 - **[LOCAL_GIT_ADAPTER_DESIGN.md](./LOCAL_GIT_ADAPTER_DESIGN.md)** - Complete architecture overview, implementation order, and success criteria
 - **[CONTEXT_INTERFACE_SPEC.md](./CONTEXT_INTERFACE_SPEC.md)** - BaseContext interface definition with captured webhook fixtures  
-- **[OCTOKIT_INTERFACE_ANALYSIS.md](./OCTOKIT_INTERFACE_ANALYSIS.md)** - Complete octokit method survey and LocalContext implementation strategy
+- **[OCTOKIT_INTERFACE_ANALYSIS.md](./OCTOKIT_INTERFACE_ANALYSIS.md)** - Analysis of how the GitHub adapter maps VCS interface to octokit internally
 
 ## Current Implementation Status
 
@@ -20,7 +20,7 @@ The adapters directory implements the host abstraction architecture that enables
 
 ### 🔄 Next: Step 3 - LocalContext Implementation  
 - LocalContext class implementing BaseContext interface
-- Git CLI operations backing octokit-equivalent methods
+- Git CLI operations backing VCS interface methods
 - Synthetic webhook payload generation from git state
 
 ## Key Design Principles

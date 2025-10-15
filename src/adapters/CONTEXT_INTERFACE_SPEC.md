@@ -30,14 +30,15 @@ This document defines the **BaseContext interface** - the minimal context interf
   - `context.payload.installation.id` - Installation/context ID (can be synthetic)
   - `context.payload.pull_request.head.sha` - Head commit SHA (when applicable)
 
-**`context.octokit`**
-- Subset of GitHub Octokit client interface
+**`context.vcs`**
+- Host-agnostic VCS interface (abstracts GitHub/GitLab/local git)
 - Required methods:
-  - `context.octokit.config.get({ owner, repo, path })` - Load configuration files
-  - `context.octokit.pulls.get(repo({ pull_number }))` - Get PR metadata
-  - `context.octokit.pulls.listFiles(repo({ pull_number }))` - Get changed files
-  - `context.octokit.repos.compareCommits(repo({ base, head }))` - Get commit comparison
-  - `context.octokit.repos.getContent({ owner, repo, path })` - Get file content (for setup only)
+  - `context.vcs.config.get({ owner, repo, path })` - Load configuration files
+  - `context.vcs.pulls.get(repo({ pull_number }))` - Get PR metadata
+  - `context.vcs.pulls.listFiles(repo({ pull_number }))` - Get changed files
+  - `context.vcs.repos.compareCommits(repo({ base, head }))` - Get commit comparison
+  - `context.vcs.repos.getContent({ owner, repo, path })` - Get file content (for setup only)
+- Note: The GitHub adapter internally maps `context.vcs.*` calls to `context.octokit.*`
 
 ### Runtime Properties (Added by Gate Orchestrator)
 
@@ -69,9 +70,9 @@ context.payload = {
 
 ### Git CLI to API Translation
 ```javascript
-// context.octokit.pulls.listFiles() → git diff --name-status
-// context.octokit.repos.compareCommits() → git diff + git show
-// context.octokit.config.get() → fs.readFileSync() 
+// context.vcs.pulls.listFiles() → git diff --name-status
+// context.vcs.repos.compareCommits() → git diff + git show
+// context.vcs.config.get() → fs.readFileSync() 
 ```
 
 ### Repository Information
@@ -86,15 +87,15 @@ context.repo = (options = {}) => ({
 ## Used Context Methods by Component
 
 ### Gates (`src/gates/cogni/`)
-- **review-limits.js**: `context.octokit.pulls.get()`, `context.repo()`
-- **governance-policy.js**: `context.repo()`, `context.octokit.repos.getContent()`, `context.spec`
+- **review-limits.js**: `context.vcs.pulls.get()`, `context.repo()`
+- **governance-policy.js**: `context.repo()`, `context.vcs.repos.getContent()`, `context.spec`
 - All gates: Runtime properties added by orchestrator
 
 ### AI Workflows (`src/ai/workflows/`)
-- **goal-evaluations.js**: `context.pr.number`, `context.repo()`, `context.octokit.rest.pulls.listFiles()`, `context.reviewLimitsConfig`, `context.payload.repository.full_name`, `context.payload.installation.id`
+- **goal-evaluations.js**: `context.pr.number`, `context.repo()`, `context.vcs.rest.pulls.listFiles()`, `context.reviewLimitsConfig`, `context.payload.repository.full_name`, `context.payload.installation.id`
 
 ### Spec Loader (`src/spec-loader.js`)
-- `context.repo()`, `context.octokit.config.get()`
+- `context.repo()`, `context.vcs.config.get()`
 
 ### Gate Orchestrator (`src/gates/index.js`)
 - `context.payload.repository.name` - Used to build synthetic PR metadata

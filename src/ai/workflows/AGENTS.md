@@ -11,7 +11,7 @@ The provider adds `provenance` wrapper with runtime metadata.
 
 ## Implementation Details
 - **Domain Logic**: Workflows handle all PR-specific logic and evidence gathering
-- **Evidence Gathering**: Workflows directly access GitHub API via context.octokit
+- **Evidence Gathering**: Workflows access VCS API via context.vcs interface
 - **Dynamic Schema**: Zod schema generated from rule's `evaluations` array
 - **Dynamic Prompts**: AI instructions generated based on metric count and statements  
 - **Registry**: Workflows registered in registry.js for discovery
