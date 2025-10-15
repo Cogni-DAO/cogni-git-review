@@ -6,6 +6,11 @@
   "author": "derekg1729",
   "license": "ISC",
   "homepage": "https://github.com//",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./github": "./github.js"
+  },
   "keywords": [
     "probot",
     "github",
@@ -15,7 +20,7 @@
     "cogni-e2e": "bin/e2e-runner.js"
   },
   "scripts": {
-    "start": "probot run ./index.js",
+    "start": "probot run ./github.js",
     "test": "node --test",
     "e2e": "node -r dotenv/config bin/e2e-runner.js",
     "dev:capture": "tsx tools/dev/webhook-capture/capture-server.ts",

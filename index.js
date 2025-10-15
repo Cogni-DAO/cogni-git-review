@@ -11,8 +11,8 @@ import { getRequestLogger } from './src/logging/index.js';
 
 
 /**
- * This is the main entrypoint to your Probot app
- * @param {import('probot').Probot} app
+ * Host-agnostic Cogni app core
+ * @param {import('./src/adapters/base-app.d.ts').CogniBaseApp} app
  */
 export default (app) => {
   const short = (sha) => sha?.slice(0, 7) || 'unknown';
