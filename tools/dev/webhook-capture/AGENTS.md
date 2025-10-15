@@ -59,4 +59,7 @@ npm run capture                   # Run both Smee clients concurrently
 ```
 
 ## Integration with Tests
-Captured fixtures integrate with test infrastructure via `test/helpers/fixture-replay.ts` for deterministic webhook testing.
+Captured fixtures integrate with test infrastructure for deterministic webhook testing:
+- Real webhook fixtures stored in `../../../fixtures/github/` directory (pull_request, check_suite, etc.)
+- Host abstraction interface validation uses these fixtures via `../../../test/unit/runallgates-real-webhook-payload.test.js`
+- Fixtures enable testing identical gate behavior between GitHub App and future local git CLI implementations

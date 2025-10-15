@@ -8,6 +8,7 @@ src/
 ├── spec-loader.js      # Repository configuration I/O layer
 ├── pr-comment.js       # PR comment publishing
 ├── summary-adapter.js  # Check run summary formatting
+├── adapters/           # Host abstraction layer (→ AGENTS.md)
 ├── ai/                 # AI-specific evaluation files (→ AGENTS.md)
 ├── gates/              # Gate evaluation system (→ AGENTS.md)
 ├── logging/            # Structured logging system (→ AGENTS.md)

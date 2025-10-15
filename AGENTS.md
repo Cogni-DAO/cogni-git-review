@@ -7,7 +7,9 @@
 The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. Detailed results appear as GitHub check runs with pass/fail/neutral status, and a brief summary is commented on the PR. 
 
 ## Architecture Overview
-- **Framework**: Probot v13.4.7 (JavaScript ES modules)
+- **Host-Agnostic Core**: App logic abstracted from GitHub/Probot via interface layers
+- **Two-Layer Interface Design**: CogniBaseApp (app abstraction) + BaseContext (context abstraction)
+- **Framework**: Probot v13.4.7 (JavaScript ES modules) via github.js adapter
 - **Unified Gate System**: All gates execute immediately
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
@@ -27,6 +29,7 @@ You are on a team full of specialized agents. If you have access use agents, do 
 - [Probot Framework Docs](https://probot.github.io/docs/)
 - [GitHub Checks API](https://docs.github.com/en/rest/checks)
 - **[Architecture Design](docs/DESIGN.md)** - Core extensible AI rules system
+- **[Host Abstraction Design](src/adapters/LOCAL_GIT_ADAPTER_DESIGN.md)** - Two-layer interface architecture enabling local git CLI integration
 - Architecture details in AGENTS.md files throughout the repository
 - README.md - basic overview and installation instructions for humans.
 
@@ -87,12 +90,14 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 
 ## Repository Structure
 ```
-├── index.js                    # Main bot webhook handlers with structured logging
+├── index.js                    # Host-agnostic app core (accepts CogniBaseApp interface)
+├── github.js                   # GitHub/Probot entry point adapter
 ├── bin/e2e-runner.js          # CLI for E2E testing (executable)
 ├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/
 │   ├── env.js                 # Centralized environment configuration with Zod validation
 │   ├── spec-loader.js         # Repository specification loading
+│   ├── adapters/              # Host abstraction layer (→ AGENTS.md)
     ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
