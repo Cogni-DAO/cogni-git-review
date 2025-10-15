@@ -29,7 +29,7 @@ test('runAllGates processes real GitHub webhook payload without errors', async (
       repo: 'test-repo', 
       ...options 
     }),
-    octokit: {
+    vcs: {
       // Minimal mocks for required methods
       config: { get: async () => ({ config: null }) },
       pulls: { 

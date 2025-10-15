@@ -18,7 +18,7 @@ describe('Governance Policy Gate', () => {
       log: {
         error: () => {}
       },
-      octokit: {
+      vcs: {
         repos: {
           getContent: async ({ path }) => {
             // Mock workflow file contents based on path
@@ -64,7 +64,7 @@ describe('Governance Policy Gate', () => {
     mockContext.spec = specResult.spec;
 
     // Mock missing security workflow
-    mockContext.octokit.repos.getContent = async ({ path }) => {
+    mockContext.vcs.repos.getContent = async ({ path }) => {
       if (path === '.github/workflows/security.yaml') {
         const error = new Error('Not found');
         error.status = 404;
@@ -103,7 +103,7 @@ describe('Governance Policy Gate', () => {
     mockContext.spec = specResult.spec;
 
     // Mock CI workflow with wrong name
-    mockContext.octokit.repos.getContent = async ({ path }) => {
+    mockContext.vcs.repos.getContent = async ({ path }) => {
       const mockFiles = {
         '.github/workflows/ci.yaml': 'name: Wrong Name\non:\n  pull_request:\n',
         '.github/workflows/security.yaml': 'name: Security\non:\n  pull_request:\n'
@@ -188,7 +188,7 @@ gates:
     const specResult = await loadRepoSpec(createMockContextWithSpec(expectedSpec), createNoopLogger());
     mockContext.spec = specResult.spec;
 
-    mockContext.octokit.repos.getContent = async () => {
+    mockContext.vcs.repos.getContent = async () => {
       const error = new Error('API Error');
       error.status = 500;
       throw error;

@@ -37,8 +37,8 @@ DRY assertions for the detailed gate report format:
 
 ### ⚠ Known Gaps (Deferred – do not “clean up” yet)
 
-- **Spec loading mismatch:** Helper still assumes `octokit.config.get`; app now loads spec via **GitHub Contents API**. This can create **false greens/reds**.  
-  _Deferred fix:_ stub `octokit.request('GET /repos/{owner}/{repo}/contents/.cogni/repo-spec.yaml')` / `rest.repos.getContent`.
+- **Spec loading mismatch:** Helper still assumes `vcs.config.get`; app now loads spec via **VCS interface**. This can create **false greens/reds**.  
+  _Deferred fix:_ stub `vcs.config.get()` or mock the appropriate VCS interface methods.
 
 - **Event coverage is incomplete:** Captures only `pull_request.opened`. Missing `synchronize`, `reopened`, and `check_suite.rerequested`.  
   _Deferred fix:_ register and dispatch handlers for all relevant events.

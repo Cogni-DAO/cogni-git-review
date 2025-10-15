@@ -578,7 +578,7 @@ export const EXPECTED_SPECS = {
 export function createMockContext(owner = "test-org", repo = "test-repo", mockBehavior = "success") {
   const context = {
     repo: () => ({ owner, repo }),
-    octokit: {
+    vcs: {
       repos: {
         getContent: null // Will be set by mockBehavior
       }
@@ -587,7 +587,7 @@ export function createMockContext(owner = "test-org", repo = "test-repo", mockBe
 
   switch (mockBehavior) {
     case "success":
-      context.octokit.repos.getContent = async () => ({
+      context.vcs.repos.getContent = async () => ({
         data: {
           type: "file",
           content: Buffer.from(SPEC_FIXTURES.minimal).toString('base64'),
@@ -597,7 +597,7 @@ export function createMockContext(owner = "test-org", repo = "test-repo", mockBe
       break;
       
     case "not_found":
-      context.octokit.repos.getContent = async () => {
+      context.vcs.repos.getContent = async () => {
         const error = new Error("Not Found");
         error.status = 404;
         throw error;
@@ -605,7 +605,7 @@ export function createMockContext(owner = "test-org", repo = "test-repo", mockBe
       break;
       
     case "invalid_yaml":
-      context.octokit.repos.getContent = async () => ({
+      context.vcs.repos.getContent = async () => ({
         data: {
           type: "file", 
           content: Buffer.from(SPEC_FIXTURES.invalidYaml).toString('base64'),
@@ -615,7 +615,7 @@ export function createMockContext(owner = "test-org", repo = "test-repo", mockBe
       break;
       
     case "directory":
-      context.octokit.repos.getContent = async () => ({
+      context.vcs.repos.getContent = async () => ({
         data: {
           type: "dir",
           name: "repo-spec.yaml"
@@ -634,7 +634,7 @@ export function createMockContext(owner = "test-org", repo = "test-repo", mockBe
 export function createMockContextWithSpec(specContent, owner = "test-org", repo = "test-repo") {
   return {
     repo: () => ({ owner, repo }),
-    octokit: {
+    vcs: {
       repos: {
         getContent: async () => ({
           data: {
@@ -737,7 +737,7 @@ export function createAIRulesContext(prFixtureKey = 'authFeaturePR') {
   return {
     pr: PR_FIXTURES[prFixtureKey],
     repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-    octokit: {
+    vcs: {
       config: {
         get: async ({ path }) => {
           if (path === '.cogni/rules/goal-alignment.yaml') {

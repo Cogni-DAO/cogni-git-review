@@ -43,7 +43,7 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
     const mockContext = {
       pr: payload.pull_request,
       repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: RULE_MISSING_THRESHOLD })
         }

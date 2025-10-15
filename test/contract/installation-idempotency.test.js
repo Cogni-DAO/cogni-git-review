@@ -40,7 +40,7 @@ threshold: 0.8`;
     const mockContext = {
       name: 'installation_repositories',
       payload: installationReposAddedPayload,
-      octokit: {
+      vcs: {
         repos: {
           getContent: async (params) => {
             apiCalls.push({ type: 'getContent', params });
@@ -140,7 +140,7 @@ threshold: 0.8`;
     const mockContext = {
       name: 'installation_repositories',
       payload: installationReposAddedPayload,
-      octokit: {
+      vcs: {
         repos: {
           getContent: async (params) => {
             apiCalls.push({ type: 'getContent', params });
@@ -200,7 +200,7 @@ threshold: 0.8`;
     const mockContext = {
       name: 'installation_repositories', 
       payload: installationReposAddedPayload,
-      octokit: {
+      vcs: {
         repos: {
           getContent: async (params) => {
             apiCalls.push({ type: 'getContent', params });

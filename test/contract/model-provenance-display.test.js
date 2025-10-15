@@ -45,7 +45,7 @@ describe('Model Provenance Display Contract Tests', () => {
         additions: 25,
         deletions: 5
       },
-      octokit: {
+      vcs: {
         config: {
           get: async ({ path }) => {
             if (path === '.cogni/rules/dont-rebuild-oss.yaml') {
@@ -106,7 +106,7 @@ describe('Model Provenance Display Contract Tests', () => {
     const runCtx = createGateTestContext({
       spec,
       pr: { changed_files: 2, additions: 25, deletions: 5 },
-      octokit: { config: { get: async () => ({ config: null }) } }
+      vcs: { config: { get: async () => ({ config: null }) } }
     });
 
     const launcherResult = await runConfiguredGates(runCtx);

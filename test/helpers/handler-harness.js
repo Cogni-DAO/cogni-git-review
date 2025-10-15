@@ -26,7 +26,7 @@ export function createMockContext(options) {
       repo: payload?.repository?.name || 'test-repo',
       ...params 
     }),
-    octokit: {
+    vcs: {
       config: {
         get: async () => ({ config: configResponse })
       },
@@ -94,11 +94,11 @@ export async function callPullRequestHandler(mockContext) {
  * @param {Object} options.payload - Event payload
  * @param {string|Object|null} options.spec - Spec fixture key, parsed object, or null
  * @param {Function} options.expectCheck - Function to assert on check creation
- * @param {Object} options.extraOctokit - Additional octokit methods to mock
+ * @param {Object} options.extraVcs - Additional vcs methods to mock
  * @returns {Array} Array of check creation calls
  */
 export async function testEventHandler(options) {
-  const { event, payload, spec, expectCheck, extraOctokit = {} } = options;
+  const { event, payload, spec, expectCheck, extraVcs = {} } = options;
   
   // Convert spec fixture to parsed object if needed
   let configResponse = spec;
@@ -125,7 +125,7 @@ export async function testEventHandler(options) {
       warn: () => {},
       error: () => {}
     },
-    octokit: {
+    vcs: {
       config: {
         get: async () => ({ config: configResponse })
       },
@@ -154,8 +154,8 @@ export async function testEventHandler(options) {
           return { data: { id: Date.now() } };
         }
       },
-      ...extraOctokit,
-      __debug_extra: extraOctokit
+      ...extraVcs,
+      __debug_extra: extraVcs
     }
   };
   
@@ -172,12 +172,12 @@ export async function testEventHandler(options) {
  * @param {Object} options
  * @param {Object} options.spec - Spec object
  * @param {Object} options.pr - PR data
- * @param {Object} options.octokit - Optional octokit mock
+ * @param {Object} options.vcs - Optional vcs mock
  * @param {string} options.loggerType - 'noop' (default), 'capturing', or 'builtin'
  * @returns {Object} Context for runConfiguredGates function
  */
 export function createGateTestContext(options) {
-  const { spec, pr, octokit = {}, loggerType = 'noop' } = options;
+  const { spec, pr, vcs = {}, loggerType = 'noop' } = options;
   
   let logger;
   switch (loggerType) {
@@ -198,11 +198,11 @@ export function createGateTestContext(options) {
       spec,
       pr,
       repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
+      vcs: {
         pulls: {
           get: () => ({ data: { changed_files: pr.changed_files || 5 } })
         },
-        ...octokit
+        ...vcs
       },
       abort: new AbortController().signal
     },
@@ -218,7 +218,7 @@ export function createGateTestContext(options) {
 export function createMockContextWithSpec(specContent) {
   return {
     repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-    octokit: {
+    vcs: {
       config: {
         get: async ({ path }) => {
           if (path === '.cogni/repo-spec.yaml') {
