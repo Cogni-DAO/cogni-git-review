@@ -139,19 +139,84 @@ src/context/
 
 This maintains TypeScript compatibility while supporting multiple context implementations.
 
-## Future Enhancement: Fixture Capture
+## Captured Webhook Fixtures
 
-**Note**: Consider implementing fixture capture endpoint (similar to cogni-git-admin) to capture real GitHub webhook payloads for:
+**Status**: ✅ **COMPLETED** - Webhook capture tool implemented and fixtures collected.
 
-- **Payload Structure Validation** - Ensure LocalContext synthetic payloads match real GitHub webhooks exactly
-- **Edge Case Discovery** - Identify payload variations across different GitHub events
-- **Test Data Generation** - Create comprehensive test fixtures for LocalContext validation
-- **Schema Evolution** - Track changes in GitHub webhook payload structure over time
+### Event Types and Actions Captured
 
-**Suggested Implementation:**
-- Capture `pull_request.opened`, `pull_request.synchronize`, `check_suite.rerequested` events
-- Store sanitized payloads (remove sensitive data) as test fixtures
-- Use captured payloads to validate LocalContext.payload structure
-- Automate payload compatibility tests
+Based on real GitHub webhook fixtures captured in `fixtures/github/`:
 
-This would significantly improve confidence in LocalContext GitHub API compatibility.
+**Pull Request Events (`pull_request`)**:
+- `opened` - New PR created
+- `synchronize` - New commits pushed to existing PR
+- `closed` - PR merged or closed
+
+**Check Suite Events (`check_suite`)**:
+- `requested` - New check suite initiated
+- `completed` - Check suite finished
+- `rerequested` - Manual re-run of checks (critical for Cogni rerun handling)
+
+**Check Run Events (`check_run`)**:
+- `created` - Individual check started
+- `completed` - Individual check finished
+
+**Workflow Run Events (`workflow_run`)**:
+- `in_progress` - GitHub Actions workflow running
+
+### Webhook Security Verification
+
+**Signature Validation**: ✅ **VERIFIED**
+```bash
+# Signature verification successful with webhook secret:
+# WEBHOOK_SECRET=402786017574bd28f9d8f7a18648939751c47fe09077d56e10f0444f14fbb73b
+Expected:  sha256=34ba640e32d8041774b4467ed7327d21281b890ae177f4bab6e609bcf775fa17
+Computed:  sha256=34ba640e32d8041774b4467ed7327d21281b890ae177f4bab6e609bcf775fa17
+Match: true
+```
+
+**Probot Signature Handling**: Probot automatically verifies `x-hub-signature-256` headers using the configured `WEBHOOK_SECRET`. The raw body is HMAC-SHA256 signed and verified before payload parsing. LocalContext will bypass this verification since it generates synthetic payloads locally.
+
+### Critical Payload Fields for LocalContext
+
+Based on captured fixtures, LocalContext must synthesize these key fields:
+
+```javascript
+// From fixtures/github/pull_request/*.json
+context.payload = {
+  action: "opened|synchronize|closed",
+  number: 123,
+  pull_request: {
+    id: 2907114512,
+    number: 123,
+    state: "open",
+    title: "PR Title",
+    head: { 
+      sha: "abc123...",
+      repo: { name: "repo-name", full_name: "owner/repo-name" }
+    },
+    base: { 
+      sha: "def456...",
+      repo: { name: "repo-name", full_name: "owner/repo-name" }
+    },
+    changed_files: 5,
+    additions: 42,
+    deletions: 13
+  },
+  repository: {
+    name: "repo-name",
+    full_name: "owner/repo-name"
+  },
+  installation: {
+    id: 2010729
+  }
+};
+```
+
+### Fixture-Based Testing Strategy
+
+The captured fixtures enable comprehensive LocalContext validation:
+1. **Payload Structure Tests** - Verify LocalContext generates compatible payload shapes
+2. **Field Mapping Tests** - Ensure all gate-required fields are present
+3. **Action Coverage Tests** - Test all captured event/action combinations
+4. **Signature Skip Tests** - Verify LocalContext bypasses signature verification gracefully

@@ -47,10 +47,13 @@ EXISTING CORE (Unchanged)
 ```
 
 ## Context Interface Requirements
+
+**📋 See [CONTEXT_INTERFACE_SPEC.md](./CONTEXT_INTERFACE_SPEC.md) for complete interface definition**
+
 LocalContext must implement the same interface as Probot context:
 
 **Core Properties:**
-- `context.payload.*` - Synthetic GitHub-like webhook payload
+- `context.payload.*` - Synthetic GitHub-like webhook payload ([verified payload structures](./CONTEXT_INTERFACE_SPEC.md#captured-webhook-fixtures))
 - `context.repo()` - Returns `{ owner, repo }` equivalent  
 - `context.octokit.*` - Subset of GitHub API calls used by gates
 
