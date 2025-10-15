@@ -256,7 +256,15 @@ context.vcs.* → context.octokit.*
 
 ## Next Steps
 
-1. Update BaseContext TypeScript interface with complete octokit definition
-2. Plan LocalContext git CLI mappings for required methods  
-3. Design graceful degradation for GitHub-specific operations
-4. Add runtime validator to catch unsupported method usage
+1. ✅ Update BaseContext TypeScript interface with complete VCS definition (DONE)
+2. Update all gate code: `context.octokit.*` → `context.vcs.*` 
+3. Create GitHub adapter: `context.vcs.*` → `context.octokit.*` mapping
+4. Plan LocalContext git CLI implementation for `context.vcs.*` methods
+5. Add runtime validator to catch unsupported VCS method usage
+
+## Migration Strategy
+
+1. **Gates Migration**: Update all gate code to use `context.vcs.*` instead of `context.octokit.*`
+2. **GitHub Adapter**: Create mapping layer that converts VCS calls to Octokit calls
+3. **LocalContext**: Implement `context.vcs.*` with git CLI operations
+4. **Validation**: Add interface compliance testing for all adapters

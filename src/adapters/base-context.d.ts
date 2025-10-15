@@ -47,8 +47,8 @@ export interface BaseContext {
     [key: string]: any;
   };
 
-  // GitHub API interface subset (what gates actually use)
-  octokit: {
+  // Host-agnostic VCS interface (what gates actually use)
+  vcs: {
     config: {
       get(params: { owner: string; repo: string; path: string }): Promise<{ config: any }>;
     };
@@ -59,16 +59,32 @@ export interface BaseContext {
     repos: {
       compareCommits(params: { owner: string; repo: string; base: string; head: string }): Promise<{ data: any }>;
       getContent(params: { owner: string; repo: string; path: string; ref?: string }): Promise<{ data: any }>;
+      listPullRequestsAssociatedWithCommit?(params: { commit_sha: string }): Promise<{ data: any[] }>;
     };
     checks?: {
       create(params: any): Promise<{ data: any }>;
     };
     issues?: {
       createComment(params: { owner: string; repo: string; issue_number: number; body: string }): Promise<{ data: any }>;
+      addLabels?(params: any): Promise<{ data: any }>;
     };
-    // Allow other octokit methods for extensibility
+    git?: {
+      getRef?(params: any): Promise<{ data: any }>;
+      createRef?(params: any): Promise<{ data: any }>;
+    };
+    // Support both direct and rest namespaced access patterns
+    rest?: {
+      pulls: {
+        listFiles(params: { owner: string; repo: string; pull_number: number }): Promise<{ data: any[] }>;
+      };
+    };
+    // Allow other VCS operations for extensibility
     [key: string]: any;
   };
+
+  // Host-specific interfaces (adapter-internal only)
+  octokit?: any; // GitHub adapter uses this internally
+  [hostSpecific: string]: any;
 
   // Runtime properties added by gate orchestrator
   pr?: {
@@ -120,7 +136,7 @@ export interface BaseContext {
 export abstract class HostAdapter implements BaseContext {
   abstract payload: BaseContext['payload'];
   abstract repo(options?: Record<string, any>): ReturnType<BaseContext['repo']>;
-  abstract octokit: BaseContext['octokit'];
+  abstract vcs: BaseContext['vcs'];
 
   // Optional properties that may be set by orchestrator
   pr?: BaseContext['pr'];
