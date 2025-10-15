@@ -23,7 +23,7 @@ export async function run(ctx, gate) {
     const docPattern = config.doc_pattern || 'AGENTS.md';
 
     // Get changed files from GitHub API
-    const { data: changedFiles } = await ctx.octokit.pulls.listFiles(
+    const { data: changedFiles } = await ctx.vcs.pulls.listFiles(
       ctx.repo({ pull_number: ctx.pr.number })
     );
 

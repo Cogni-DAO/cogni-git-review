@@ -30,7 +30,7 @@ async function loadCogniFile(context, path) {
   }
   
   const { owner, repo } = context.repo();
-  return await context.octokit.config.get({ owner, repo, path });
+  return await context.vcs.config.get({ owner, repo, path });
 }
 
 /**

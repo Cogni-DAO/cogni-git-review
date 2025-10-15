@@ -70,7 +70,7 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
   body += `[View Details](${checkUrl})\n\n`;
   body += `<!-- cogni:summary v0 sha=${headSha.slice(0, 7)} ts=${Date.now()} -->`;
 
-  return context.octokit.issues.createComment(context.repo({
+  return context.vcs.issues.createComment(context.repo({
     issue_number: prNumber,
     body
   }));
@@ -90,7 +90,7 @@ export async function postPRCommentWithGuards(context, runResult, checkUrl, head
   
   try {
     // Staleness guard - check if head SHA changed during run
-    const { data: latest } = await context.octokit.pulls.get(context.repo({ pull_number: prNumber }));
+    const { data: latest } = await context.vcs.pulls.get(context.repo({ pull_number: prNumber }));
     if (latest.head.sha === headShaStart) {
       await postPRComment(context, runResult, checkUrl, headShaStart, prNumber);
       log.info({ sha: headShaStart?.slice(0, 7) }, "posted PR comment");

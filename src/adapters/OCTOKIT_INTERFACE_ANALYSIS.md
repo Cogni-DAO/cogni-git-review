@@ -262,9 +262,74 @@ context.vcs.* → context.octokit.*
 4. Plan LocalContext git CLI implementation for `context.vcs.*` methods
 5. Add runtime validator to catch unsupported VCS method usage
 
+## VCS DTO Typing Strategy
+
+### Current Challenge
+VCS interface methods return `{ data: any }` - we need proper TypeScript DTOs for type safety and LocalContext implementation guidance.
+
+### Evidence-Based Type Discovery Process
+
+**Phase 1: Discovery & Analysis**
+
+1. **Audit All VCS Usage Sites**
+   - Search codebase for all `context.vcs.*` calls
+   - Search for remaining `context.octokit.*` calls needing migration
+   - Document every method signature and response usage
+   - Create inventory: method name, parameters, response shape, calling context
+
+2. **Analyze Response Usage Patterns**
+   - For each VCS call site, trace how `.data` property is used
+   - Document which properties are accessed (e.g., `result.data.changed_files`, `result.data.content`)
+   - Identify required vs optional properties
+   - Note any type coercions or validations in calling code
+
+3. **Capture Real Response Shapes**
+   - Use existing webhook fixtures to understand actual GitHub API response formats
+   - Check test mocks to see what response shapes are expected
+   - Reference GitHub API docs for official response schemas
+   - Document the minimal subset of properties actually used by gates
+
+**Phase 2: Type Design**
+
+4. **Create Minimal DTOs**
+   - Design DTOs with only the properties actually used by gates
+   - Make properties optional if calling code handles undefined
+   - Use union types for known enum values (e.g., `"added" | "modified" | "removed"`)
+   - Avoid over-typing - keep DTOs neutral and minimal
+
+5. **Design VCS Response Wrapper**
+   - Create consistent `VcsResponse<T>` wrapper matching current `{ data: T }` pattern
+   - Ensure zero breaking changes to existing calling code
+   - Consider adding status/headers for future extensibility
+
+6. **Update VCS Interface**
+   - Replace `{ data: any }` with proper `VcsResponse<DTO>` types
+   - Update method signatures with correct parameter types
+   - Ensure TypeScript compilation passes
+
+**Phase 3: Validation**
+
+7. **Compile Test**
+   - Run TypeScript compilation to verify all types align
+   - Fix any type mismatches between interface and usage
+   - Ensure no breaking changes to existing method calls
+
+8. **Runtime Verification**
+   - Run tests to ensure DTO shapes match actual responses
+   - Verify GitHub adapter maps Octokit responses to VCS DTOs correctly
+   - Test that calling code works unchanged with new types
+
+**Key Principles:**
+- **Evidence-Based**: Only type properties actually used by gates
+- **Zero Breaking Changes**: Maintain exact same calling patterns
+- **Host-Neutral**: DTOs work for GitHub, GitLab, local git, etc.
+- **Minimal**: Avoid over-engineering - just enough typing for safety
+
 ## Migration Strategy
 
 1. **Gates Migration**: Update all gate code to use `context.vcs.*` instead of `context.octokit.*`
-2. **GitHub Adapter**: Create mapping layer that converts VCS calls to Octokit calls
-3. **LocalContext**: Implement `context.vcs.*` with git CLI operations
-4. **Validation**: Add interface compliance testing for all adapters
+2. **DTO Discovery**: Follow evidence-based process to create proper VCS DTOs
+3. **Type Implementation**: Replace `{ data: any }` with typed `VcsResponse<DTO>` interfaces
+4. **GitHub Adapter**: Create mapping layer that converts VCS calls to Octokit calls
+5. **LocalContext**: Implement `context.vcs.*` with git CLI operations using typed interfaces
+6. **Validation**: Add interface compliance testing for all adapters

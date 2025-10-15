@@ -48,7 +48,7 @@ export async function run(context, gate, logger) {
       
       try {
         // Check if workflow file exists
-        const { data: fileContent } = await context.octokit.repos.getContent({
+        const { data: fileContent } = await context.vcs.repos.getContent({
           owner,
           repo,
           path: workflowPath
