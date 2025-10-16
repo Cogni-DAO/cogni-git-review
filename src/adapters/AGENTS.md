@@ -18,10 +18,11 @@ The adapters directory implements the host abstraction architecture that enables
 - **../index.js**: Host-agnostic app core accepting CogniBaseApp interface
 - **../../github.js**: Probot adapter implementing CogniBaseApp interface
 
-### 🔄 Next: Step 3 - LocalContext Implementation  
-- LocalContext class implementing BaseContext interface
-- Git CLI operations backing VCS interface methods
-- Synthetic webhook payload generation from git state
+### ✅ Step 3 Complete: Local CLI Implementation  
+- **local-cli.js**: CLI entry point implementing CogniBaseApp interface
+- **local-cli/local-context.js**: LocalContext class implementing BaseContext interface
+- **local-cli/local-app.js**: LocalCogniApp class for event simulation
+- **local-cli/git-utils.js**: Git CLI operations and parsing utilities
 
 ## Key Design Principles
 
@@ -36,6 +37,12 @@ src/adapters/
 ├── AGENTS.md                    # This file - architecture overview
 ├── base-app.d.ts               # CogniBaseApp interface (app abstraction)
 ├── base-context.d.ts           # BaseContext interface (context abstraction)
+├── github.js                   # GitHub/Probot adapter implementation
+├── local-cli.js                # Local CLI adapter implementation
+├── local-cli/                  # Local CLI implementation details (→ AGENTS.md)
+│   ├── local-context.js        # LocalContext class (BaseContext impl)
+│   ├── local-app.js            # LocalCogniApp class (CogniBaseApp impl)
+│   └── git-utils.js            # Git CLI utility functions
 ├── LOCAL_GIT_ADAPTER_DESIGN.md # Complete design specification
 ├── CONTEXT_INTERFACE_SPEC.md   # Interface definition + webhook fixtures  
 └── OCTOKIT_INTERFACE_ANALYSIS.md # Octokit method analysis + implementation strategy
@@ -44,8 +51,8 @@ src/adapters/
 ## Integration Points
 
 **Entry Points (adapters):**
-- `../../github.js` - Probot → CogniBaseApp wrapper  
-- `../../cli.js` - Future CLI entry point
+- `github.js` - Probot → CogniBaseApp wrapper  
+- `local-cli.js` - Local git CLI → CogniBaseApp wrapper
 
 **Core Integration:**
 - `../index.js` - Receives CogniBaseApp, handlers receive BaseContext
