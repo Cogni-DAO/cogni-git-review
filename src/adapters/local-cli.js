@@ -18,15 +18,15 @@ import { getRequestLogger } from '../logging/index.js';
  * @returns {Promise<any>} Gate execution results
  */
 export default async function runLocalCLI(baseRef = 'HEAD~1', headRef = 'HEAD', repoPath = process.cwd()) {
+  // Create app adapter and register with cogni core FIRST
+  const app = new LocalCogniApp();
+  runCogniApp(app);  // This registers the handlers
+  
   // Create LocalContext from CLI args
   const context = new LocalContext(baseRef, headRef, repoPath);
   context.log = getRequestLogger(context, { module: 'local-cli', code: 'cli-run' });
   
-  // Create app adapter and register with cogni core
-  const app = new LocalCogniApp();
-  runCogniApp(app);
-  
-  // Simulate PR event and run gates
+  // Simulate PR event and run gates (handlers are already registered)
   console.log(`🔍 Running Cogni gates on ${baseRef}...${headRef}`);
   const result = await app.simulatePREvent(context);
   

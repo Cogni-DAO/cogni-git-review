@@ -97,32 +97,3 @@ export function isGitRepository(repoPath) {
   }
 }
 
-/**
- * Get detailed file statistics using git diff --numstat
- * @param {string} baseRef - Base reference
- * @param {string} headRef - Head reference  
- * @param {string} repoPath - Repository path
- * @returns {Array<Object>} Array of file stats with line counts
- */
-export function getDetailedFileStats(baseRef, headRef, repoPath) {
-  try {
-    const numstatOutput = execGitCommand(`git diff --numstat ${baseRef}...${headRef}`, repoPath);
-    
-    if (!numstatOutput) {
-      return [];
-    }
-    
-    return numstatOutput.split('\n').map(line => {
-      const [additions, deletions, filename] = line.split('\t');
-      return {
-        filename,
-        additions: additions === '-' ? 0 : parseInt(additions) || 0,
-        deletions: deletions === '-' ? 0 : parseInt(deletions) || 0,
-        changes: (additions === '-' ? 0 : parseInt(additions) || 0) + 
-                (deletions === '-' ? 0 : parseInt(deletions) || 0)
-      };
-    }).filter(file => file.filename);
-  } catch (error) {
-    return [];
-  }
-}

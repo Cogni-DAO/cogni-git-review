@@ -1,116 +1,78 @@
 /**
  * LocalContext class - implements BaseContext interface for local git operations
  * Provides VCS interface backed by git CLI commands and filesystem access
+ * @typedef {import('../base-context.d.ts').BaseContext} BaseContext
  */
 
-import fs from 'fs';
-import path from 'path';
-import { execSync } from 'child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import YAML from 'yaml';
-import { HostAdapter } from '../base-context.d.ts';
-import { parseGitStats, parseGitNameStatus, execGitCommand } from './git-utils.js';
+import { parseGitStats, parseGitNameStatus, execGitCommand, isGitRepository } from './git-utils.js';
 
-export class LocalContext extends HostAdapter {
+/**
+ * @implements {BaseContext}
+ */
+export class LocalContext {
   constructor(baseRef, headRef, repoPath) {
-    super();
     this.baseRef = baseRef;
     this.headRef = headRef;
     this.repoPath = path.resolve(repoPath);
     
-    this._setupPayload();
-    this._setupVCS();
+    // Validate git repository
+    if (!isGitRepository(this.repoPath)) {
+      throw new Error(`Not a git repository: ${this.repoPath}`);
+    }
+    
+    this._createMinimalPayload();
+    this._createVCS();
   }
 
-  _setupPayload() {
-    // Extract repository info from git remote or use defaults
-    let repoName = path.basename(this.repoPath);
-    let ownerName = 'local';
+  _createMinimalPayload() {
+    const repoName = path.basename(this.repoPath);
     
-    try {
-      // Try to extract from git remote
-      const remoteUrl = execGitCommand('git remote get-url origin', this.repoPath);
-      const match = remoteUrl.match(/[:/]([^/]+)\/([^/.]+)/);
-      if (match) {
-        [, ownerName, repoName] = match;
-      }
-    } catch (error) {
-      // Use defaults if git remote fails
-    }
-
-    // Generate PR data from git diff
-    const prStats = this._generatePRStats();
-    
-    // Create GitHub-like payload structure
+    // Minimal payload with only fields gates actually read
     this.payload = {
       repository: {
         name: repoName,
-        full_name: `${ownerName}/${repoName}`,
-        owner: { login: ownerName }
+        full_name: `local/${repoName}`
       },
-      installation: { 
-        id: 'local-cli' 
-      },
+      installation: { id: 'local-cli' },
       pull_request: {
-        id: 1,
         number: 1,
         state: 'open',
         title: `Local diff: ${this.baseRef}...${this.headRef}`,
         head: {
           sha: this._getCommitSha(this.headRef),
           repo: {
-            name: repoName,
-            full_name: `${ownerName}/${repoName}`
+            name: repoName
           }
         },
         base: {
-          sha: this._getCommitSha(this.baseRef),
-          repo: {
-            name: repoName,
-            full_name: `${ownerName}/${repoName}`
-          }
-        },
-        ...prStats
+          sha: this._getCommitSha(this.baseRef)
+        }
       },
       action: 'opened'
     };
   }
 
-  _generatePRStats() {
-    try {
-      const statsOutput = execGitCommand(`git diff --shortstat ${this.baseRef}...${this.headRef}`, this.repoPath);
-      const [changed_files, additions, deletions] = parseGitStats(statsOutput);
-      return { changed_files, additions, deletions };
-    } catch (error) {
-      return { changed_files: 0, additions: 0, deletions: 0 };
-    }
-  }
-
   _getCommitSha(ref) {
     try {
-      return execGitCommand(`git rev-parse ${ref}`, this.repoPath);
+      return execGitCommand(`git rev-parse ${ref}`, this.repoPath).trim();
     } catch (error) {
-      return ref; // fallback to ref name
+      throw new Error(`Failed to get commit SHA for ${ref}: ${error.message}`);
     }
   }
 
+
   repo(options = {}) {
-    const { owner, repo } = this._extractRepoInfo();
     return {
-      owner,
-      repo,
+      owner: 'local',
+      repo: this.payload.repository.name,
       ...options
     };
   }
 
-  _extractRepoInfo() {
-    const { repository } = this.payload;
-    return {
-      owner: repository.owner.login,
-      repo: repository.name
-    };
-  }
-
-  _setupVCS() {
+  _createVCS() {
     this.vcs = {
       config: {
         get: async ({ path: filePath }) => {
@@ -119,31 +81,36 @@ export class LocalContext extends HostAdapter {
             const content = fs.readFileSync(fullPath, 'utf8');
             return { config: YAML.parse(content) };
           } catch (error) {
-            // Return empty config if file doesn't exist (matches GitHub behavior)
+            console.warn(`Config file not found: ${filePath}`);
             return { config: null };
           }
         }
       },
 
       pulls: {
-        get: async ({ pull_number }) => {
-          const stats = this._generatePRStats();
-          return { data: stats };
+        get: async () => {
+          try {
+            const statsOutput = execGitCommand(`git diff --shortstat ${this.baseRef}...${this.headRef}`, this.repoPath);
+            const [changed_files, additions, deletions] = parseGitStats(statsOutput);
+            return { data: { changed_files, additions, deletions } };
+          } catch (error) {
+            throw new Error(`Failed to get PR stats: ${error.message}`);
+          }
         },
 
-        listFiles: async ({ pull_number }) => {
+        listFiles: async () => {
           try {
             const output = execGitCommand(`git diff --name-status ${this.baseRef}...${this.headRef}`, this.repoPath);
             const files = parseGitNameStatus(output);
             return { data: files };
           } catch (error) {
-            return { data: [] };
+            throw new Error(`Failed to list changed files: ${error.message}`);
           }
         }
       },
 
       repos: {
-        getContent: async ({ path: filePath, ref }) => {
+        getContent: async ({ path: filePath }) => {
           try {
             const fullPath = path.join(this.repoPath, filePath);
             const content = fs.readFileSync(fullPath, 'utf8');
@@ -169,8 +136,14 @@ export class LocalContext extends HostAdapter {
       checks: {
         create: async (params) => {
           // Output check results to console with proper formatting
-          const status = params.conclusion === 'success' ? '✅' : 
-                        params.conclusion === 'failure' ? '❌' : '⚠️';
+          let status;
+          if (params.conclusion === 'success') {
+            status = '✅';
+          } else if (params.conclusion === 'failure') {
+            status = '❌';
+          } else {
+            status = '⚠️';
+          }
           console.log(`${status} Check: ${params.conclusion.toUpperCase()} - ${params.output?.summary || 'No summary'}`);
           
           if (params.output?.text) {

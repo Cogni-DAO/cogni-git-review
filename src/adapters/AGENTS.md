@@ -43,6 +43,7 @@ src/adapters/
 │   ├── local-context.js        # LocalContext class (BaseContext impl)
 │   ├── local-app.js            # LocalCogniApp class (CogniBaseApp impl)
 │   └── git-utils.js            # Git CLI utility functions
+├── MINIMAL_PAYLOAD_SPEC.md      # Essential payload fields and usage analysis
 ├── LOCAL_GIT_ADAPTER_DESIGN.md # Complete design specification
 ├── CONTEXT_INTERFACE_SPEC.md   # Interface definition + webhook fixtures  
 └── OCTOKIT_INTERFACE_ANALYSIS.md # Octokit method analysis + implementation strategy
