@@ -1,7 +1,7 @@
 # Host Abstraction Layer
 
 ## Overview
-The adapters directory implements the host abstraction architecture that enables Cogni to run on different platforms (GitHub, local git CLI) with identical gate evaluation logic.
+The adapters directory implements the host abstraction architecture that enables Cogni to run on different platforms (GitHub, GitLab, Forgejo, Bitbucket, Gerrit, Radicle, local git CLI) with identical gate evaluation logic.
 
 ## Architecture: Two-Layer Interface Design
 
@@ -9,6 +9,7 @@ The adapters directory implements the host abstraction architecture that enables
 - **[LOCAL_GIT_ADAPTER_DESIGN.md](./LOCAL_GIT_ADAPTER_DESIGN.md)** - Complete architecture overview, implementation order, and success criteria
 - **[CONTEXT_INTERFACE_SPEC.md](./CONTEXT_INTERFACE_SPEC.md)** - BaseContext interface definition with captured webhook fixtures  
 - **[OCTOKIT_INTERFACE_ANALYSIS.md](./OCTOKIT_INTERFACE_ANALYSIS.md)** - Analysis of how the GitHub adapter maps VCS interface to octokit internally
+- **[MINIMAL_PAYLOAD_SPEC.md](./MINIMAL_PAYLOAD_SPEC.md)** - Minimal subset of webhook payload fields required by gates
 
 ## Current Implementation Status
 
@@ -20,9 +21,18 @@ The adapters directory implements the host abstraction architecture that enables
 
 ### ✅ Step 3 Complete: Local CLI Implementation  
 - **local-cli.js**: CLI entry point implementing CogniBaseApp interface
+  - Accepts git references (baseRef, headRef) and repository path
+  - Registers handlers with core app, then simulates PR event
+  - Creates LocalContext with request-scoped logger
 - **local-cli/local-context.js**: LocalContext class implementing BaseContext interface
+  - Direct implementation (no inheritance) with minimal payload
+  - VCS operations backed by git CLI and filesystem
 - **local-cli/local-app.js**: LocalCogniApp class for event simulation
+  - Stores registered handlers for later execution
+  - Simulates pull_request.opened events to trigger gates
 - **local-cli/git-utils.js**: Git CLI operations and parsing utilities
+  - Parse git diff output for statistics and file changes
+  - Safe command execution with error handling
 
 ## Key Design Principles
 
@@ -66,3 +76,25 @@ src/adapters/
 - `../../test/unit/runallgates-real-webhook-payload.test.js` - End-to-end validation with real fixtures
 
 Result: Identical gate behavior across GitHub and future local git implementations.
+
+## Multi-Platform Roadmap
+
+### Next: Extend BaseContext for Platform Diversity
+**Schema Changes Required:**
+- Add `provider: string` and `review` object (generic PR/MR abstraction)
+- Add `vcs.capabilities` for platform feature detection  
+- Standardize `vcs.checks.create()` for commit status across platforms
+- Alias `vcs.reviews = vcs.pulls` for backward compatibility
+
+### Platform Support Matrix
+| Platform | Reviews | Commit Status | External Checks | Compare | Ref Write |
+|----------|---------|---------------|-----------------|---------|-----------|
+| GitHub   | ✅      | ✅             | ✅              | ✅       | ✅        |
+| GitLab   | ✅      | ✅             | ✅              | ✅       | ✅        |
+| Forgejo  | ✅      | ✅             | ❌              | ✅       | ✅        |
+| Bitbucket| ✅      | ✅             | ❌              | ✅       | ❌        |
+| Gerrit   | ✅      | ✅             | ❌              | ❌       | ❌        |
+| Radicle  | ✅      | ✅             | ❌              | ❌       | ❌        |
+| Local CLI| ❌      | ❌             | ❌              | ✅       | ❌        |
+
+**Implementation Pattern:** Each adapter maps platform webhooks → BaseContext + handles `vcs.checks.create()` via platform APIs.
