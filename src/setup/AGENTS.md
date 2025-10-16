@@ -5,6 +5,8 @@ Installation workflow automation for new repository onboarding with complete gov
 ## Files
 - `installation-handler.js` - Handles `installation_repositories.added` webhook events
 - `createWelcomePR.js` - Creates welcome PR with complete governance template bundle
+  - Uses VCS interface (`context.vcs.*`) for all GitHub API operations
+  - Host-agnostic implementation compatible with BaseContext interface
 
 ## Flow
 ```
@@ -33,6 +35,9 @@ installation_repositories.added webhook
 - `customizeRepoSpec()` - Replaces `intent.name` with actual repo name
 - `customizeCodeowners()` - Replaces `{{REPO_OWNER}}` with repo owner handle  
 - `copyTemplateFile()` - Generic template file copying with existence checks
+  - Uses `context.vcs.repos.getContent()` to check file existence
+  - Uses `context.vcs.repos.createOrUpdateFileContents()` to create files
+  - All operations through VCS interface for host independence
 
 ### Templates Used (from cogni-rails-templates-v0.1/)
 - `.cogni/repo-spec-template.yaml` - Repository specification

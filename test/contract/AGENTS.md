@@ -130,6 +130,9 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 - `installation-idempotency.test.js` - Installation retry scenarios
 - `template-customization.test.js` - Template replacement validation (repo-spec + CODEOWNERS customization)
 - `agents-sync-integration.test.js` - AGENTS.md synchronization gate integration tests
+  - Tests the agents-md-sync gate within the launcher framework
+  - Validates that code changes require corresponding AGENTS.md documentation updates
+  - Uses VCS interface mock (`context.vcs.pulls.listFiles`) for file listing
 - `model-provenance-display.test.js` - Model provenance display in GitHub Check summaries (uses structured AI gate mocks)
 - `error-on-neutral.test.js` - Tests for `fail_on_error` flag behavior - validates that neutral gate results convert to failure/neutral conclusions based on flag setting
 - `review-limits-budget-integration.test.js` - Integration of review-limits configuration with AI workflow budget calculations
