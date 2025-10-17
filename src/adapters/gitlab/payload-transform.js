@@ -8,7 +8,7 @@
  * @returns {object} GitHub-compatible payload
  */
 export function transformGitLabPayload(gitlabPayload) {
-  const { object_kind, object_attributes, project, user } = gitlabPayload;
+  const { object_kind, object_attributes, project, user: _user } = gitlabPayload;
   
   if (object_kind === 'merge_request') {
     return {
