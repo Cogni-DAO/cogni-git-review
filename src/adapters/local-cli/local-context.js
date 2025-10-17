@@ -80,7 +80,7 @@ export class LocalContext {
             const fullPath = path.join(this.repoPath, filePath);
             const content = fs.readFileSync(fullPath, 'utf8');
             return { config: YAML.parse(content) };
-          } catch (error) {
+          } catch {
             console.warn(`Config file not found: ${filePath}`);
             return { config: null };
           }
@@ -120,7 +120,7 @@ export class LocalContext {
                 encoding: 'base64'
               } 
             };
-          } catch (error) {
+          } catch {
             throw new Error(`File not found: ${filePath}`);
           }
         }

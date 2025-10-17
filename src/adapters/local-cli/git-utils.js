@@ -92,7 +92,7 @@ export function isGitRepository(repoPath) {
   try {
     execGitCommand('git rev-parse --git-dir', repoPath);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
