@@ -4,12 +4,13 @@
 **cogni-git-review** - CogniDAO's GitHub App that automatically evaluates pull requests against repository-defined quality gates, providing fast feedback on code changes, with the goal of keeping the codebase clean, consistent, and aligned with the project's goals.
 
 ## Core Function
-The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. Detailed results appear as GitHub check runs with pass/fail/neutral status, and a brief summary is commented on the PR. 
+The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR/MR. Detailed results appear as GitHub check runs or GitLab commit statuses with pass/fail/neutral status, and a brief summary is commented on the PR/MR. 
 
 ## Architecture Overview
-- **Host-Agnostic Core**: App logic abstracted from GitHub/Probot via interface layers
+- **Host-Agnostic Core**: App logic abstracted from VCS providers via interface layers
 - **Two-Layer Interface Design**: CogniBaseApp (app abstraction) + BaseContext (context abstraction)
-- **Framework**: Probot v13.4.7 (JavaScript ES modules) via github.js adapter
+- **Gateway Architecture**: Single Express server handling multiple providers at `/api/v1/webhooks/{provider}`
+- **Framework**: Multi-provider gateway with shared handler registration
 - **Unified Gate System**: All gates execute immediately
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
@@ -93,16 +94,19 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 ## Repository Structure
 ```
 ├── index.js                    # Host-agnostic app core (accepts CogniBaseApp interface)
-├── github.js                   # GitHub/Probot entry point adapter
-├── bin/e2e-runner.js          # CLI for E2E testing (executable)
-├── lib/e2e-runner.js          # E2E testing implementation
+├── github.js                   # GitHub/Probot standalone entry point (legacy)
 ├── src/
+│   ├── gateway.js             # Multi-provider gateway server
 │   ├── env.js                 # Centralized environment configuration with Zod validation
 │   ├── spec-loader.js         # Repository specification loading
 │   ├── adapters/              # Host abstraction layer (→ AGENTS.md)
-    ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
+│   │   ├── github.js          # GitHub adapter with factory pattern
+│   │   └── gitlab/            # GitLab adapter implementation
+│   ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
-│       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 
+│       ├── cogni/             # Built-in quality gates (→ AGENTS.md)
+├── bin/e2e-runner.js          # CLI for E2E testing (executable)
+├── lib/e2e-runner.js          # E2E testing implementation 
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── contract/              # End-to-end tests, using test harness without HTTP (→ AGENTS.md)
@@ -154,12 +158,13 @@ gates:
 - Multiple instances of the same gate type are supported
 
 ## Key Features
+- **Multi-provider support**: Single gateway process handles GitHub and GitLab webhooks
+- **Shared handler architecture**: Event handlers registered once, used by all providers
 - **Dynamic gate discovery**: Gates auto-discovered from filesystem
-- **All gates run immediately**: Gates execute directly with comprehensive logging
+- **All gates run immediately**: Gates execute directly
 - **Smart check creation**: Creates completed check for all specs
 - **Graceful timeout handling**: Individual gate timeouts return neutral status while allowing remaining gates to execute
 - **Enhanced diagnostics**: Detailed execution summaries with per-gate timeout attribution, pass/fail/neutral counts, and conclusion reasoning
-- **Robust error handling**: Gate crashes become neutral results with preserved diagnostic information
 - **Universal gate logging**: Every gate logs start and completion with status, duration, and diagnostic context
 - **Configurable neutral handling**: `fail_on_error` flag controls whether gate errors/timeouts block merges (failure) or allow them (neutral)
 

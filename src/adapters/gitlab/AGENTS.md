@@ -1,46 +1,78 @@
 # GitLab Adapter Architecture
 
 ## Overview
-GitLab adapter implements the same two-layer abstraction as the GitHub adapter:
-1. **Platform-specific entry point** - Maps GitLab webhooks/API � BaseContext interface  
-2. **Host-agnostic core** - Existing gate logic unchanged
+GitLab adapter implements BaseContext interface for GitLab webhooks, enabling the gateway to process GitLab merge requests using the same shared handlers as GitHub pull requests.
 
-## Implementation Strategy
+## Current Implementation
 
 ### Core Files
-- `gitlab.js` - Express server entry point (mirrors `src/adapters/github.js` pattern)
-- `gitlab/gitlab-context.js` - GitLab BaseContext implementation
-- `gitlab/gitlab-vcs.js` - GitLab API � VCS interface mapping
+- `gitlab-router.js` - Express router with webhook token validation and handler execution
+- `gitlab-context.js` - GitLab BaseContext implementation (VCS interface stub)
+- `payload-transform.js` - GitLab MR webhook → GitHub PR payload transformation
 
-### Webhook Architecture
-**Current**: `POST /api/github/webhooks` (GitHub-specific)
-**Target**: `POST /api/webhooks` (host-agnostic) + routing by `User-Agent` or path
+### Gateway Integration
+**Endpoint**: `/api/v1/webhooks/gitlab`
+**Authentication**: `X-Gitlab-Token` header validated with timing-safe comparison (tsscmp)
+**Handler Flow**:
+1. Gateway captures shared handlers at boot via `runCogniApp(handlerCapture)`
+2. GitLab router validates webhook token
+3. Transforms GitLab payload to GitHub-compatible structure
+4. Creates GitLab context implementing BaseContext
+5. Executes appropriate shared handler
+6. Returns proper HTTP status codes (200 success, 202 unsupported, 401 unauthorized, 500 error)
 
 ### Event Mapping
-- GitLab `merge_request` (action: open/update/reopen) � `pull_request.opened/synchronize/reopened`
-- GitLab `note` (noteable_type: MergeRequest) � Comment events
+- GitLab `merge_request` events → `pull_request.*` handlers
+  - `open` → `opened`
+  - `update` → `synchronize`
+  - `reopen` → `reopened`
 
 ### Payload Transformation
-Transform GitLab webhook � GitHub-compatible BaseContext:
-- `object_attributes.iid` � `pull_request.number`
-- `project` � `repository` 
-- `object_attributes.source_branch` � `pull_request.head.ref`
+The `payload-transform.js` module maps GitLab webhook fields to GitHub-compatible structure:
+- `object_attributes.iid` → `pull_request.number`
+- `object_attributes.id` → `pull_request.id`
+- `object_attributes.state` → `pull_request.state`
+- `object_attributes.title` → `pull_request.title`
+- `object_attributes.description` → `pull_request.body`
+- `object_attributes.source_branch` → `pull_request.head.ref`
+- `object_attributes.target_branch` → `pull_request.base.ref`
+- `object_attributes.last_commit.id` → `pull_request.head.sha`
+- `project` → `repository` (with namespace → owner mapping)
 
-### GitLab API Integration  
-Map essential endpoints to VCS interface:
-- `/projects/:id/merge_requests/:iid` � `vcs.pulls.get`
-- `/projects/:id/merge_requests/:iid/notes` � `vcs.issues.createComment`  
-- `/projects/:id/statuses/:sha` � `vcs.checks.create`
-- `/projects/:id/repository/files/:path` � `vcs.config.get`
+## VCS Interface Status
 
-### Authentication Flow
-1. OAuth callback: `/oauth/callback/gitlab` (Disambiguation: carry `state.instance_url` for SaaS vs self-managed selection)
-2. Store user access tokens per project
-3. Webhook validation: `X-Gitlab-Token` header (simple string comparison)
+### Implemented
+- Basic context structure with `payload`, `repo()`, and `log`
+- Stub VCS methods returning appropriate errors
 
-## Integration Points
-- Add GitLab env vars to `src/env.js`
-- Extend webhook routing in main server
-- Zero changes to `index.js` or gate logic
+### Not Yet Implemented  
+- GitLab API authentication and client initialization
+- VCS interface methods:
+  - `vcs.config.get` - Read `.cogni/repo-spec.yaml` via GitLab API
+  - `vcs.pulls.get` - Fetch MR details
+  - `vcs.repos.compareCommits` - Get diff statistics
+  - `vcs.checks.create` - Create GitLab commit status
+  - `vcs.issues.createComment` - Post MR comment
 
-**Result**: Identical gate behavior across GitHub and GitLab platforms.
+## Environment Configuration
+The following GitLab-specific variables are validated in `src/env.js`:
+- `GITLAB_WEBHOOK_TOKEN` - Required for webhook authentication
+- `GITLAB_OAUTH_APPLICATION_ID` - Optional, for future OAuth support
+- `GITLAB_OAUTH_APPLICATION_SECRET` - Optional, for future OAuth support
+
+## Error Handling
+The router implements proper HTTP status code responses:
+- **200 OK**: Handler executed successfully
+- **202 Accepted**: Unsupported event type (not an error)
+- **401 Unauthorized**: Missing or invalid webhook token
+- **500 Internal Server Error**: Handler execution failed
+
+Errors are properly propagated from the core handler (index.js now rethrows errors) ensuring failed gate evaluations return 500 status instead of silent 200.
+
+## Next Steps
+1. Implement GitLab API client initialization with OAuth tokens
+2. Complete VCS interface methods for GitLab API operations
+3. Add OAuth flow at `/oauth/gitlab/callback` for token acquisition
+4. Test end-to-end flow with real GitLab webhooks
+
+**Result**: GitLab webhook reception and routing functional, awaiting VCS interface implementation for complete gate evaluation.

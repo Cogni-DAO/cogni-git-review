@@ -1,7 +1,7 @@
 # Host Abstraction Layer
 
 ## Overview
-The adapters directory implements the host abstraction architecture that enables Cogni to run on different platforms (GitHub, GitLab, Forgejo, Bitbucket, Gerrit, Radicle, local git CLI) with identical gate evaluation logic.
+The adapters directory implements the host abstraction architecture that enables Cogni to run on different platforms (GitHub, GitLab, Forgejo, Bitbucket, Gerrit, Radicle, local git CLI) with identical gate evaluation logic. The gateway architecture enables multiple providers to share a single process with unified handler registration.
 
 ## Architecture: Two-Layer Interface Design
 
@@ -13,11 +13,16 @@ The adapters directory implements the host abstraction architecture that enables
 
 ## Current Implementation Status
 
+### ✅ Gateway Architecture: Multi-Provider Support
+- **../gateway.js**: Express server with shared handler registration via `runCogniApp(handlerCapture)`
+- **github.js**: Dual-mode adapter - factory pattern for gateway, default export for standalone
+- **gitlab/**: GitLab webhook router with payload transformation to BaseContext
+
 ### ✅ Step 2 Complete: Probot Abstraction
 - **base-app.d.ts**: CogniBaseApp interface (app.on() abstraction)
 - **base-context.d.ts**: BaseContext interface (context abstraction) 
 - **../index.js**: Host-agnostic app core accepting CogniBaseApp interface
-- **../../github.js**: Probot adapter implementing CogniBaseApp interface
+- **../../github.js**: Legacy standalone Probot entry point
 
 ### ✅ Step 3 Complete: Local CLI Implementation  
 - **local-cli.js**: CLI entry point implementing CogniBaseApp interface
@@ -47,7 +52,13 @@ src/adapters/
 ├── AGENTS.md                    # This file - architecture overview
 ├── base-app.d.ts               # CogniBaseApp interface (app abstraction)
 ├── base-context.d.ts           # BaseContext interface (context abstraction)
-├── github.js                   # GitHub/Probot adapter implementation
+├── github.js                   # GitHub adapter with gateway factory + standalone default
+├── gitlab/                     # GitLab adapter implementation (→ AGENTS.md)
+│   ├── gitlab-router.js        # Express router with webhook validation
+│   ├── gitlab-context.js       # GitLab BaseContext implementation
+│   ├── payload-transform.js    # GitLab MR → GitHub PR mapping
+│   ├── APP-SETUP.md            # GitLab app configuration guide
+│   └── AUTH.md                 # GitLab authentication documentation
 ├── local-cli.js                # Local CLI adapter implementation
 ├── local-cli/                  # Local CLI implementation details (→ AGENTS.md)
 │   ├── local-context.js        # LocalContext class (BaseContext impl)
@@ -61,8 +72,14 @@ src/adapters/
 
 ## Integration Points
 
-**Entry Points (adapters):**
-- `github.js` - Probot → CogniBaseApp wrapper  
+**Gateway Mode:**
+- `../gateway.js` - Captures shared handlers via `runCogniApp(handlerCapture)`
+- `github.js` - Exports `createGitHubApp(sharedHandlers)` factory for gateway
+- `gitlab/gitlab-router.js` - Creates Express router consuming shared handlers
+
+**Standalone Mode (Legacy):**
+- `../../github.js` - Direct Probot entry point
+- `github.js` default export - Probot → CogniBaseApp wrapper  
 - `local-cli.js` - Local git CLI → CogniBaseApp wrapper
 
 **Core Integration:**
