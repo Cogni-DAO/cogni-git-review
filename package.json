@@ -20,7 +20,7 @@
     "cogni-e2e": "bin/e2e-runner.js"
   },
   "scripts": {
-    "start": "probot run ./src/adapters/github.js",
+    "start": "node src/gateway.js",
     "test": "node --test",
     "e2e": "node -r dotenv/config bin/e2e-runner.js",
     "dev:capture": "tsx tools/dev/webhook-capture/capture-server.ts",
@@ -39,6 +39,7 @@
     "pino": "^9.12.0",
     "pino-loki": "^2.6.0",
     "probot": "^13.0.1",
+    "tsscmp": "^1.0.6",
     "zod": "^3.25.76"
   },
   "devDependencies": {

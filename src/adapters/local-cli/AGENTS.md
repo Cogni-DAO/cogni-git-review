@@ -52,7 +52,15 @@ context.vcs.issues.createComment({...})  // � console.log (no-op)
 
 ## Implementation Status
 
-✅ **COMPLETE**: All components implemented and ready for use
+⚠️ **WIP**: Basic functionality works but has rough edges and bugs
+
+**Current State (7517bbd)**: 
+- ✅ Gates execute locally using git CLI
+- ✅ Console output with colored results  
+- ✅ All 7 gates run (~60s execution time)
+- ❌ PR comment error at end
+- ❌ Some gate failures expected
+- ❌ Production config missing
 
 ### File Structure
 ```
@@ -66,10 +74,10 @@ src/adapters/local-cli/
 ### Components
 
 **local-context.js**: 
-- Extends HostAdapter, implements BaseContext interface
-- Creates GitHub-like payload from git state
+- Implements BaseContext interface directly (no inheritance)
+- Creates minimal payload with only required fields
 - VCS interface backed by git CLI commands and filesystem
-- Graceful error handling and console output formatting
+- Basic error handling and console output formatting
 
 **local-app.js**:
 - Implements CogniBaseApp interface for event registration
@@ -189,20 +197,28 @@ Based on gate analysis, these VCS methods are **not used** by core gates:
 
 ## Usage
 
-### CLI Execution
+### Current Testing
 ```bash
-# Run from repository root
-node src/adapters/local-cli.js [baseRef] [headRef] [repoPath]
-
-# Examples
+# Run from repository root (kinda works!)
 node src/adapters/local-cli.js                    # Compare HEAD~1...HEAD
 node src/adapters/local-cli.js main feature-branch  # Compare main...feature-branch  
 node src/adapters/local-cli.js HEAD~3 HEAD /path/to/repo  # Custom repo path
 ```
 
-### Integration
-```javascript
-import runLocalCLI from './src/adapters/local-cli.js';
+**Expected Output:**
+- 🔍 Gate execution starts
+- ✅❌⚠️ Colored gate results
+- 📋 Detailed violation reports
+- ❌ PR comment error at end (known bug)
 
-const result = await runLocalCLI('main', 'feature-branch', '/path/to/repo');
-```
+### Production CLI Setup
+
+**Current:** JS implementation for development testing only.
+
+**Proper production setup requires converting app to TypeScript.**
+
+**Steps to complete:**
+1. Add TypeScript build pipeline with `tsconfig.runtime.json`
+2. Update package.json: `"bin": { "cog": "./bin/cog" }`, point to `dist/`
+3. Create `bin/cog` launcher: `import('../dist/adapters/local-cli.js')`
+4. Build → install globally → `cog main feature-branch`
