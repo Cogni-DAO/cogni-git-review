@@ -56,7 +56,8 @@ The `payload-transform.js` module maps GitLab webhook fields to GitHub-compatibl
 
 ## Environment Configuration
 The following GitLab-specific variables are validated in `src/env.js`:
-- `GITLAB_WEBHOOK_TOKEN` - Required for webhook authentication
+- `WEBHOOK_SECRET_GITLAB` - Required for webhook authentication (renamed from GITLAB_WEBHOOK_TOKEN)
+- `WEBHOOK_PROXY_URL_GITLAB` - Optional smee proxy URL for local development
 - `GITLAB_OAUTH_APPLICATION_ID` - Optional, for future OAuth support
 - `GITLAB_OAUTH_APPLICATION_SECRET` - Optional, for future OAuth support
 

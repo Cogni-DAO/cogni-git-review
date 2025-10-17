@@ -343,9 +343,9 @@ This requires updating UI expectations - comments will show the OAuth user's nam
 **Environment Configuration**:
 ```bash
 # V1 Environment Variables
-GITLAB_OAUTH_CLIENT_ID=your_gitlab_oauth_client_id
-GITLAB_OAUTH_CLIENT_SECRET=your_gitlab_oauth_client_secret
-WEBHOOK_SECRET=shared_webhook_secret
+GITLAB_OAUTH_APPLICATION_ID=your_gitlab_oauth_client_id
+GITLAB_OAUTH_APPLICATION_SECRET=your_gitlab_oauth_client_secret
+WEBHOOK_SECRET_GITLAB=shared_webhook_secret
 ```
 
 **V1 Implementation Scope**:

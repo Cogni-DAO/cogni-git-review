@@ -187,7 +187,7 @@ Computed:  sha256=34ba640e32d8041774b4467ed7327d21281b890ae177f4bab6e609bcf775fa
 Match: true
 ```
 
-**Probot Signature Handling**: Probot automatically verifies `x-hub-signature-256` headers using the configured `WEBHOOK_SECRET`. The raw body is HMAC-SHA256 signed and verified before payload parsing. LocalContext will bypass this verification since it generates synthetic payloads locally.
+**Probot Signature Handling**: Probot automatically verifies `x-hub-signature-256` headers using the configured `WEBHOOK_SECRET_GITHUB`. The raw body is HMAC-SHA256 signed and verified before payload parsing. LocalContext will bypass this verification since it generates synthetic payloads locally.
 
 ### Critical Payload Fields for LocalContext
 

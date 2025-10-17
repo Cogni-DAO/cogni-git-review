@@ -27,6 +27,8 @@ src/
     - GitLab: `/api/v1/webhooks/gitlab` via custom Express router
   - OAuth endpoints at `/oauth/:provider/callback`
   - Health check at `/api/v1/health` with handler inventory
+  - Auto-launches smee proxy clients in dev mode when `WEBHOOK_PROXY_URL_GITHUB` or `WEBHOOK_PROXY_URL_GITLAB` are set
+  - Handles private key base64 decoding for Probot integration
 
 ### Environment Management
 - **env.js**: Centralized environment configuration
@@ -37,7 +39,9 @@ src/
   - Type coercion for numeric values (PORT, APP_ID)
   - URL validation with optional empty string handling
   - ESLint `n/no-process-env` rule enforces usage of this module
-  - Includes GitLab-specific variables: GITLAB_WEBHOOK_TOKEN, GITLAB_OAUTH_APPLICATION_ID, GITLAB_OAUTH_APPLICATION_SECRET
+  - Multi-provider webhook secrets: `WEBHOOK_SECRET_GITHUB`, `WEBHOOK_SECRET_GITLAB`
+  - Multi-provider proxy URLs: `WEBHOOK_PROXY_URL_GITHUB`, `WEBHOOK_PROXY_URL_GITLAB`
+  - GitLab OAuth variables: `GITLAB_OAUTH_APPLICATION_ID`, `GITLAB_OAUTH_APPLICATION_SECRET`
 
 ### Input Layer
 - **spec-loader.js**: Repository `.cogni/*` file loading

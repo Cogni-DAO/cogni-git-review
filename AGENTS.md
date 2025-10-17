@@ -16,6 +16,7 @@ The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
 - **AI Provider Architecture**: Generic workflow router with no domain-specific logic
 - **Centralized Logging**: Grafana Cloud Loki integration for production log aggregation
+- **Auto Smee Proxy**: Gateway automatically launches smee clients for webhook proxying in dev mode
 
 ## Agent Team
 You are on a team full of specialized agents. If you have access use agents, do it!
@@ -213,7 +214,7 @@ npm start                  # Start Local dev server. WARNING: this is a blocking
 ### Setup
 ```bash
 npm install
-npm start  # Local development with webhook proxy
+npm start  # Starts gateway with auto smee proxy (if WEBHOOK_PROXY_URL_GITHUB/GITLAB set)
 npm test   # Run tests
 npm run lint  # ESLint for JavaScript code
 npm run lint:workflows  # actionlint for GitHub Actions workflows
