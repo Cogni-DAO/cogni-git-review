@@ -21,6 +21,7 @@
   },
   "scripts": {
     "start": "probot run ./src/adapters/github.js",
+    "start:gitlab": "node -e \"import('./src/adapters/gitlab.js').then(m => m.default())\"",
     "test": "node --test",
     "e2e": "node -r dotenv/config bin/e2e-runner.js",
     "dev:capture": "tsx tools/dev/webhook-capture/capture-server.ts",

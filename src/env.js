@@ -51,6 +51,11 @@ const github = z.object({
   WEBHOOK_PROXY_URL: urlOrUndef(),
 });
 
+const gitlab = z.object({
+  GITLAB_OAUTH_APPLICATION_ID: z.string().optional(),
+  GITLAB_OAUTH_APPLICATION_SECRET: z.string().optional(),
+});
+
 const schema = base
   .merge(logging)
   .merge(service)
@@ -58,6 +63,7 @@ const schema = base
   .merge(ai)
   .merge(testing)
   .merge(github)
+  .merge(gitlab)
   .strict()
   .superRefine((v, ctx) => {
     // Loki all-or-nothing validation
@@ -80,6 +86,7 @@ const knownKeys = Object.keys({
   ...ai.shape,
   ...testing.shape,
   ...github.shape,
+  ...gitlab.shape,
 });
 
 const input = Object.fromEntries(knownKeys.map(k => [k, process.env[k]]));
