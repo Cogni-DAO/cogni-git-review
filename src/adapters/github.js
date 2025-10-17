@@ -61,24 +61,28 @@ function wrapProbotContext(context) {
 /**
  * Probot app entry point
  * @param {import('probot').Probot} probotApp
+ * @param {Map<string, Function>} [sharedHandlers] - Optional shared handlers from gateway
  */
-export default (probotApp) => {
-  // Create CogniBaseApp wrapper around Probot
-  const cogniAppAdapter = {
-    /**
-     * Register event handler - wraps context with VCS interface
-     * @param {string|string[]} event - Event name(s) 
-     * @param {Function} handler - Handler function
-     */
-    on(event, handler) {
-      probotApp.on(event, (context) => {
-        // Wrap Probot context with VCS interface before passing to handler
+export default (probotApp, sharedHandlers = null) => {
+  if (sharedHandlers) {
+    // Gateway mode: wire Probot to shared handlers
+    for (const [eventName, handler] of sharedHandlers) {
+      probotApp.on(eventName, (context) => {
         const wrappedContext = wrapProbotContext(context);
         return handler(wrappedContext);
       });
     }
-  };
-
-  // Call the host-agnostic cogni app with the adapter
-  return runCogniApp(cogniAppAdapter);
+    return probotApp;
+  } else {
+    // Standalone mode: register handlers via CogniBaseApp  
+    const cogniAppAdapter = {
+      on(event, handler) {
+        probotApp.on(event, (context) => {
+          const wrappedContext = wrapProbotContext(context);
+          return handler(wrappedContext);
+        });
+      }
+    };
+    return runCogniApp(cogniAppAdapter);
+  }
 };
