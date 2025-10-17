@@ -47,14 +47,15 @@ const testing = z.object({
 const github = z.object({
   APP_ID: isDevelopmentMode ? z.coerce.number().optional() : z.coerce.number().min(1),
   PRIVATE_KEY: isDevelopmentMode ? z.string().optional() : z.string().min(1),
-  WEBHOOK_SECRET: isDevelopmentMode ? z.string().optional() : z.string().min(1),
-  WEBHOOK_PROXY_URL: urlOrUndef(),
+  WEBHOOK_SECRET_GITHUB: isDevelopmentMode ? z.string().optional() : z.string().min(1),
+  WEBHOOK_PROXY_URL_GITHUB: urlOrUndef(),
 });
 
 const gitlab = z.object({
   GITLAB_OAUTH_APPLICATION_ID: z.string().optional(),
   GITLAB_OAUTH_APPLICATION_SECRET: z.string().optional(),
-  GITLAB_WEBHOOK_TOKEN: z.string().optional(),
+  WEBHOOK_SECRET_GITLAB: z.string().optional(),
+  WEBHOOK_PROXY_URL_GITLAB: urlOrUndef(),
 });
 
 const schema = base

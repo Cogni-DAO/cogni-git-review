@@ -61,8 +61,8 @@ cp .env.example .env
 Then edit `.env`:
 ```bash
 APP_ID=123456  # from your app page
-WEBHOOK_SECRET=your-password-from-step-1
-WEBHOOK_PROXY_URL=https://smee.io/your-channel
+WEBHOOK_SECRET_GITHUB=your-password-from-step-1
+WEBHOOK_PROXY_URL_GITHUB=https://smee.io/your-channel
 LOG_LEVEL=debug
 PRIVATE_KEY=""
 ```

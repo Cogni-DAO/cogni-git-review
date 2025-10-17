@@ -26,7 +26,7 @@ export function createGitLabRouter(sharedHandlers) {
       }
       
       // Guard: Validate token with timing-safe comparison  
-      if (!tsscmp(String(req.get('x-gitlab-token') || ''), String(environment.GITLAB_WEBHOOK_TOKEN || ''))) {
+      if (!tsscmp(String(req.get('x-gitlab-token') || ''), String(environment.WEBHOOK_SECRET_GITLAB || ''))) {
         return res.status(401).json({ status: 'error', code: 401, message: 'invalid token' });
       }
       
