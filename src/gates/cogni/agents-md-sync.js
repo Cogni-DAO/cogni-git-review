@@ -11,7 +11,7 @@ export const type = 'agents-md-sync';
 
 /**
  * Registry-compatible run function for agents-sync gate
- * @param {object} ctx - Run context with octokit, pr, etc.
+ * @param {object} ctx - Run context with vcs, pr, etc.
  * @param {object} gate - Gate configuration from spec
  * @returns {Promise<object>} Normalized gate result
  */
@@ -23,7 +23,7 @@ export async function run(ctx, gate) {
     const docPattern = config.doc_pattern || 'AGENTS.md';
 
     // Get changed files from GitHub API
-    const { data: changedFiles } = await ctx.octokit.pulls.listFiles(
+    const { data: changedFiles } = await ctx.vcs.pulls.listFiles(
       ctx.repo({ pull_number: ctx.pr.number })
     );
 

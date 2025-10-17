@@ -24,6 +24,8 @@ export async function handlePullRequest(context) {
 }
 ```
 
+**BaseContext Support**: `getRequestLogger()` accepts BaseContext interface from any adapter (GitHub, local-cli), extracting id and repository information from the normalized interface.
+
 ### 2. Gate System - Accept Logger, Create Module Children
 
 ```javascript

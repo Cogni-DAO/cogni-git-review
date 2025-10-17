@@ -8,7 +8,7 @@ export const type = 'review-limits';
 
 /**
  * Evaluate review limits for a PR against configured limits
- * @param {import('probot').Context} context - Probot context
+ * @param {import('../../adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @param {object} pr - Pull request object from webhook
  * @param {object} limits - review_limits from repo spec
  * @returns {Promise<{violations: Array, stats: object, oversize: boolean}>}
@@ -17,7 +17,7 @@ export async function evaluateReviewLimits(context, pr, limits) {
   try {
     // Get changed files count - prefer PR data, fallback to API call
     const changed_files = pr.changed_files ?? 
-      (await context.octokit.pulls.get(context.repo({pull_number: pr.number}))).data.changed_files;
+      (await context.vcs.pulls.get(context.repo({pull_number: pr.number}))).data.changed_files;
     
     // Calculate diff size heuristic from additions/deletions (cast to numbers)
     const additions = Number(pr.additions || 0);

@@ -52,7 +52,7 @@ describe('Multiple AI Rules Integration', () => {
           deletions: 0
         },
         repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-        octokit: {
+        vcs: {
           config: {
             get: async ({ path }) => {
               // Mock rule file loading for both AI rules
@@ -146,7 +146,7 @@ describe('Multiple AI Rules Integration', () => {
     const runCtx = createGateTestContext({
       spec: specWithDuplicates,
       pr: { changed_files: [], additions: 0, deletions: 0 },
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: DONT_REBUILD_OSS_RULE })
         }

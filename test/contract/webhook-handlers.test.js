@@ -113,7 +113,7 @@ describe("GitHub Webhook Handler Contract Tests", () => {
     // This test verifies that rerun gets PR number from check_suite.pull_requests, 
     // fetches full PR data, but reports neutral when no stored spec available
 
-    const extraOctokit = {
+    const extraVcs = {
       pulls: {
         get: async () => ({
           data: {
@@ -154,7 +154,7 @@ describe("GitHub Webhook Handler Contract Tests", () => {
         // Stats should be in gate sections now (no more footer)
         assert(params.output.text.includes("changed_files: 3"));
       },
-      extraOctokit
+      extraVcs
     });
 
     assert.strictEqual(calls.length, 1);

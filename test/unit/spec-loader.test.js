@@ -4,10 +4,10 @@ import { SPEC_FIXTURES } from "../fixtures/repo-specs.js";
 import { describe, beforeEach, test } from "node:test";
 import assert from "node:assert";
 
-// Mock context factory using Probot octokit config plugin pattern
+// Mock context factory using VCS interface
 const createMockContext = (configResponse) => ({
   repo: () => ({ owner: 'test-owner', repo: 'test-repo' }),
-  octokit: {
+  vcs: {
     config: {
       get: async ({ owner, repo, path }) => {
         if (path === '.cogni/repo-spec.yaml') {

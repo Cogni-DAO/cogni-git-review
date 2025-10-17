@@ -21,7 +21,7 @@ describe('Code-Aware AI Gate Integration Tests', () => {
         deletions: 17
       },
       repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
+      vcs: {
         rest: {
           pulls: {
             listFiles: async () => ({

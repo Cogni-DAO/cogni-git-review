@@ -32,9 +32,17 @@ Tests can access `process.env` directly (ESLint exempted) and may mock environme
 - `make-llm-client.test.js` - LLM client factory whitelist behavior tests
 - `model-selector.test.js` - Environment-based model selection tests, mocking env.app
 - `pr-structure-validation.test.js` - Pull request structure validation tests
+- `probot-context-interface.test.js` - Validates Probot context implements BaseContext interface
 - `rules-gate-code-aware.test.js` - AI rule gate code-aware enhancement tests
 - `rules-gate-neutral.test.js` - AI rule gate neutral case handling tests
+- `runallgates-real-webhook-payload.test.js` - End-to-end gate validation using real GitHub webhook fixtures
 - `spec-loader.test.js` - Repository specification loading tests
 - `summary-adapter.test.js` - Summary formatting and operator symbol mapping tests
 - `webhook-spec-debug.test.js` - Webhook specification debugging tests
 - `workflow-registry.test.js` - AI workflow registry functionality tests for unified goal-evaluations workflow
+
+## Host Abstraction Interface Tests
+New tests validate the host abstraction layer:
+- **Interface compatibility**: Probot context implements BaseContext interface
+- **Adapter functionality**: github.js correctly wraps Probot into CogniBaseApp interface  
+- **Real-world validation**: Gate orchestrator works with actual GitHub webhook payloads
