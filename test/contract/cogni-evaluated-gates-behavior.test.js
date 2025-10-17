@@ -72,7 +72,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
       name: 'pull_request',
       payload: createBehaviorPayload(),
       repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: null })  // Mock missing spec
         },
@@ -123,7 +123,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         deletions: 30  // 60/3 = 20 KB
       }),
       repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: expectedSpec })  // Mock valid spec
         },
@@ -182,7 +182,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         deletions: 30  // 60/3 = 20 KB (under limit)
       }),
       repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: expectedSpec })  // Mock valid spec
         },
@@ -241,7 +241,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
         deletions: 225
       }),
       repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: expectedSpec })  // Mock valid spec
         },

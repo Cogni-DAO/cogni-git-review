@@ -7,7 +7,9 @@
 The bot reads `.cogni/repo-spec.yaml` from repositories and evaluates configured quality gates on every PR. Detailed results appear as GitHub check runs with pass/fail/neutral status, and a brief summary is commented on the PR. 
 
 ## Architecture Overview
-- **Framework**: Probot v13.4.7 (JavaScript ES modules)
+- **Host-Agnostic Core**: App logic abstracted from GitHub/Probot via interface layers
+- **Two-Layer Interface Design**: CogniBaseApp (app abstraction) + BaseContext (context abstraction)
+- **Framework**: Probot v13.4.7 (JavaScript ES modules) via github.js adapter
 - **Unified Gate System**: All gates execute immediately
 - **Dynamic Gate Discovery**: Registry-based discovery with timeout handling
 - **Events**: `pull_request.opened/synchronize/reopened`, `check_suite.rerequested`
@@ -27,17 +29,20 @@ You are on a team full of specialized agents. If you have access use agents, do 
 - [Probot Framework Docs](https://probot.github.io/docs/)
 - [GitHub Checks API](https://docs.github.com/en/rest/checks)
 - **[Architecture Design](docs/DESIGN.md)** - Core extensible AI rules system
+- **[Host Abstraction Design](src/adapters/LOCAL_GIT_ADAPTER_DESIGN.md)** - Two-layer interface architecture enabling local git CLI integration
 - Architecture details in AGENTS.md files throughout the repository
 - README.md - basic overview and installation instructions for humans.
 
 ## Context Architecture
 
-### Probot Context Object
-All webhook handlers receive a Probot `context` object containing:
+### Context Object Architecture
+All webhook handlers receive a `context` object containing:
 - **context.payload**: GitHub webhook payload (varies by event type)  
-- **context.octokit**: Authenticated GitHub API client
+- **context.vcs**: Host-agnostic VCS interface (abstracts GitHub/GitLab/local git)
 - **context.repo()**: Method returning `{ owner, repo }` from payload
 - **context.log**: Structured logger
+
+**VCS Interface**: The `context.vcs.*` interface provides host-agnostic access to version control operations. The GitHub adapter internally maps these calls to `context.octokit.*`, while future adapters will implement the same interface for other hosts.
 
 ### Context Variations by Event Type
 
@@ -63,8 +68,8 @@ context.payload = {
 ### Rerun Event Handling
 `check_suite.rerequested` events lack PR association data. The rerun handler:
 ```javascript
-// Use GitHub API to find PR associated with commit SHA
-const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+// Use VCS interface to find PR associated with commit SHA
+const { data: assoc } = await context.vcs.repos.listPullRequestsAssociatedWithCommit(
   context.repo({ commit_sha: headSha })
 );
 const pr = assoc.find(pr => pr.state === 'open') || assoc[0];
@@ -87,12 +92,14 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 
 ## Repository Structure
 ```
-├── index.js                    # Main bot webhook handlers with structured logging
+├── index.js                    # Host-agnostic app core (accepts CogniBaseApp interface)
+├── github.js                   # GitHub/Probot entry point adapter
 ├── bin/e2e-runner.js          # CLI for E2E testing (executable)
 ├── lib/e2e-runner.js          # E2E testing implementation
 ├── src/
 │   ├── env.js                 # Centralized environment configuration with Zod validation
 │   ├── spec-loader.js         # Repository specification loading
+│   ├── adapters/              # Host abstraction layer (→ AGENTS.md)
     ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md) 

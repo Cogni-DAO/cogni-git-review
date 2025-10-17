@@ -21,7 +21,7 @@ async function copyTemplateFile(context, repoInfo, branchName, sourceRelativePat
   const content = fs.readFileSync(sourcePath, 'utf8');
   
   try {
-    await context.octokit.repos.getContent({
+    await context.vcs.repos.getContent({
       owner,
       repo,
       path: destPath,
@@ -32,7 +32,7 @@ async function copyTemplateFile(context, repoInfo, branchName, sourceRelativePat
   } catch (error) {
     if (error.status !== 404) throw error;
     // File doesn't exist, create it
-    await context.octokit.repos.createOrUpdateFileContents({
+    await context.vcs.repos.createOrUpdateFileContents({
       owner,
       repo,
       path: destPath,
@@ -75,7 +75,7 @@ export async function createWelcomePR(context, repoInfo) {
   try {
     // Check if repo-spec already exists
     try {
-      await context.octokit.repos.getContent({
+      await context.vcs.repos.getContent({
         owner,
         repo,
         path: '.cogni/repo-spec.yaml'
@@ -88,7 +88,7 @@ export async function createWelcomePR(context, repoInfo) {
     }
 
     // Check if welcome PR already exists
-    const { data: openPRs } = await context.octokit.pulls.list({
+    const { data: openPRs } = await context.vcs.pulls.list({
       owner,
       repo,
       state: 'open'
@@ -105,7 +105,7 @@ export async function createWelcomePR(context, repoInfo) {
     }
 
     // Get default branch
-    const { data: repoData } = await context.octokit.repos.get({ owner, repo });
+    const { data: repoData } = await context.vcs.repos.get({ owner, repo });
     const defaultBranch = repoData.default_branch;
 
     // Read and customize template file
@@ -115,14 +115,14 @@ export async function createWelcomePR(context, repoInfo) {
     
     // Create branch
     const branchName = WELCOME_BRANCH_PREFIX;
-    const { data: defaultRef } = await context.octokit.git.getRef({
+    const { data: defaultRef } = await context.vcs.git.getRef({
       owner,
       repo,
       ref: `heads/${defaultBranch}`
     });
     
     try {
-      await context.octokit.git.createRef({
+      await context.vcs.git.createRef({
         owner,
         repo,
         ref: `refs/heads/${branchName}`,
@@ -135,7 +135,7 @@ export async function createWelcomePR(context, repoInfo) {
 
     // Add repo-spec.yaml file (only if it doesn't exist)
     try {
-      await context.octokit.repos.getContent({
+      await context.vcs.repos.getContent({
         owner,
         repo,
         path: '.cogni/repo-spec.yaml',
@@ -145,7 +145,7 @@ export async function createWelcomePR(context, repoInfo) {
     } catch (error) {
       if (error.status !== 404) throw error;
       // File doesn't exist, create it
-      await context.octokit.repos.createOrUpdateFileContents({
+      await context.vcs.repos.createOrUpdateFileContents({
         owner,
         repo,
         path: '.cogni/repo-spec.yaml',
@@ -157,7 +157,7 @@ export async function createWelcomePR(context, repoInfo) {
 
     // Add CODEOWNERS file with owner customization (only if it doesn't exist)
     try {
-      await context.octokit.repos.getContent({
+      await context.vcs.repos.getContent({
         owner,
         repo,
         path: '.github/CODEOWNERS',
@@ -171,7 +171,7 @@ export async function createWelcomePR(context, repoInfo) {
       const codeownersTemplate = fs.readFileSync(codeownersTemplatePath, 'utf8');
       const customizedCodeowners = customizeCodeowners(codeownersTemplate, owner);
       
-      await context.octokit.repos.createOrUpdateFileContents({
+      await context.vcs.repos.createOrUpdateFileContents({
         owner,
         repo,
         path: '.github/CODEOWNERS',
@@ -243,7 +243,7 @@ export async function createWelcomePR(context, repoInfo) {
     const prBody = createPRBody(owner, repo, PR_REVIEW_NAME);
 
     // Create PR
-    const { data: pr } = await context.octokit.pulls.create({
+    const { data: pr } = await context.vcs.pulls.create({
       owner,
       repo,
       title: WELCOME_PR_TITLE(repo),
@@ -253,7 +253,7 @@ export async function createWelcomePR(context, repoInfo) {
     });
 
     // Add label
-    await context.octokit.issues.addLabels({
+    await context.vcs.issues.addLabels({
       owner,
       repo,
       issue_number: pr.number,

@@ -8,7 +8,7 @@ describe('AGENTS.md Synchronization Gate', () => {
     return {
       pr: { number: 123 },
       repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
+      vcs: {
         pulls: {
           listFiles: async () => ({ data: changedFiles })
         }
@@ -152,7 +152,7 @@ describe('AGENTS.md Synchronization Gate', () => {
     const ctx = {
       pr: { number: 123 },
       repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-      octokit: {
+      vcs: {
         pulls: {
           listFiles: async () => {
             throw new Error('API rate limit exceeded');

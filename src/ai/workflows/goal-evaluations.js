@@ -24,7 +24,7 @@ async function gatherEvidence(context, capabilities = [], budgets = {}) {
     }
 
     const { owner, repo } = context.repo();
-    const { data: files } = await context.octokit.rest.pulls.listFiles({
+    const { data: files } = await context.vcs.rest.pulls.listFiles({
       owner,
       repo,
       pull_number: pullNumber

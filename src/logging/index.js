@@ -6,7 +6,7 @@ export const noop = noopLogger;
 
 /**
  * Create request-scoped logger from Probot context
- * @param {Object} context - Probot context with log and payload
+ * @param {import('../adapters/base-context.d.ts').BaseContext} context - Base context interface with log and payload
  * @param {Object} bindings - Additional structured data to bind
  * @returns {Object} Pino logger instance
  */

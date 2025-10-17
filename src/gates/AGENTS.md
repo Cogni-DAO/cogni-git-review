@@ -21,7 +21,12 @@ src/gates/
 **Important**: Only gates configured in `spec.gates[]` will execute. Multiple instances of the same gate type are supported.
 
 ## Root Contract
-`runAllGates()` returns:
+`runAllGates()` accepts BaseContext interface parameter:
+```javascript
+runAllGates(context: BaseContext, pr, spec, logger)
+```
+
+Returns:
 ```javascript
 {
   overall_status: "pass" | "fail" | "neutral",
@@ -79,8 +84,10 @@ for (const gate of spec.gates) {
 
 ## Orchestration
 - **Orchestrator** (`index.js`): Coordinates gate execution and provides execution diagnostics
+  - Accepts BaseContext interface (host-agnostic context from adapters)
   - Enriches context with PR metadata and review-limits configuration
   - Passes `reviewLimitsConfig` to context for AI workflow budget calculations
+  - Handles both regular PR events and check_suite.rerequested events (where pr parameter might be the same as context.payload.pull_request)
 - **Launcher** (`run-configured.js`): Sequential gate execution with robust error handling
 - **Overall status logic**: Prioritizes failures over neutral conditions: `hasFail ? 'fail' : (hasNeutral ? 'neutral' : 'pass')`
 - **Execution diagnostics**: Detailed logging of execution plan, per-gate outcomes, and summary statistics

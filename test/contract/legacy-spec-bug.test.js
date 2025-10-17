@@ -41,7 +41,7 @@ describe("Legacy Spec Bug Tests", () => {
       name: 'pull_request',
       payload: prOpenedComplete,
       repo: (params = {}) => ({ owner: 'derekg1729', repo: 'cogni-git-review', ...params }),
-      octokit: {
+      vcs: {
         config: {
           get: async () => ({ config: legacySpec })
         },

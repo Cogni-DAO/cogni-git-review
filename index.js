@@ -11,8 +11,8 @@ import { getRequestLogger } from './src/logging/index.js';
 
 
 /**
- * This is the main entrypoint to your Probot app
- * @param {import('probot').Probot} app
+ * Host-agnostic Cogni app core
+ * @param {import('./src/adapters/base-app.d.ts').CogniBaseApp} app
  */
 export default (app) => {
   const short = (sha) => sha?.slice(0, 7) || 'unknown';
@@ -39,7 +39,7 @@ export default (app) => {
   async function createCheckOnSha(context, options) {
     const { sha, conclusion, summary, text } = options;
     const started_at = new Date();
-    return context.octokit.checks.create(context.repo({
+    return context.vcs.checks.create(context.repo({
       name: PR_REVIEW_NAME,
       head_sha: sha,
       status: "completed",
@@ -54,7 +54,7 @@ export default (app) => {
     const conclusion = mapStatusToConclusion(runResult.overall_status, context.spec.fail_on_error);
     const { summary, text } = renderCheckSummary(runResult);
 
-    const checkResult = await context.octokit.checks.create(context.repo({
+    const checkResult = await context.vcs.checks.create(context.repo({
       name: PR_REVIEW_NAME,
       head_sha: headSha,
       status: "completed",
@@ -129,7 +129,7 @@ export default (app) => {
             ? `Repository spec validation failed: ${error.message || 'Unknown error'}`
             : 'GitHub API/network issue while loading the spec. Re-run the check or try again.');
 
-      return context.octokit.checks.create(context.repo({
+      return context.vcs.checks.create(context.repo({
         name: PR_REVIEW_NAME,
         head_sha: pr.head.sha,
         status: "completed",
@@ -151,7 +151,7 @@ export default (app) => {
 
     // Rerun does NOT have PR information, just the head SHA. 
     // Find associated PR(s) for this commit SHA using GitHub API
-    const { data: assoc } = await context.octokit.repos.listPullRequestsAssociatedWithCommit(
+    const { data: assoc } = await context.vcs.repos.listPullRequestsAssociatedWithCommit(
       context.repo({ commit_sha: headSha })
     );
     const prRef = assoc.find(pr => pr.state === 'open') || assoc[0];
@@ -170,7 +170,7 @@ export default (app) => {
     
     try {
       // Fetch full PR data with file/diff statistics
-      const { data: fullPR } = await context.octokit.pulls.get(
+      const { data: fullPR } = await context.vcs.pulls.get(
         context.repo({ pull_number: prRef.number })
       );
       

@@ -26,7 +26,7 @@ function createMockContext(prData = {}, filesData = []) {
       ...prData
     },
     repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-    octokit: {
+    vcs: {
       rest: {
         pulls: {
           listFiles: async () => ({ data: filesData })

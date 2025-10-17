@@ -44,7 +44,7 @@ function validateUniqueIds(gates) {
 /**
  * Run all configured gates from spec in order with dynamic resolution
  * @param {object} params - Parameters object
- * @param {import('probot').Context} params.context - Probot context with execution metadata
+ * @param {import('../adapters/base-context.d.ts').BaseContext} params.context - Base context interface with execution metadata
  * @param {object} params.logger - Logger instance
  * @returns {Promise<{results: GateResult[]}>} Gate execution results
  */

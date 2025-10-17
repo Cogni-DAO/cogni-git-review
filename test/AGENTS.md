@@ -72,7 +72,7 @@ SPEC_FIXTURES.invalidStructure  // Missing sections
 
 // Test harness helpers (NEW - with logger support)
 testEventHandler({ event, payload, spec, expectCheck })     // Complete webhook testing
-createGateTestContext({ spec, pr, octokit })                // Gate testing with noopLogger
+createGateTestContext({ spec, pr, vcs })                    // Gate testing with noopLogger
 ```
 
 ### **Webhook Fixtures** - Existing

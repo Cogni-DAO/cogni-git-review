@@ -7,7 +7,7 @@ import { runConfiguredGates } from './run-configured.js';
 
 /**
  * Run all gate evaluations for a PR with proper state management
- * @param {import('probot').Context} context - Probot context
+ * @param {import('../adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
  * @param {object} logger - Logger instance from caller

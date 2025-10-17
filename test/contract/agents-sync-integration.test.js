@@ -40,7 +40,7 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
           deletions: 10
         },
         repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-        octokit: {
+        vcs: {
           pulls: {
             listFiles: async () => ({ data: changedFiles })
           }
@@ -170,7 +170,7 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
         spec: createTestSpec(),
         pr: { number: 123, changed_files: 1 },
         repo: () => ({ owner: 'test-org', repo: 'test-repo' }),
-        octokit: {
+        vcs: {
           pulls: {
             listFiles: async () => {
               throw new Error('GitHub API rate limit');
