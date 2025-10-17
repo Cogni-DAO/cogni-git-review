@@ -102,8 +102,15 @@ async function startGateway() {
   // OAuth routes for all providers
   app.get('/oauth/:provider/callback', (req, res) => {
     const { provider } = req.params;
+    
+    // Validate provider against allowlist
+    const allowedProviders = ['github', 'gitlab'];
+    if (!allowedProviders.includes(provider)) {
+      return res.status(404).json({ error: 'Unknown provider' });
+    }
+    
     console.log(`OAuth callback: ${provider}`, req.query);
-    res.send(`${provider} OAuth - not implemented yet`);
+    res.send('OAuth - not implemented yet');
   });
   
   // Health check
