@@ -54,6 +54,7 @@ const github = z.object({
 const gitlab = z.object({
   GITLAB_OAUTH_APPLICATION_ID: z.string().optional(),
   GITLAB_OAUTH_APPLICATION_SECRET: z.string().optional(),
+  GITLAB_WEBHOOK_TOKEN: z.string().optional(),
 });
 
 const schema = base

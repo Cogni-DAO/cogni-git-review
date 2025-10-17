@@ -3,9 +3,10 @@
  */
 
 import express from 'express';
-import crypto from 'crypto';
+import tsscmp from 'tsscmp';
 import { transformGitLabPayload } from './payload-transform.js';
 import { createGitLabContext } from './gitlab-context.js';
+import { environment } from '../../env.js';
 
 /**
  * Create GitLab webhook router
@@ -17,48 +18,37 @@ export function createGitLabRouter(sharedHandlers) {
   router.use(express.json({ limit: '10mb' }));
 
   router.post('/', async (req, res) => {
-    const eventType = req.headers['x-gitlab-event'];
-    const token = req.headers['x-gitlab-token'];
-    const payload = req.body;
-    
-    console.log(`GitLab webhook: ${eventType}`, {
-      object_kind: payload.object_kind,
-      action: payload.object_attributes?.action,
-      project: payload.project?.path_with_namespace
-    });
-    
-    // TODO: Validate GitLab token (simple comparison)
-    // const expectedSecret = getWebhookSecret(payload.project.id);
-    // if (!token || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expectedSecret))) {
-    //   return res.status(401).send('Invalid token');
-    // }
-    
-    // Transform payload to GitHub-like structure
-    const transformedPayload = transformGitLabPayload(payload);
-    if (!transformedPayload.action) {
-      console.log('No action mapped, ignoring event');
-      return res.status(200).send('Ignored');
-    }
-    
-    // Create BaseContext with GitLab VCS interface
-    const context = createGitLabContext(transformedPayload);
-    
-    // Find and execute shared handler
-    const eventName = `pull_request.${transformedPayload.action}`;
-    const handler = sharedHandlers.get(eventName);
-    
-    if (handler) {
-      console.log(`Executing shared handler: ${eventName}`);
-      try {
-        await handler(context);
-        res.status(200).send('OK');
-      } catch (error) {
-        console.error('Handler error:', error);
-        res.status(500).send('Handler failed');
+    try {
+      // Guard: Check token presence
+      const token = req.headers['x-gitlab-token'];
+      if (!token) {
+        return res.status(401).json({ status: 'error', code: 401, message: 'missing token' });
       }
-    } else {
-      console.log(`No handler for ${eventName}`);
-      res.status(200).send('No handler');
+      
+      // Guard: Validate token with timing-safe comparison  
+      if (!tsscmp(String(req.get('x-gitlab-token') || ''), String(environment.GITLAB_WEBHOOK_TOKEN || ''))) {
+        return res.status(401).json({ status: 'error', code: 401, message: 'invalid token' });
+      }
+      
+      // Transform payload
+      const pr = transformGitLabPayload(req.body || {});
+      if (!pr.action) {
+        return res.status(202).json({ status: 'ok', code: 202, message: 'unsupported event' });
+      }
+      
+      // Find handler
+      const handler = sharedHandlers.get(`pull_request.${pr.action}`);
+      if (!handler) {
+        return res.status(202).json({ status: 'ok', code: 202, message: 'no handler' });
+      }
+      
+      // Execute handler
+      await handler(createGitLabContext(pr));
+      return res.status(200).json({ status: 'ok', code: 200 });
+      
+    } catch (error) {
+      console.error('GitLab handler error:', error);
+      return res.status(500).json({ status: 'error', code: 500, message: 'handler failed' });
     }
   });
   

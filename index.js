@@ -118,26 +118,8 @@ export default (app) => {
       const conclusion = error?.code === 'SPEC_MISSING' ? 'neutral' : (error?.code === 'SPEC_INVALID' ? 'failure' : 'neutral');
       log.error({ err: error, duration_ms: Date.now() - started, conclusion }, 'PR handler failed');
       
-      const isMissing = error?.code === 'SPEC_MISSING';
-      const isInvalid = error?.code === 'SPEC_INVALID';
-      const summary = isMissing
-        ? 'Cogni needs a repo-spec'
-        : (isInvalid ? 'Invalid .cogni/repo-spec.yaml' : 'Spec could not be loaded (transient error)');
-      const text = isMissing
-        ? 'Please merge the Welcome PR to configure Cogni, or add `.cogni/repo-spec.yaml` manually.'
-        : (isInvalid
-            ? `Repository spec validation failed: ${error.message || 'Unknown error'}`
-            : 'GitHub API/network issue while loading the spec. Re-run the check or try again.');
-
-      return context.vcs.checks.create(context.repo({
-        name: PR_REVIEW_NAME,
-        head_sha: pr.head.sha,
-        status: "completed",
-        started_at: startTime,
-        conclusion,
-        completed_at: new Date(),
-        output: { title: PR_REVIEW_NAME, summary, text }
-      }));
+      // Rethrow error to make handler promise reject
+      throw error;
     }
   }
 

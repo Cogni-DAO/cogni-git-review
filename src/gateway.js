@@ -7,7 +7,7 @@
 
 import { Probot, createNodeMiddleware } from 'probot';
 import express from 'express';
-import githubApp from './adapters/github.js';
+import { createGitHubApp } from './adapters/github.js';
 import { createGitLabRouter } from './adapters/gitlab/gitlab-router.js';
 import { environment } from './env.js';
 import runCogniApp from '../index.js';
@@ -43,9 +43,9 @@ async function startGateway() {
   });
   
   // Mount GitHub middleware at /webhooks/github  
-  app.use('/webhooks/github', createNodeMiddleware((probot) => githubApp(probot, sharedHandlers), { 
+  app.use('/webhooks/github', createNodeMiddleware(createGitHubApp(sharedHandlers), { 
     probot, 
-    webhooksPath: '/webhooks/github' 
+    webhooksPath: '/' 
   }));
   
   // GitLab: Mount custom router at /webhooks/gitlab
