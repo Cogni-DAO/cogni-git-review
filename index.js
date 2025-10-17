@@ -118,7 +118,25 @@ export default (app) => {
       const conclusion = error?.code === 'SPEC_MISSING' ? 'neutral' : (error?.code === 'SPEC_INVALID' ? 'failure' : 'neutral');
       log.error({ err: error, duration_ms: Date.now() - started, conclusion }, 'PR handler failed');
       
-      // Rethrow error to make handler promise reject
+      // Handle spec errors by creating informative checks (these are application conditions, not HTTP errors)
+      if (error?.code === 'SPEC_MISSING' || error?.code === 'SPEC_INVALID') {
+        const isMissing = error?.code === 'SPEC_MISSING';
+        const summary = isMissing
+          ? 'Cogni needs a repo-spec'
+          : 'Invalid .cogni/repo-spec.yaml';
+        const text = isMissing
+          ? 'Please merge the Welcome PR to configure Cogni, or add `.cogni/repo-spec.yaml` manually.'
+          : `Repository spec validation failed: ${error.message || 'Unknown error'}`;
+
+        return await createCheckOnSha(context, {
+          sha: pr.head.sha,
+          conclusion,
+          summary,
+          text
+        });
+      }
+      
+      // For real errors (network, auth, etc.), rethrow to maintain gateway HTTP error handling
       throw error;
     }
   }
