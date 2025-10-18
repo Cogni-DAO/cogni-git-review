@@ -54,7 +54,7 @@ const github = z.object({
 const gitlab = z.object({
   GITLAB_OAUTH_APPLICATION_ID: z.string().optional(),
   GITLAB_OAUTH_APPLICATION_SECRET: z.string().optional(),
-  WEBHOOK_SECRET_GITLAB: z.string().optional(),
+  WEBHOOK_SECRET_GITLAB: isDevelopmentMode ? z.string().optional() : z.string().min(1),
   WEBHOOK_PROXY_URL_GITLAB: urlOrUndef(),
 });
 
