@@ -39,7 +39,7 @@ src/
   - Type coercion for numeric values (PORT, APP_ID)
   - URL validation with optional empty string handling
   - ESLint `n/no-process-env` rule enforces usage of this module
-  - Multi-provider webhook secrets: `WEBHOOK_SECRET_GITHUB`, `WEBHOOK_SECRET_GITLAB`
+  - Multi-provider webhook secrets (both required for now): `WEBHOOK_SECRET_GITHUB`, `WEBHOOK_SECRET_GITLAB`
   - Multi-provider proxy URLs: `WEBHOOK_PROXY_URL_GITHUB`, `WEBHOOK_PROXY_URL_GITLAB`
   - GitLab OAuth variables: `GITLAB_OAUTH_APPLICATION_ID`, `GITLAB_OAUTH_APPLICATION_SECRET`
 
