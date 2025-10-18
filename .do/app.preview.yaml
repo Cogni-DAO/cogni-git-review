@@ -41,9 +41,6 @@ services:
     value: ${WEBHOOK_SECRET_GITHUB}
   - key: WEBHOOK_SECRET_GITLAB
     scope: RUN_TIME
-    value: ${WEBHOOK_PROXY_URL_GITHUB}
-  - key: WEBHOOK_SECRET_GITLAB
-    scope: RUN_TIME
     type: SECRET
     value: ${WEBHOOK_SECRET_GITLAB}
   - key: LANGFUSE_PUBLIC_KEY
