@@ -59,26 +59,31 @@ function wrapProbotContext(context) {
 }
 
 /**
- * Probot app entry point
+ * Create GitHub app factory for gateway
+ * @param {Map<string, Function>} sharedHandlers - Shared handlers from gateway
+ * @returns {Function} Probot app factory
+ */
+export const createGitHubApp = (sharedHandlers) => (app) => {
+  for (const [eventName, handler] of sharedHandlers) {
+    app.on(eventName, (context) => {
+      const wrappedContext = wrapProbotContext(context);
+      return handler(wrappedContext);
+    });
+  }
+};
+
+/**
+ * Probot app entry point (standalone mode)
  * @param {import('probot').Probot} probotApp
  */
 export default (probotApp) => {
-  // Create CogniBaseApp wrapper around Probot
   const cogniAppAdapter = {
-    /**
-     * Register event handler - wraps context with VCS interface
-     * @param {string|string[]} event - Event name(s) 
-     * @param {Function} handler - Handler function
-     */
     on(event, handler) {
       probotApp.on(event, (context) => {
-        // Wrap Probot context with VCS interface before passing to handler
         const wrappedContext = wrapProbotContext(context);
         return handler(wrappedContext);
       });
     }
   };
-
-  // Call the host-agnostic cogni app with the adapter
   return runCogniApp(cogniAppAdapter);
 };

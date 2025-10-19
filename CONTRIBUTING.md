@@ -61,8 +61,8 @@ cp .env.example .env
 Then edit `.env`:
 ```bash
 APP_ID=123456  # from your app page
-WEBHOOK_SECRET=your-password-from-step-1
-WEBHOOK_PROXY_URL=https://smee.io/your-channel
+WEBHOOK_SECRET_GITHUB=your-password-from-step-1
+WEBHOOK_PROXY_URL_GITHUB=https://smee.io/your-channel
 LOG_LEVEL=debug
 PRIVATE_KEY=""
 ```
@@ -75,20 +75,15 @@ sh -lc 'printf "PRIVATE_KEY=%s\n" "$(base64 < </path/to/key.pem> | tr -d "\n")"'
 
 Using a github preview deployment? do this:
 ```bash
-# Note: the quotes are essential for .do appspec parsing via github actions
-echo "\"$(base64 -i /path/to/key.pem)\"" | gh secret set PRIVATE_KEY --env Preview
+# Store pure base64 content (no quotes) - matches gateway.js:92 expectations
+base64 -i /path/to/key.pem | gh secret set PRIVATE_KEY --env Preview
 ```
 
-### 3. Run with Smee
-Install smee client and start the forwarder (replace with your smee URL):
-```bash
-npm install -g smee-client
-smee --url https://smee.io/your-channel --target http://localhost:3000/api/github/webhooks
-```
+### 3. Smee Webhook Proxy (Automatic)
+The gateway automatically starts smee proxy when you run `npm start` if WEBHOOK_PROXY_URL_GITHUB is set. 
+No need to run smee manually anymore!
 
-It might not seem like it, but you can close this terminal window now. SMEE is set up (`npm start` will run it under the hood).
-
-**Note**: You should open the URL `https://smee.io/your-channel` in your browser. You can see the webhook events being triggered by Github, and `Re-Deliver` any of the payloads to your localhost app!
+**Tip**: Open your Smee URL `https://smee.io/your-channel` in your browser to see webhook events from GitHub and re-deliver payloads to your localhost app!
 
 ### 4. Run the app
 In another terminal, start the app:
