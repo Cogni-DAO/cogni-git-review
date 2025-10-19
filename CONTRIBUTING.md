@@ -75,8 +75,8 @@ sh -lc 'printf "PRIVATE_KEY=%s\n" "$(base64 < </path/to/key.pem> | tr -d "\n")"'
 
 Using a github preview deployment? do this:
 ```bash
-# Note: the quotes are essential for .do appspec parsing via github actions
-echo "\"$(base64 -i /path/to/key.pem)\"" | gh secret set PRIVATE_KEY --env Preview
+# Store pure base64 content (no quotes) - matches gateway.js:92 expectations
+base64 -i /path/to/key.pem | gh secret set PRIVATE_KEY --env Preview
 ```
 
 ### 3. Smee Webhook Proxy (Automatic)
