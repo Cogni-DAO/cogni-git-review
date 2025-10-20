@@ -191,11 +191,16 @@ export function createGitLabContext(transformedPayload) {
             else if (conclusion === 'neutral') state = 'skipped';  // TODO: value off err-on-neutral flag
             else state = 'pending';
 
-            const result = await gitlab.Commits.editStatus(projectId, head_sha, {
-              state,
+            // Construct proper target_url pointing to the MR
+            const baseUrl = environment.GITLAB_BASE_URL || 'https://gitlab.com';
+            const mrNumber = transformedPayload.pull_request?.number;
+            
+            const result = await gitlab.Commits.editStatus(projectId, head_sha, state, {
               name,
-              description: output?.summary || `${name} check`,
-              target_url: output?.title ? `#${name}` : undefined
+              target_url: mrNumber
+                ? `${baseUrl}/${transformedPayload.repository.full_name}/-/merge_requests/${mrNumber}`
+                : undefined,
+              description: output?.summary?.slice(0, 255)
             });
 
             return {
@@ -215,9 +220,7 @@ export function createGitLabContext(transformedPayload) {
         createComment: async ({ issue_number, body }) => {
           try {
             // For merge requests, use merge request notes
-            const note = await gitlab.MergeRequestNotes.create(projectId, issue_number, {
-              body
-            });
+            const note = await gitlab.MergeRequestNotes.create(projectId, issue_number, body);
             return {
               data: {
                 id: note.id,
