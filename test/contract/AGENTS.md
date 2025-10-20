@@ -118,6 +118,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 
 - `webhook-handlers.test.js` - Basic webhook → check flows
 - `cogni-evaluated-gates-behavior.test.js` - Gate execution behavior
+- `gitlab-integration.test.js` - GitLab webhook integration (4 tests)
 - `hardened-launcher.test.js` - Error handling scenarios
 - `spec-aware-webhook.test.js` - Spec loading scenarios
 - `spec-gate-consistency.test.js` - Gate counting validation

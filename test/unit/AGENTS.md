@@ -8,6 +8,7 @@ Tests for individual functions and components in isolation, without external dep
 - **Gate logic**: Individual gate behavior and error handling  
 - **Model selection**: Environment-based AI model configuration
 - **Utility functions**: Helper functions and shared logic
+- **Provider adapters**: GitLab and GitHub payload transformation and interface compliance
 
 ## Testing Principles
 - Test one component at a time
@@ -27,6 +28,9 @@ Tests can access `process.env` directly (ESLint exempted) and may mock environme
 - `config-extraction-debug.test.js` - Configuration extraction debugging
 - `eval-criteria.test.js` - Success criteria evaluation logic tests for multi-metric evaluation
 - `forbidden-scopes-stub.test.js` - Forbidden scopes gate stub tests
+- `gitlab-payload-transform.test.js` - GitLab payload transformation (7 tests)
+- `gitlab-router.test.js` - GitLab router core logic (2 tests)
+- `gitlab-vcs-interface.test.js` - GitLab VCS interface (6 tests)
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP with shared mock utilities
 - `make-llm-client.test.js` - LLM client factory whitelist behavior tests
@@ -42,7 +46,8 @@ Tests can access `process.env` directly (ESLint exempted) and may mock environme
 - `workflow-registry.test.js` - AI workflow registry functionality tests for unified goal-evaluations workflow
 
 ## Host Abstraction Interface Tests
-New tests validate the host abstraction layer:
+Tests validate the host abstraction layer:
 - **Interface compatibility**: Probot context implements BaseContext interface
 - **Adapter functionality**: github.js correctly wraps Probot into CogniBaseApp interface  
 - **Real-world validation**: Gate orchestrator works with actual GitHub webhook payloads
+- **GitLab adapter validation**: GitLab context implements BaseContext interface with proper VCS method signatures
