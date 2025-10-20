@@ -17,7 +17,7 @@ function createGitLabClient() {
   
   return new Gitlab({
     token: environment.GITLAB_PAT,
-    host: 'https://gitlab.com'
+    host: environment.GITLAB_BASE_URL || 'https://gitlab.com'
   });
 }
 
