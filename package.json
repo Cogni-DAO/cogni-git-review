@@ -29,6 +29,7 @@
     "lint:workflows": "actionlint && actionlint cogni-rails-templates-v0.1/.github/workflows/*.yaml"
   },
   "dependencies": {
+    "@gitbeaker/rest": "^43.5.0",
     "@langchain/langgraph": "^0.4.6",
     "@langchain/openai": "^0.6.9",
     "ajv": "^8.17.1",

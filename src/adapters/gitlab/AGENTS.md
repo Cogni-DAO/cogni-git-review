@@ -47,17 +47,27 @@ The `payload-transform.js` module maps GitLab webhook fields to GitHub-compatibl
 
 ### Not Yet Implemented  
 - GitLab API authentication and client initialization
-- VCS interface methods:
-  - `vcs.config.get` - Read `.cogni/repo-spec.yaml` via GitLab API
-  - `vcs.pulls.get` - Fetch MR details
-  - `vcs.repos.compareCommits` - Get diff statistics
-  - `vcs.checks.create` - Create GitLab commit status
-  - `vcs.issues.createComment` - Post MR comment
+- VCS interface methods requiring GitLab API implementation:
+  - `vcs.config.get` - Read `.cogni/repo-spec.yaml` via `/projects/:id/repository/files/:path?ref=...`
+  - `vcs.pulls.get` - Fetch MR metadata via `/projects/:id/merge_requests/:iid` (return changed_files, base/head refs only)
+  - `vcs.pulls.listFiles` - Get changed files via `/projects/:id/merge_requests/:iid/changes` (map GitLab status flags, null additions/deletions)
+  - `vcs.repos.compareCommits` - Get diff via `/projects/:id/repository/compare` (returns diffs, not per-file stats)
+  - `vcs.repos.getContent` - Read file content via `/projects/:id/repository/files/:path?ref=...` (base64 content, null on 404)
+  - `vcs.checks.create` - Create GitLab commit status via `POST /projects/:id/statuses/:sha` ({state, name, target_url, description, ref})
+  - `vcs.issues.createComment` - Post MR comment via GitLab API
+
+### GitLab API Implementation Requirements
+**Authentication**: `Authorization: Bearer <token>` or `PRIVATE-TOKEN` header for PATs
+**Base URL**: Support `GITLAB_BASE_URL` for self-hosted GitLab instances (default: https://gitlab.com)
+**Project Resolution**: Map `{owner, repo}` to GitLab project ID via `/projects/:path_with_namespace` (cache results)
+**Status Mapping**: Map GitHub check conclusions to GitLab commit states (success|failed|pending)
 
 ## Environment Configuration
 The following GitLab-specific variables are validated in `src/env.js`:
-- `WEBHOOK_SECRET_GITLAB` - Required for webhook authentication (renamed from GITLAB_WEBHOOK_TOKEN)
-- `WEBHOOK_PROXY_URL_GITLAB` - Optional smee proxy URL for local development
+- `WEBHOOK_SECRET_GITLAB` - Required for webhook authentication (X-Gitlab-Token equality check, not HMAC)
+- `WEBHOOK_PROXY_URL_GITLAB` - Optional smee proxy URL for local development  
+- `GITLAB_BASE_URL` - GitLab instance URL (default: https://gitlab.com, supports self-hosted)
+- `GITLAB_ACCESS_TOKEN` - GitLab API access token (Bearer auth or PRIVATE-TOKEN header)
 - `GITLAB_OAUTH_APPLICATION_ID` - Optional, for future OAuth support
 - `GITLAB_OAUTH_APPLICATION_SECRET` - Optional, for future OAuth support
 
