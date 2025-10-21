@@ -50,6 +50,36 @@ function transformFileContent(gitlabResponse) {
 }
 
 /**
+ * Map GitLab file change to GitHub-compatible format
+ * @param {object} change - GitLab change object
+ * @returns {object} GitHub-compatible file change
+ */
+function mapFileChange(change) {
+  return {
+    filename: change.new_path || change.old_path,
+    status: change.new_file ? 'added' : (change.deleted_file ? 'removed' : 'modified'),
+    additions: 0, // Not available in GitLab diff format
+    deletions: 0, // Not available in GitLab diff format
+    changes: 0,
+    patch: change.diff
+  };
+}
+
+/**
+ * Get changed files for merge request (shared implementation)
+ * @param {object} gitlab - GitLab API client
+ * @param {string|number} projectId - Project ID
+ * @param {number} pullNumber - Pull/MR number
+ * @returns {Promise<object>} GitHub-compatible response
+ */
+async function getMergeRequestFiles(gitlab, projectId, pullNumber) {
+  const changes = await gitlab.MergeRequests.allDiffs(projectId, pullNumber);
+  return {
+    data: changes.map(mapFileChange)
+  };
+}
+
+/**
  * Create GitLab context implementing BaseContext interface
  * @param {object} transformedPayload - GitHub-like payload
  * @returns {import('../base-context.d.ts').BaseContext} GitLab context
@@ -114,17 +144,7 @@ export function createGitLabContext(transformedPayload) {
         },
         listFiles: async ({ _owner, _repo, pull_number }) => {
           try {
-            const changes = await gitlab.MergeRequests.allDiffs(projectId, pull_number);
-            return {
-              data: changes.map(change => ({
-                filename: change.new_path || change.old_path,
-                status: change.new_file ? 'added' : (change.deleted_file ? 'removed' : 'modified'),
-                additions: 0, // Not available in GitLab diff format
-                deletions: 0, // Not available in GitLab diff format
-                changes: 0,
-                patch: change.diff
-              }))
-            };
+            return await getMergeRequestFiles(gitlab, projectId, pull_number);
           } catch (error) {
             throw new Error(`Failed to list merge request files: ${error.message}`);
           }
@@ -136,14 +156,7 @@ export function createGitLabContext(transformedPayload) {
             const comparison = await gitlab.Repositories.compare(projectId, base, head);
             return {
               data: {
-                files: comparison.diffs?.map(diff => ({
-                  filename: diff.new_path || diff.old_path,
-                  status: diff.new_file ? 'added' : (diff.deleted_file ? 'removed' : 'modified'),
-                  additions: 0, // Not available
-                  deletions: 0, // Not available
-                  changes: 0,
-                  patch: diff.diff
-                })) || []
+                files: comparison.diffs?.map(mapFileChange) || []
               }
             };
           } catch (error) {
@@ -238,19 +251,8 @@ export function createGitLabContext(transformedPayload) {
       rest: {
         pulls: {
           listFiles: async ({ _owner, _repo, pull_number }) => {
-            // Same implementation as vcs.pulls.listFiles
             try {
-              const changes = await gitlab.MergeRequests.allDiffs(projectId, pull_number);
-              return {
-                data: changes.map(change => ({
-                  filename: change.new_path || change.old_path,
-                  status: change.new_file ? 'added' : (change.deleted_file ? 'removed' : 'modified'),
-                  additions: 0, // Not available in GitLab diff format
-                  deletions: 0, // Not available in GitLab diff format
-                  changes: 0,
-                  patch: change.diff
-                }))
-              };
+              return await getMergeRequestFiles(gitlab, projectId, pull_number);
             } catch (error) {
               throw new Error(`Failed to list merge request files: ${error.message}`);
             }
