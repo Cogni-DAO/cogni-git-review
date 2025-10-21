@@ -57,15 +57,15 @@ test.describe('GitLab E2E: MR Review Process', () => {
         GITLAB_TOKEN: testConfig.E2E_GITLAB_PAT 
       };
 
-      // Clone GitLab repo and create test change
-      sh(`glab repo clone ${testConfig.E2E_GITLAB_REPO} ${tempDir}`, { env: envWithToken });
+      // Clone GitLab repo and create test change (direct git clone with OAuth2 token)
+      sh(`git clone "https://oauth2:${testConfig.E2E_GITLAB_PAT}@gitlab.com/${testConfig.E2E_GITLAB_REPO}.git" "${tempDir}"`);
       sh(`git -C ${tempDir} switch -c ${branch}`);
 
       const testContent = `GitLab E2E test change ${new Date().toISOString()}`;
       sh(`echo '${testContent}' > ${tempDir}/.gitlab-e2e-test.txt`);
       sh(`git -C ${tempDir} add .gitlab-e2e-test.txt`);
       sh(`git -C ${tempDir} -c user.name='cogni-gitlab-e2e-bot' -c user.email='e2e@cogni.gitlab.test' commit -m 'e2e(gitlab): test MR for cogni review'`);
-      sh(`git -C ${tempDir} push origin ${branch}`);
+      sh(`git -C ${tempDir} push "https://oauth2:${testConfig.E2E_GITLAB_PAT}@gitlab.com/${testConfig.E2E_GITLAB_REPO}.git" ${branch}`);
 
       // Get commit SHA before creating MR
       commitSha = sh(`git -C ${tempDir} rev-parse HEAD`);
@@ -148,10 +148,9 @@ test.describe('GitLab E2E: MR Review Process', () => {
           // Close the MR (don't merge in e2e tests)
           sh(`glab mr close ${mrNumber} --repo ${testConfig.E2E_GITLAB_REPO}`, { env: envWithToken });
           
-          // Delete the test branch
-          sh(`git push origin --delete ${branch}`, {
-            cwd: tempDir,
-            env: envWithToken
+          // Delete the test branch (direct git push with OAuth2 token)
+          sh(`git push "https://oauth2:${testConfig.E2E_GITLAB_PAT}@gitlab.com/${testConfig.E2E_GITLAB_REPO}.git" --delete ${branch}`, {
+            cwd: tempDir
           });
           
           console.log(`✅ Cleaned up MR !${mrNumber} and branch ${branch}`);

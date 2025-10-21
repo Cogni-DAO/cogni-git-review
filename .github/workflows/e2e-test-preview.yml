@@ -41,6 +41,16 @@ jobs:
       - run: brew install glab
       - run: glab --version
       
+      # Configure glab authentication (no SSH)
+      - name: Configure glab authentication (no SSH)
+        run: |
+          echo "${E2E_GITLAB_PAT}" | glab auth login --hostname gitlab.com --stdin
+          glab config set -h gitlab.com git_protocol https
+          glab config set -h gitlab.com api_protocol https
+          printf "machine gitlab.com login oauth2 password %s\n" "${E2E_GITLAB_PAT}" > ~/.netrc
+          chmod 600 ~/.netrc
+          git config --global credential.helper ""
+      
       - run: npm ci --ignore-scripts
       - name: Configure git creds from PAT
         run: |
