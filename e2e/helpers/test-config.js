@@ -21,7 +21,7 @@ function validateEnvironment(requiredVars) {
 export const testConfig = {
   // GitHub E2E Configuration
   GITHUB_TOKEN: process.env.E2E_GITHUB_PAT,
-  GITHUB_TEST_REPO: process.env.E2E_GITHUB_REPO || 'Cogni-DAO/test-repo',
+  E2E_GITHUB_REPO: process.env.E2E_GITHUB_REPO || 'Cogni-DAO/test-repo',
   
   // GitLab E2E Configuration
   E2E_GITLAB_PAT: process.env.E2E_GITLAB_PAT,
