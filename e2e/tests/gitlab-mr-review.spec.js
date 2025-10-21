@@ -36,8 +36,8 @@ test.describe('GitLab E2E: MR Review Process', () => {
     console.log('✅ glab CLI available');
 
     console.log(`✅ GitLab E2E Setup Complete`);
-    console.log(`- Test Repo: ${testConfig.GITLAB_TEST_REPO}`);
-    console.log(`- App URL: ${testConfig.GITLAB_E2E_APP_DEPLOYMENT_URL}`);
+    console.log(`- Test Repo: ${testConfig.E2E_GITLAB_REPO}`);
+    console.log(`- App URL: ${testConfig.E2E_GITLAB_DEPLOYMENT_URL}`);
     console.log(`- Expected Check: ${testConfig.EXPECTED_CHECK_NAME}`);
   });
 
@@ -54,11 +54,11 @@ test.describe('GitLab E2E: MR Review Process', () => {
 
       const envWithToken = { 
         ...process.env, 
-        GITLAB_TOKEN: testConfig.GITLAB_TOKEN 
+        GITLAB_TOKEN: testConfig.E2E_GITLAB_PAT 
       };
 
       // Clone GitLab repo and create test change
-      sh(`glab repo clone ${testConfig.GITLAB_TEST_REPO} ${tempDir}`, { env: envWithToken });
+      sh(`glab repo clone ${testConfig.E2E_GITLAB_REPO} ${tempDir}`, { env: envWithToken });
       sh(`git -C ${tempDir} switch -c ${branch}`);
 
       const testContent = `GitLab E2E test change ${new Date().toISOString()}`;
@@ -89,10 +89,10 @@ test.describe('GitLab E2E: MR Review Process', () => {
       let statusConclusion = null;
       const startTime = Date.now();
 
-      while (!commitStatusFound && (Date.now() - startTime) < testConfig.GITLAB_WEBHOOK_TIMEOUT_MS) {
+      while (!commitStatusFound && (Date.now() - startTime) < testConfig.E2E_GITLAB_WEBHOOK_TIMEOUT_MS) {
         
         // Poll GitLab commit status API (equivalent to GitHub check-runs)
-        const statusJson = sh(`glab api projects/${encodeURIComponent(testConfig.GITLAB_TEST_REPO)}/repository/commits/${commitSha}/statuses`, { env: envWithToken });
+        const statusJson = sh(`glab api projects/${encodeURIComponent(testConfig.E2E_GITLAB_REPO)}/repository/commits/${commitSha}/statuses`, { env: envWithToken });
         const statuses = JSON.parse(statusJson);
 
         // Look for Cogni status (matching the check name from constants)
@@ -113,20 +113,20 @@ test.describe('GitLab E2E: MR Review Process', () => {
           console.log(`Waiting for Cogni status "${testConfig.EXPECTED_CHECK_NAME}" on commit ${commitSha}...`);
         }
 
-        await sleep(testConfig.GITLAB_POLL_INTERVAL_MS);
+        await sleep(testConfig.E2E_GITLAB_POLL_INTERVAL_MS);
       }
 
       // === PHASE 3: Validation ===
       if (!commitStatusFound) {
         // Debug information
         try {
-          const healthCheck = sh(`curl -s ${testConfig.GITLAB_E2E_APP_DEPLOYMENT_URL}/api/v1/health`);
+          const healthCheck = sh(`curl -s ${testConfig.E2E_GITLAB_DEPLOYMENT_URL}/api/v1/health`);
           console.log('App health check:', healthCheck);
         } catch (e) {
           console.log('Could not fetch app health check:', e.message);
         }
 
-        throw new Error(`TIMEOUT: GitLab commit status not found within ${testConfig.GITLAB_WEBHOOK_TIMEOUT_MS / 1000}s`);
+        throw new Error(`TIMEOUT: GitLab commit status not found within ${testConfig.E2E_GITLAB_WEBHOOK_TIMEOUT_MS / 1000}s`);
       }
 
       // Verify status was created (success or failure both indicate processing worked)
@@ -137,16 +137,16 @@ test.describe('GitLab E2E: MR Review Process', () => {
 
     } finally {
       // === CLEANUP ===
-      if (mrNumber && testConfig.GITLAB_TOKEN) {
+      if (mrNumber && testConfig.E2E_GITLAB_PAT) {
         try {
           console.log('🧹 Cleaning up GitLab test resources...');
           const envWithToken = { 
             ...process.env, 
-            GITLAB_TOKEN: testConfig.GITLAB_TOKEN 
+            GITLAB_TOKEN: testConfig.E2E_GITLAB_PAT 
           };
 
           // Close the MR (don't merge in e2e tests)
-          sh(`glab mr close ${mrNumber} --repo ${testConfig.GITLAB_TEST_REPO}`, { env: envWithToken });
+          sh(`glab mr close ${mrNumber} --repo ${testConfig.E2E_GITLAB_REPO}`, { env: envWithToken });
           
           // Delete the test branch
           sh(`git push origin --delete ${branch}`, {

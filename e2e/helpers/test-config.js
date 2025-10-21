@@ -24,9 +24,9 @@ export const testConfig = {
   GITHUB_TEST_REPO: process.env.E2E_GITHUB_REPO || 'Cogni-DAO/test-repo',
   
   // GitLab E2E Configuration
-  GITLAB_TOKEN: process.env.E2E_GITLAB_PAT,
-  GITLAB_TEST_REPO: process.env.E2E_GITLAB_REPO,
-  GITLAB_DEPLOYMENT_URL: process.env.E2E_GITLAB_DEPLOYMENT_URL,
+  E2E_GITLAB_PAT: process.env.E2E_GITLAB_PAT,
+  E2E_GITLAB_REPO: process.env.E2E_GITLAB_REPO,
+  E2E_GITLAB_DEPLOYMENT_URL: process.env.E2E_GITLAB_DEPLOYMENT_URL,
   
   // Expected check name from constants
   EXPECTED_CHECK_NAME: PR_REVIEW_NAME,
@@ -34,8 +34,8 @@ export const testConfig = {
   // Timeouts with defaults
   GITHUB_WEBHOOK_TIMEOUT_MS: parseInt(process.env.TIMEOUT_SEC || '480', 10) * 1000,
   GITHUB_POLL_INTERVAL_MS: parseInt(process.env.SLEEP_MS || '5000', 10),
-  GITLAB_WEBHOOK_TIMEOUT_MS: parseInt(process.env.E2E_GITLAB_WEBHOOK_TIMEOUT_MS || '120000'),
-  GITLAB_POLL_INTERVAL_MS: parseInt(process.env.E2E_GITLAB_POLL_INTERVAL_MS || '5000'),
+  E2E_GITLAB_WEBHOOK_TIMEOUT_MS: parseInt(process.env.E2E_GITLAB_WEBHOOK_TIMEOUT_MS || '120000'),
+  E2E_GITLAB_POLL_INTERVAL_MS: parseInt(process.env.E2E_GITLAB_POLL_INTERVAL_MS || '5000'),
   
   // Validate GitLab environment variables only
   validate() {

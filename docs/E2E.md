@@ -47,8 +47,8 @@ gh workflow run "E2E Test (Preview)" --ref main
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `TEST_REPO_GITHUB_PAT` | ✅ | - | GitHub token for API access |
-| `TEST_REPO` | - | `Cogni-DAO/test-repo` | Target repository |
+| `E2E_GITHUB_PAT` | ✅ | - | GitHub token for API access |
+| `E2E_GITHUB_REPO` | - | `Cogni-DAO/test-repo` | Target repository |
 | `APP_ENV` | - | `dev` | Environment name (determines check name) |
 | `TIMEOUT_SEC` | - | `480` | Maximum wait time (seconds) |
 | `SLEEP_MS` | - | `5000` | Poll interval (milliseconds) |
@@ -57,11 +57,11 @@ gh workflow run "E2E Test (Preview)" --ref main
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `GITLAB_E2E_TEST_REPO_PAT` | ✅ | - | GitLab PAT for API access (starts with `glpat-`) |
-| `GITLAB_E2E_TEST_REPO` | ✅ | - | Target GitLab repository (e.g., `username/repo`) |
-| `GITLAB_E2E_APP_DEPLOYMENT_URL` | ✅ | - | App URL to test against |
-| `GITLAB_E2E_WEBHOOK_TIMEOUT_MS` | - | `120000` | Webhook processing timeout |
-| `GITLAB_E2E_POLL_INTERVAL_MS` | - | `5000` | Status polling interval |
+| `E2E_GITLAB_PAT` | ✅ | - | GitLab PAT for API access (starts with `glpat-`) |
+| `E2E_GITLAB_REPO` | ✅ | - | Target GitLab repository (e.g., `username/repo`) |
+| `E2E_GITLAB_DEPLOYMENT_URL` | ✅ | - | App URL to test against |
+| `E2E_GITLAB_WEBHOOK_TIMEOUT_MS` | - | `120000` | Webhook processing timeout |
+| `E2E_GITLAB_POLL_INTERVAL_MS` | - | `5000` | Status polling interval |
 
 **Check Names by Environment:**
 - `dev` → `"Cogni Git PR Review (dev)"`  
@@ -71,13 +71,13 @@ gh workflow run "E2E Test (Preview)" --ref main
 ## Authentication Setup
 
 **Local Development:**
-- E2E runner uses `TEST_REPO_GITHUB_PAT` for GitHub API operations (`gh` commands)
+- E2E runner uses `E2E_GITHUB_PAT` for GitHub API operations (`gh` commands)
 - Git push operations work using your existing personal git credentials
-- Both authentication methods must have write access to `TEST_REPO`
+- Both authentication methods must have write access to `E2E_GITHUB_REPO`
 
 **GitHub Actions (CI):**
 - Workflow configures git authentication using `gh auth setup-git` before E2E tests
-- Uses the same `TEST_REPO_GITHUB_PAT` for both API operations and git push
+- Uses the same `E2E_GITHUB_PAT` for both API operations and git push
 - Git user configured as `cogni-bot` for commit operations
 
 ## Test Architecture
