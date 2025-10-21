@@ -113,7 +113,7 @@ async function startGateway() {
     res.send('OAuth - not implemented yet');
   });
   
-  // Health check
+  // Health check: TODO. move to /health. and make it actually intelligent healthcheck.
   app.get('/api/v1/health', (req, res) => {
     res.json({ 
       status: 'ok',
