@@ -35,11 +35,17 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+      
+      # Install GitLab CLI (glab) for E2E testing
+      - uses: Homebrew/actions/setup-homebrew@master
+      - run: brew install glab
+      - run: glab --version
+      
       - run: npm ci --ignore-scripts
       - name: Configure git creds from PAT
         run: |
           unset GH_TOKEN                                  
-          printf '%s' "$TEST_REPO_GITHUB_PAT" | gh auth login --with-token --hostname github.com
+          printf '%s' "$E2E_GITHUB_PAT" | gh auth login --with-token --hostname github.com
           gh auth setup-git
           git config --global user.name  "cogni-bot"
           git config --global user.email "actions@users.noreply.github.com"
