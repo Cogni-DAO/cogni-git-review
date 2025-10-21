@@ -32,13 +32,8 @@ test.describe('GitLab E2E: MR Review Process', () => {
     testConfig.validate();
 
     // Check glab CLI is available
-    try {
-      sh('glab --version');
-      console.log('✅ glab CLI available');
-    } catch (error) {
-      console.error('❌ glab CLI not found. Install with: brew install glab');
-      throw new Error('glab CLI not found. Install with: brew install glab');
-    }
+    sh('glab --version');
+    console.log('✅ glab CLI available');
 
     console.log(`✅ GitLab E2E Setup Complete`);
     console.log(`- Test Repo: ${testConfig.GITLAB_TEST_REPO}`);
@@ -128,7 +123,7 @@ test.describe('GitLab E2E: MR Review Process', () => {
           const healthCheck = sh(`curl -s ${testConfig.GITLAB_E2E_APP_DEPLOYMENT_URL}/api/v1/health`);
           console.log('App health check:', healthCheck);
         } catch (e) {
-          console.log('Could not fetch app health check');
+          console.log('Could not fetch app health check:', e.message);
         }
 
         throw new Error(`TIMEOUT: GitLab commit status not found within ${testConfig.GITLAB_WEBHOOK_TIMEOUT_MS / 1000}s`);
