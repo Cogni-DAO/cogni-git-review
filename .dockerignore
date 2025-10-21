@@ -1,12 +1,10 @@
-**/node_modules/
-**/.git
-**/README.md
-**/LICENSE
-**/.vscode
-**/npm-debug.log
-**/coverage
-**/.env
-**/.editorconfig
-**/dist
-**/*.pem
-Dockerfile
+# Ignore everything
+*
+
+# Include only production essentials
+!package.json
+!package-lock.json
+!src/
+!index.js
+!Dockerfile
+!.dockerignore

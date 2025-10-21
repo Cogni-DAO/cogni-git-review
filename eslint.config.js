@@ -58,7 +58,7 @@ export default [
   
   // Allow process.env only in env.js and E2E infrastructure
   {
-    files: ['src/env.js', 'lib/e2e-runner.js', 'bin/e2e-runner.js', 'e2e/**/*.js', 'playwright.config.js'],
+    files: ['src/env.js', 'e2e/**/*.js', 'playwright.config.js'],
     rules: { 'n/no-process-env': 'off' }
   }
 ];
