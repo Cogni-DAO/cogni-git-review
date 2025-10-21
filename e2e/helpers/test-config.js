@@ -34,8 +34,8 @@ export const testConfig = {
   validate() {
     validateEnvironment([
       'GITLAB_E2E_TEST_REPO_PAT',
-      'GITLAB_E2E_TEST_REPO', 
-      'GITLAB_E2E_APP_DEPLOYMENT_URL'
+      'GITLAB_E2E_TEST_REPO'
+      // GITLAB_E2E_APP_DEPLOYMENT_URL is optional (has default in playwright.config.js)
     ]);
   }
 };
