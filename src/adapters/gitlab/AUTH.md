@@ -380,11 +380,47 @@ GITLAB_OAUTH_APPLICATION_SECRET=your_gitlab_oauth_client_secret
 WEBHOOK_SECRET_GITLAB=shared_webhook_secret
 ```
 
-**V1 Implementation Scope**:
-- Single OAuth app for gitlab.com
-- Basic connection storage in database
-- Standard OAuth + webhook flow
-- Manual environment configuration
+**MVP Implementation Specification**:
+
+**Routes**: 
+- `GET /oauth/gitlab/start` - Initiate OAuth flow
+- `GET /oauth/gitlab/callback` - Handle OAuth callback
+
+**Libraries**: `openid-client`, `zod`, `jose`
+**API Client**: Prefer `fetch()` for MVP. GitBeaker optional for later enhancement.
+
+**Environment Variables**:
+```bash
+BASE_URL=https://cogni.app
+GITLAB_BASE_URL=https://gitlab.com
+GITLAB_OAUTH_CLIENT_ID=your_oauth_app_id  
+GITLAB_OAUTH_CLIENT_SECRET=your_oauth_app_secret
+ENCRYPTION_KEY=base64_encoded_32_byte_key
+```
+
+**Storage**: SQLite file `data/cogni.db`
+
+**OAuth Flow**:
+1. **Start**: Generate state+nonce+PKCE → redirect to GitLab authorize
+2. **Callback**: Verify state → exchange code → store encrypted tokens → link provider_user_id → redirect `/connected`
+3. **Usage**: Attach Bearer token; if expiring (<60s), refresh once then retry
+
+**Security Features**:
+- Cookies: `Secure+HttpOnly+SameSite=Lax`
+- Tokens at rest: AES-256-GCM with `ENCRYPTION_KEY`
+- Webhook tokens: Store HMAC digest only
+- Logging: Mask secrets, include request correlation ID
+
+**Acceptance Criteria**:
+- ✅ OAuth flow completes and persists tokens
+- ✅ Token refresh works and recovers from single 401
+- ✅ One MR API call succeeds using stored OAuth token
+
+**MVP Deferrals**:
+- Project selector UI (use all accessible projects)
+- Webhook auto-provisioning (manual setup)
+- Multi-provider support (GitLab only)
+- Admin UI and key rotation workflows
 
 ## V2: Production Multi-Provider System
 
@@ -422,26 +458,31 @@ interface Install {
 
 #### 2. Provider Abstraction Layer
 
-Unified interface abstracting GitHub/GitLab differences:
-
+**OAuth Provider Interface**:
 ```typescript
-// Host Interface - Provider Agnostic
-interface Host {
-  commentOnMR(projectId: string, mrIid: number, body: string): Promise<void>
-  setCommitStatus(projectId: string, sha: string, state: string, targetUrl?: string, description?: string): Promise<void>
-  listProjects(oauthCtx: any): Promise<Project[]>
-  createWebhook(projectId: string, url: string, secret: string): Promise<string>
-}
-
-// Provider Implementations
-class GitHubProvider implements Host {
-  // Uses JWT → Installation Token flow
-}
-
-class GitLabProvider implements Host {
-  // Uses OAuth token directly
+interface OAuthProvider {
+  authorizeUrl(ctx: OAuthContext): string
+  exchangeCode(ctx: OAuthContext): Promise<TokenSet>  
+  refresh(tokenSet: TokenSet): Promise<TokenSet>
+  userinfo(tokenSet: TokenSet): Promise<UserInfo>
 }
 ```
+
+**VCS Provider Interface**:
+```typescript  
+interface VCSProvider {
+  getRepo(connection: Connection, id: string): Promise<Repository>
+  getMR(connection: Connection, id: string): Promise<MergeRequest>
+  listFiles(connection: Connection, mrId: string): Promise<FileChange[]>
+  getFile(connection: Connection, path: string, ref?: string): Promise<FileContent>
+  setStatus(connection: Connection, sha: string, status: CommitStatus): Promise<void>
+  comment(connection: Connection, mrId: string, body: string): Promise<void>
+}
+```
+
+**Universal Routes**:
+- `GET /oauth/:provider/start` → `provider-registry.get(provider).authorizeUrl()`
+- `GET /oauth/:provider/callback` → `provider-registry.get(provider).exchangeCode()`
 
 #### 3. Multi-Instance Support
 
