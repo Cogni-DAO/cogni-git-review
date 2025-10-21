@@ -1,15 +1,22 @@
-# E2E - Playwright E2E Testing (GitLab PoC)
+# E2E - Unified Playwright E2E Testing Framework
 
-**Minimal proof of concept** for GitLab E2E testing using Playwright framework.
+**Production E2E testing framework** for GitHub and GitLab webhook integration validation.
 
 ## Purpose
-- GitLab webhook integration testing
-- MR creation → Cogni processing → commit status validation
-- Alternative to legacy CLI-based E2E runner (`lib/e2e-runner.js`)
+- GitHub PR and GitLab MR webhook integration testing
+- PR/MR creation → Cogni processing → check/status validation
+- Unified test runner replacing legacy CLI-based implementation
 
 ## Key Files
-- `tests/` - Playwright test specifications
-- `helpers/` - Test configuration and utilities  
-- `artifacts/` - Test reports and results (gitignored)
+- `tests/` - GitHub and GitLab E2E test specifications
+- `helpers/` - Shared test configuration and utilities  
+- `artifacts/` - Test reports, videos, and traces (gitignored)
 
-**Note**: Not used in CI/CD. Future work will migrate to Playwright-only testing.
+## Test Configuration
+- **Config File**: `playwright.config.js` at repository root
+- **Projects**: Separate configurations for `github-e2e` and `gitlab-e2e`
+- **Reporters**: HTML reports, JSON results, console output
+- **Artifacts**: Collected on failure (videos, traces) for debugging
+
+## CI/CD Integration
+Used in GitHub Actions workflows for preview and production E2E validation. Artifacts automatically uploaded for debugging failed tests.
