@@ -47,6 +47,14 @@ export default defineConfig({
   /* Configure projects for different test types */
   projects: [
     {
+      name: 'github-e2e',
+      testMatch: '**/github-*.spec.js',
+      timeout: 300000, // 5 minutes for GitHub webhook processing
+      use: {
+        // No browser needed for GitHub CLI tests
+      },
+    },
+    {
       name: 'gitlab-e2e',
       testMatch: '**/gitlab-*.spec.js',
       timeout: 300000, // 5 minutes for GitLab webhook processing
