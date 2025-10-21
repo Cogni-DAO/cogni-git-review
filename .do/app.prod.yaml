@@ -35,6 +35,10 @@ services:
     scope: RUN_TIME
     type: SECRET
     value: ${WEBHOOK_SECRET_GITLAB}
+  - key: GITLAB_PAT
+    scope: RUN_TIME
+    type: SECRET
+    value: ${GITLAB_PAT}
   - key: LOG_LEVEL
     scope: RUN_TIME
     value: info
