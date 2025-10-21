@@ -25,6 +25,7 @@ jobs:
          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
          WEBHOOK_SECRET_GITHUB: ${{ secrets.WEBHOOK_SECRET_GITHUB }}
          WEBHOOK_SECRET_GITLAB: ${{ secrets.WEBHOOK_SECRET_GITLAB }}
+         GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
          LANGFUSE_PUBLIC_KEY: ${{ vars.LANGFUSE_PUBLIC_KEY }}

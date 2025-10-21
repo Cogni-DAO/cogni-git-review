@@ -106,13 +106,12 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 │   ├── logging/               # Repo-wide logging setup with Loki integration (→ AGENTS.md)
 │   └── gates/                 # Gate evaluation system (→ AGENTS.md)
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md)
-├── bin/e2e-runner.js          # CLI for E2E testing (executable)
-├── lib/e2e-runner.js          # E2E testing implementation 
-├── e2e/                       # Playwright E2E testing (GitLab PoC)
-│   ├── tests/                 # Playwright test specifications 
-│   ├── helpers/               # Test configuration and utilities
-│   └── artifacts/             # Test reports and results (gitignored)
-├── playwright.config.js       # Playwright test configuration
+├── bin/                       # CLI executables directory 
+├── e2e/                       # Unified Playwright E2E testing framework
+│   ├── tests/                 # GitHub and GitLab E2E test specifications 
+│   ├── helpers/               # Shared test configuration and utilities
+│   └── artifacts/             # Test reports, videos, and traces (gitignored)
+├── playwright.config.js       # Unified Playwright E2E test configuration with E2E_GITLAB_DEPLOYMENT_URL baseURL
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── contract/              # End-to-end tests, using test harness without HTTP (→ AGENTS.md)
@@ -174,6 +173,24 @@ gates:
 - **Universal gate logging**: Every gate logs start and completion with status, duration, and diagnostic context
 - **Configurable neutral handling**: `fail_on_error` flag controls whether gate errors/timeouts block merges (failure) or allow them (neutral)
 
+## CI/CD Artifact Collection
+
+### GitHub Actions E2E Artifacts
+GitHub Actions workflows collect comprehensive E2E test artifacts for debugging:
+- **Artifact Name**: `e2e-artifacts`
+- **Contents**: Playwright reports, test results JSON, videos on failure, trace files
+- **Collection**: Automatic upload even on failure via `actions/upload-artifact@v4`
+- **Retention**: 7 days
+- **Environments**: Both preview and production E2E tests
+
+## Docker Build Optimization
+
+### Production Container Build
+Docker builds use allowlist-only approach in `.dockerignore`:
+- **Strategy**: Ignore everything (`*`), then explicitly include production essentials
+- **Included**: `package.json`, `package-lock.json`, `src/`, `index.js`, Dockerfile
+- **Benefits**: Minimal container size, no test/dev files in production image
+
 ## Environment Configuration
 
 ### Centralized Environment Management
@@ -209,8 +226,9 @@ Direct `process.env` access allowed only in:
 npm test                    # Run all tests (unit, contract, E2E unit tests)
 npm run lint               # ESLint for JavaScript code  
 npm run lint:workflows     # actionlint for GitHub Actions workflows
-npm run e2e                # End-to-end testing against live deployment (GitHub, legacy)
-npm run e2e:gitlab         # GitLab E2E testing via Playwright (PoC)
+npm run e2e                # Run all E2E tests via Playwright (GitHub + GitLab)
+npm run e2e:github         # Run GitHub E2E tests only
+npm run e2e:gitlab         # Run GitLab E2E tests only
 
 # Setup and running:
 npm install                # Install dependencies
@@ -223,6 +241,7 @@ npm install
 npm start  # Starts gateway with auto smee proxy (if WEBHOOK_PROXY_URL_GITHUB/GITLAB set)
 npm test   # Run tests
 npm run lint  # ESLint for JavaScript code
+npx playwright test        # Run E2E tests directly with Playwright CLI
 npm run lint:workflows  # actionlint for GitHub Actions workflows
 ```
 

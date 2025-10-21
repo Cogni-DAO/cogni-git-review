@@ -16,13 +16,11 @@
     "github",
     "probot-app"
   ],
-  "bin": {
-    "cogni-e2e": "bin/e2e-runner.js"
-  },
   "scripts": {
     "start": "node src/gateway.js",
     "test": "node --test",
-    "e2e": "node -r dotenv/config bin/e2e-runner.js",
+    "e2e": "npx playwright test",
+    "e2e:github": "npx playwright test --project=github-e2e",
     "e2e:gitlab": "npx playwright test --project=gitlab-e2e",
     "dev:capture": "tsx tools/dev/webhook-capture/capture-server.ts",
     "lint": "eslint . --ext .js,.yaml,.yml",

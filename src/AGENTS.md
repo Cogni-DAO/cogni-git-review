@@ -43,6 +43,7 @@ src/
   - Multi-provider proxy URLs: `WEBHOOK_PROXY_URL_GITHUB`, `WEBHOOK_PROXY_URL_GITLAB`
   - GitLab configuration: `GITLAB_BASE_URL` (supports self-hosted, defaults to gitlab.com), `GITLAB_PAT` (Personal Access Token for PoC)
   - GitLab OAuth variables: `GITLAB_OAUTH_APPLICATION_ID`, `GITLAB_OAUTH_APPLICATION_SECRET`
+  - E2E testing configuration: `E2E_GITHUB_REPO`, `E2E_GITHUB_PAT` for unified environment variable naming
 
 ### Input Layer
 - **spec-loader.js**: Repository `.cogni/*` file loading

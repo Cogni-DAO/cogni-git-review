@@ -124,8 +124,8 @@ Generate token, and use in the next step
 ### 2. Add E2E Environment Variables  
 Add these to your `.env` file:
 ```bash
-TEST_REPO=<your-username>/<your-test-repo>
-TEST_REPO_GITHUB_PAT=<your-personal-access-token>
+E2E_GITHUB_REPO=<your-username>/<your-test-repo>
+E2E_GITHUB_PAT=<your-personal-access-token>
 ```
 
 ### 3. Run E2E Test

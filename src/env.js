@@ -40,8 +40,8 @@ const ai = z.object({
 });
 
 const testing = z.object({
-  TEST_REPO: z.string().optional(),
-  TEST_REPO_GITHUB_PAT: z.string().optional(),
+  E2E_GITHUB_REPO: z.string().optional(),
+  E2E_GITHUB_PAT: z.string().optional(),
 });
 
 const github = z.object({
