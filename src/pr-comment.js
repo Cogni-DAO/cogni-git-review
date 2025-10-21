@@ -7,7 +7,7 @@
  * Post PR comment with gate results summary
  * @param {import('./adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @param {Object} runResult - Gate execution results
- * @param {string} checkUrl - URL to GitHub check details
+ * @param {string} checkUrl - URL to check details (GitHub check run or GitLab MR page)
  * @param {string} headSha - PR head SHA for staleness guard
  * @param {number} prNumber - PR number
  */
@@ -80,7 +80,7 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
  * Post PR comment with staleness guard
  * @param {import('./adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @param {Object} runResult - Gate execution results
- * @param {string} checkUrl - URL to GitHub check details
+ * @param {string} checkUrl - URL to check details (GitHub check run or GitLab MR page)
  * @param {string} headShaStart - Original PR head SHA
  * @param {number} prNumber - PR number
  * @param {Object} logger - Logger instance from caller

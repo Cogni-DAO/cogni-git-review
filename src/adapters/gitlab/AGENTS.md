@@ -74,12 +74,37 @@ The `payload-transform.js` module maps GitLab webhook fields to GitHub-compatibl
 - **Single Repository**: Only works with cogni-dao/test/test-repo (project ID: 75449860)
 - **No OAuth**: Missing production authentication flow
 - **No Multi-tenancy**: Cannot handle multiple GitLab instances/users
+- **External Status UX**: GitLab renders webhook-posted statuses as external jobs with no native logs or pipeline page
 
 ### GitLab API Implementation Requirements
 **Authentication**: `Authorization: Bearer <token>` or `PRIVATE-TOKEN` header for PATs
 **Base URL**: Support `GITLAB_BASE_URL` for self-hosted GitLab instances (default: https://gitlab.com)
 **Project Resolution**: Map `{owner, repo}` to GitLab project ID via `/projects/:path_with_namespace` (cache results)
 **Status Mapping**: Map GitHub check conclusions to GitLab commit states (success|failed|pending)
+
+## Design Patterns for GitLab Integration
+
+### Current: Webhook-Only Pattern
+- **Pros**: Fastest response, host-agnostic, immediate feedback
+- **Cons**: External status jobs have no native GitLab logs, limited UX
+- **target_url**: Points to MR page (no dedicated pipeline/job page available)
+
+### Recommended: Hybrid Pattern (Future)
+**Model**: SonarQube's GitLab integration approach
+1. **Keep webhook service** for immediate status posting 
+2. **Add minimal CI job** that calls Cogni API and prints summary
+3. **Result**: First-class GitLab UX with logs + fast webhook feedback
+
+**Benefits**:
+- Native GitLab job page with logs and artifacts
+- Preserves current webhook service architecture  
+- Users get familiar pipeline URL experience
+- Matches established pattern (SonarQube, security scanners)
+
+### Alternative: Pipeline-Only Pattern
+- **Pros**: Full GitLab-native UX with logs, artifacts, pipeline pages
+- **Cons**: Ties service to GitLab CI, slower than webhooks
+- **Use case**: GitLab-specific deployment scenarios
 
 ## Environment Configuration
 The following GitLab-specific variables are validated in `src/env.js`:

@@ -194,12 +194,13 @@ export function createGitLabContext(transformedPayload) {
             // Construct proper target_url pointing to the MR
             const baseUrl = environment.GITLAB_BASE_URL || 'https://gitlab.com';
             const mrNumber = transformedPayload.pull_request?.number;
+            const htmlUrl = mrNumber
+              ? `${baseUrl}/${transformedPayload.repository.full_name}/-/merge_requests/${mrNumber}`
+              : undefined;
             
             const result = await gitlab.Commits.editStatus(projectId, head_sha, state, {
               name,
-              target_url: mrNumber
-                ? `${baseUrl}/${transformedPayload.repository.full_name}/-/merge_requests/${mrNumber}`
-                : undefined,
+              target_url: htmlUrl,
               description: output?.summary?.slice(0, 255)
             });
 
@@ -207,7 +208,8 @@ export function createGitLabContext(transformedPayload) {
               data: {
                 id: result.id,
                 status: state,
-                conclusion: state === 'success' ? 'success' : (state === 'failed' ? 'failure' : null)
+                conclusion: state === 'success' ? 'success' : (state === 'failed' ? 'failure' : null),
+                html_url: htmlUrl  // Add html_url for comment links
               }
             };
           } catch (error) {
