@@ -3,8 +3,8 @@
 Test files for GitHub and GitLab E2E workflow validation.
 
 ## Current Tests
-- `github-pr-review.spec.js` - Complete GitHub PR → Cogni check workflow (ported from legacy)
-- `gitlab-mr-review.spec.js` - Complete GitLab MR → Cogni status workflow
+- `github-pr-review.spec.js` - Complete GitHub PR → Cogni check workflow using unified E2E_GITHUB_* environment variables
+- `gitlab-mr-review.spec.js` - Complete GitLab MR → Cogni status workflow using unified E2E_GITLAB_* environment variables
 
 ## Test Pattern
 1. Create test PR/MR in repository

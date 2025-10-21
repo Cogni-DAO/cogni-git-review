@@ -26,8 +26,8 @@ function sleep(ms) {
 // GitHub E2E Configuration
 const githubTestConfig = {
   // GitHub E2E Configuration (from environment)
-  GITHUB_TOKEN: process.env.TEST_REPO_GITHUB_PAT,
-  TEST_REPO: process.env.TEST_REPO || 'Cogni-DAO/test-repo',
+  GITHUB_TOKEN: process.env.E2E_GITHUB_PAT,
+  E2E_GITHUB_REPO: process.env.E2E_GITHUB_REPO || 'Cogni-DAO/test-repo',
   
   // Expected check name from constants
   EXPECTED_CHECK_NAME: PR_REVIEW_NAME,
@@ -39,7 +39,7 @@ const githubTestConfig = {
   // Validate environment on use
   validate() {
     if (!this.GITHUB_TOKEN) {
-      throw new Error('Missing required GitHub E2E environment variable: TEST_REPO_GITHUB_PAT');
+      throw new Error('Missing required GitHub E2E environment variable: E2E_GITHUB_PAT');
     }
   }
 };
@@ -55,7 +55,7 @@ test.describe('GitHub E2E: PR Review Process', () => {
     console.log('✅ gh CLI available');
 
     console.log(`✅ GitHub E2E Setup Complete`);
-    console.log(`- Test Repo: ${githubTestConfig.TEST_REPO}`);
+    console.log(`- Test Repo: ${githubTestConfig.E2E_GITHUB_REPO}`);
     console.log(`- Expected Check: ${githubTestConfig.EXPECTED_CHECK_NAME}`);
   });
 
@@ -76,7 +76,7 @@ test.describe('GitHub E2E: PR Review Process', () => {
       };
 
       // Clone GitHub repo and create test change
-      sh(`gh repo clone ${githubTestConfig.TEST_REPO} ${tempDir}`, { env: envWithToken });
+      sh(`gh repo clone ${githubTestConfig.E2E_GITHUB_REPO} ${tempDir}`, { env: envWithToken });
       sh(`git -C ${tempDir} switch -c ${branch}`);
 
       const testContent = `GitHub E2E test change ${new Date().toISOString()}`;
@@ -89,7 +89,7 @@ test.describe('GitHub E2E: PR Review Process', () => {
       commitSha = sh(`git -C ${tempDir} rev-parse HEAD`);
 
       // Create PR using gh
-      const prUrl = sh(`gh pr create -R ${githubTestConfig.TEST_REPO} --title "GitHub E2E Test PR ${timestamp}" --body "Auto-created for GitHub E2E testing - will be processed by cogni-git-review" --base main --head ${branch}`, { env: envWithToken });
+      const prUrl = sh(`gh pr create -R ${githubTestConfig.E2E_GITHUB_REPO} --title "GitHub E2E Test PR ${timestamp}" --body "Auto-created for GitHub E2E testing - will be processed by cogni-git-review" --base main --head ${branch}`, { env: envWithToken });
       
       // Extract PR number from URL
       prNumber = prUrl.split('/').pop();
@@ -107,7 +107,7 @@ test.describe('GitHub E2E: PR Review Process', () => {
       while (!checkFound && (Date.now() - startTime) < githubTestConfig.GITHUB_WEBHOOK_TIMEOUT_MS) {
         
         // Poll GitHub check-runs API
-        const checkRunsJson = sh(`gh api repos/${githubTestConfig.TEST_REPO}/commits/${commitSha}/check-runs -H 'Accept: application/vnd.github+json'`, { env: envWithToken });
+        const checkRunsJson = sh(`gh api repos/${githubTestConfig.E2E_GITHUB_REPO}/commits/${commitSha}/check-runs -H 'Accept: application/vnd.github+json'`, { env: envWithToken });
         const checkRuns = JSON.parse(checkRunsJson);
 
         // Look for Cogni check (matching the check name from constants)
@@ -153,7 +153,7 @@ test.describe('GitHub E2E: PR Review Process', () => {
           };
 
           // Close the PR and delete branch (gh pr close handles both)
-          sh(`gh pr close ${prNumber} -R ${githubTestConfig.TEST_REPO} --delete-branch`, { env: envWithToken });
+          sh(`gh pr close ${prNumber} -R ${githubTestConfig.E2E_GITHUB_REPO} --delete-branch`, { env: envWithToken });
           
           console.log(`✅ Cleaned up PR #${prNumber} and branch ${branch}`);
         } catch (cleanupErr) {

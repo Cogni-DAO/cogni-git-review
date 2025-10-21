@@ -111,7 +111,7 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 │   ├── tests/                 # GitHub and GitLab E2E test specifications 
 │   ├── helpers/               # Shared test configuration and utilities
 │   └── artifacts/             # Test reports, videos, and traces (gitignored)
-├── playwright.config.js       # Unified Playwright E2E test configuration
+├── playwright.config.js       # Unified Playwright E2E test configuration with E2E_GITLAB_DEPLOYMENT_URL baseURL
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── contract/              # End-to-end tests, using test harness without HTTP (→ AGENTS.md)

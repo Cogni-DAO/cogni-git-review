@@ -11,8 +11,8 @@
 ## GitHub Configuration
 
 **Environment:**
-- Variables: `TEST_REPO`, `APP_ID` 
-- Secrets: `TEST_REPO_GITHUB_PAT`, `PRIVATE_KEY`, `WEBHOOK_SECRET_GITHUB`, `OPENAI_API_KEY`
+- Variables: `E2E_GITHUB_REPO`, `APP_ID` 
+- Secrets: `E2E_GITHUB_PAT`, `PRIVATE_KEY`, `WEBHOOK_SECRET_GITHUB`, `OPENAI_API_KEY`
 
 **Repository:**
 - `DIGITAL_OCEAN_ACCESS_TOKEN`
