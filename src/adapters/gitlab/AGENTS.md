@@ -41,23 +41,77 @@ The `payload-transform.js` module maps GitLab webhook fields to GitHub-compatibl
 
 ## VCS Interface Status
 
-### Implemented
-- Basic context structure with `payload`, `repo()`, and `log`
-- Stub VCS methods returning appropriate errors
+### ✅ Fully Implemented and Working
+- ✅ Basic context structure with `payload`, `repo()`, and `log`
+- ✅ GitLab API authentication via GITLAB_PAT + @gitbeaker/rest client
+- ✅ **Complete VCS interface methods implemented and tested**:
+  - `vcs.config.get` - Reads and parses YAML from GitLab API using HEAD ref
+  - `vcs.pulls.get` - Fetches MR metadata via GitLab MergeRequests.show API
+  - `vcs.pulls.listFiles` - Gets changed files via MergeRequests.allDiffs API
+  - `vcs.repos.compareCommits` - Gets diff via Repositories.compare API  
+  - `vcs.repos.getContent` - Reads file content via RepositoryFiles.show API
+  - `vcs.repos.listPullRequestsAssociatedWithCommit` - Synthetic implementation
+  - `vcs.issues.createComment` - Creates MR notes via MergeRequestNotes.create API
+  - `vcs.rest.pulls.listFiles` - Duplicate implementation for compatibility
+  - ✅ **`vcs.checks.create` - GitLab commit status creation working** (fixed GitBeaker method signatures)
 
-### Not Yet Implemented  
-- GitLab API authentication and client initialization
-- VCS interface methods:
-  - `vcs.config.get` - Read `.cogni/repo-spec.yaml` via GitLab API
-  - `vcs.pulls.get` - Fetch MR details
-  - `vcs.repos.compareCommits` - Get diff statistics
-  - `vcs.checks.create` - Create GitLab commit status
-  - `vcs.issues.createComment` - Post MR comment
+### ⚠️ Proof of Concept Working (NOT Production Ready)
+- ✅ **Basic end-to-end GitLab MR processing working**
+- ✅ **All 8 quality gates execute successfully on GitLab MRs**
+- ✅ **Commit statuses created and displayed in GitLab UI**
+- ✅ **MR comments posted with gate results**
+- ✅ **Tested with real GitLab MR #328 on cogni-dao/test/test-repo**
+
+### GitBeaker Library Bug Fixes Applied
+**Critical Fix**: GitBeaker method signatures differ from expected patterns:
+- ❌ `Commits.editStatus(projectId, sha, { state, name, ... })` - Wrong
+- ✅ `Commits.editStatus(projectId, sha, state, { name, target_url, description })` - Correct
+- ❌ `MergeRequestNotes.create(projectId, mrId, { body })` - Wrong  
+- ✅ `MergeRequestNotes.create(projectId, mrId, body)` - Correct
+
+### 🚨 Current Limitations (POC Only)
+- **Hardcoded Authentication**: Using static GITLAB_PAT token
+- **Single Repository**: Only works with cogni-dao/test/test-repo (project ID: 75449860)
+- **No OAuth**: Missing production authentication flow
+- **No Multi-tenancy**: Cannot handle multiple GitLab instances/users
+- **External Status UX**: GitLab renders webhook-posted statuses as external jobs with no native logs or pipeline page
+
+### GitLab API Implementation Requirements
+**Authentication**: `Authorization: Bearer <token>` or `PRIVATE-TOKEN` header for PATs
+**Base URL**: Support `GITLAB_BASE_URL` for self-hosted GitLab instances (default: https://gitlab.com)
+**Project Resolution**: Map `{owner, repo}` to GitLab project ID via `/projects/:path_with_namespace` (cache results)
+**Status Mapping**: Map GitHub check conclusions to GitLab commit states (success|failed|pending)
+
+## Design Patterns for GitLab Integration
+
+### Current: Webhook-Only Pattern
+- **Pros**: Fastest response, host-agnostic, immediate feedback
+- **Cons**: External status jobs have no native GitLab logs, limited UX
+- **target_url**: Points to MR page (no dedicated pipeline/job page available)
+
+### Recommended: Hybrid Pattern (Future)
+**Model**: SonarQube's GitLab integration approach
+1. **Keep webhook service** for immediate status posting 
+2. **Add minimal CI job** that calls Cogni API and prints summary
+3. **Result**: First-class GitLab UX with logs + fast webhook feedback
+
+**Benefits**:
+- Native GitLab job page with logs and artifacts
+- Preserves current webhook service architecture  
+- Users get familiar pipeline URL experience
+- Matches established pattern (SonarQube, security scanners)
+
+### Alternative: Pipeline-Only Pattern
+- **Pros**: Full GitLab-native UX with logs, artifacts, pipeline pages
+- **Cons**: Ties service to GitLab CI, slower than webhooks
+- **Use case**: GitLab-specific deployment scenarios
 
 ## Environment Configuration
 The following GitLab-specific variables are validated in `src/env.js`:
-- `WEBHOOK_SECRET_GITLAB` - Required for webhook authentication (renamed from GITLAB_WEBHOOK_TOKEN)
-- `WEBHOOK_PROXY_URL_GITLAB` - Optional smee proxy URL for local development
+- `WEBHOOK_SECRET_GITLAB` - Required for webhook authentication (X-Gitlab-Token equality check, not HMAC)
+- `WEBHOOK_PROXY_URL_GITLAB` - Optional smee proxy URL for local development  
+- `GITLAB_BASE_URL` - GitLab instance URL (default: https://gitlab.com, supports self-hosted)
+- `GITLAB_PAT` - GitLab Personal Access Token for API authentication (implemented)
 - `GITLAB_OAUTH_APPLICATION_ID` - Optional, for future OAuth support
 - `GITLAB_OAUTH_APPLICATION_SECRET` - Optional, for future OAuth support
 

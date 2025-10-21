@@ -5,8 +5,9 @@ Reusable test data that eliminates duplication across test suites.
 
 ## Fixture Types
 - **Repository specs**: YAML configurations for different test scenarios (repo-specs.js)
-- **Webhook payloads**: Real GitHub webhook events (check_run, check_suite, pull_request, installation)
+- **Webhook payloads**: Real GitHub and GitLab webhook events (check_run, check_suite, pull_request, installation, merge_request)
   - **Real webhook fixtures**: Captured from `../../fixtures/github/` directory - complete payloads from actual GitHub webhooks
+  - **GitLab webhook fixtures**: Real GitLab merge request webhooks from production (e.g., `merge_request.opened.complete.json`)
   - **Webhook encryption**: To encrypt fixtures with webhook secret for security testing, set `WEBHOOK_SECRET_GITHUB` environment variable and use crypto.createHmac('sha256', secret) for signature validation
 - **AI rule fixtures**: Mock AI evaluation data and contexts (ai-rules.js), matching real spec formats
   - **Schema v0.3 format**: Uses `workflow_id: 'goal-evaluations'` with dynamic `evaluations` array for unified evaluation workflow

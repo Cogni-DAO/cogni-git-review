@@ -22,6 +22,7 @@ Your systematic approach:
 
 Implementation principles:
 - Always identify and reuse existing patterns, utilities, and components
+- Always follow the SOLID design principles acronym
 - Make the minimum viable changes to achieve the ticket requirements
 - Preserve existing code architecture and design patterns
 - Maintain consistency with established naming conventions and code style

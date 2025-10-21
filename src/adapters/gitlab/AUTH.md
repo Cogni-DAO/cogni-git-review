@@ -48,16 +48,31 @@ sequenceDiagram
 
 **Required Scopes**:
 - `api` - Full API access (MRs, webhooks, commit statuses, comments)
-- `read_user` - User profile information
+- `read_user` - User profile information via REST API
+- `openid` - OpenID Connect authentication and ID token
+
+**Conditional Scopes** (add only if used):
+- `profile` - Profile data in ID token claims (add only if reading ID token claims)
+- `email` - Email data in ID token claims (add only if reading ID token claims)  
+- `offline_access` - Refresh token support (required on some GitLab setups)
+
+**OAuth 2.0 + OpenID Connect Security Rules**:
+- **ID Token Usage**: Login identity only. Verify `iss`, `aud`, `exp`, `iat`, `nonce` with `openid-client`/`jose`
+- **API Authorization**: Use `access_token` for all REST calls. Never authorize API from ID token
+- **Identity Binding**: Persist `sub` claim as stable `provider_user_id`. Do not trust email for identity
+- **Profile Data**: Prefer UserInfo endpoint when claims missing from ID token
+- **Token Refresh**: Refresh access tokens on expiry. Add `offline_access` scope if needed
+- **PKCE + State**: Use PKCE with short state TTL. Strict `redirect_uri` validation
+- **Self-hosted Support**: Feature-detect via OIDC discovery. Handle missing claims gracefully
 
 **Security Model**:
 ```javascript
-// OAuth credentials (server-side only)
+// OAuth + OIDC credentials (server-side only)
 const OAUTH_CONFIG = {
   client_id: process.env.GITLAB_CLIENT_ID,
   client_secret: process.env.GITLAB_CLIENT_SECRET, // Never exposed to client
   redirect_uri: process.env.GITLAB_REDIRECT_URI,
-  scope: 'api read_user'
+  scope: 'api read_user openid' // + profile email if reading claims
 };
 ```
 
@@ -71,15 +86,20 @@ const OAUTH_CONFIG = {
 
 **Token Storage Schema**:
 ```sql
--- Per-connection token storage
-CREATE TABLE gitlab_connections (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL,
-  gitlab_user_id INTEGER NOT NULL,
-  access_token TEXT NOT NULL, -- Encrypted at rest
-  refresh_token TEXT NOT NULL, -- Encrypted at rest
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+-- OAuth connections with encrypted tokens
+CREATE TABLE oauth_connections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT, -- nullable for MVP
+  provider TEXT NOT NULL DEFAULT 'gitlab',
+  provider_user_id TEXT NOT NULL, -- GitLab sub claim
+  access_token_enc JSONB NOT NULL, -- {ciphertext, iv, tag} via AES-256-GCM
+  refresh_token_enc JSONB NOT NULL, -- {ciphertext, iv, tag} via AES-256-GCM
+  expires_at TIMESTAMPTZ NOT NULL,
+  scopes TEXT DEFAULT 'api read_user openid',
+  instance_url TEXT DEFAULT 'https://gitlab.com',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(provider, provider_user_id)
 );
 ```
 
@@ -255,17 +275,28 @@ const CONNECTION_SCHEMA = {
 
 ### 1. Token Security
 
-**Encryption at Rest**:
+**AES-256-GCM Encryption**:
 ```javascript
-// Encrypt tokens before database storage
-const encryptedToken = await encrypt(accessToken, ENCRYPTION_KEY);
-await db.connections.update(connectionId, {
-  access_token: encryptedToken,
-  updated_at: new Date()
-});
+// Encrypt tokens with crypto.createCipheriv (32B key, 12B IV)
+const crypto = require('crypto');
 
-// Decrypt for API usage
-const decryptedToken = await decrypt(connection.access_token, ENCRYPTION_KEY);
+function encryptToken(token, key) {
+  const iv = crypto.randomBytes(12); // 12-byte IV for GCM
+  const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(key, 'base64'), iv);
+  const ciphertext = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  
+  return {
+    ciphertext: ciphertext.toString('base64'),
+    iv: iv.toString('base64'),
+    tag: tag.toString('base64')
+  };
+}
+
+// Store {ciphertext, iv, tag} in JSONB column
+await db.connections.update(connectionId, {
+  access_token_enc: encryptToken(accessToken, ENCRYPTION_KEY)
+});
 ```
 
 **Token Refresh Logic**:
@@ -282,10 +313,11 @@ async function ensureValidToken(connection) {
 
 ### 2. Webhook Security
 
-**Secret Validation**:
-- Generate cryptographically secure webhook secrets
-- Use constant-time comparison to prevent timing attacks
-- Rotate webhook secrets periodically
+**Webhook Secret Security**:
+- Never persist webhook secrets in plaintext
+- Store HMAC-SHA256 hashed secrets only
+- Compare using `tsscmp` for timing-safe validation
+- Generate cryptographically secure secrets per webhook
 
 **Request Integrity**:
 - Validate `X-Gitlab-Event-UUID` for replay protection
@@ -330,9 +362,9 @@ const gitlab = new Gitlab({ token: validToken });
 
 This requires updating UI expectations - comments will show the OAuth user's name rather than a consistent app identity (unless using bot pattern).
 
-## V1 → V2 Migration Plan
+## MVP: GitLab OAuth Implementation
 
-### V1: Single-Deployment Model (Current)
+### MVP Scope: Single-User OAuth2 + OIDC
 
 **Characteristics**:
 - One deployment per GitLab instance/tenant
@@ -348,13 +380,49 @@ GITLAB_OAUTH_APPLICATION_SECRET=your_gitlab_oauth_client_secret
 WEBHOOK_SECRET_GITLAB=shared_webhook_secret
 ```
 
-**V1 Implementation Scope**:
-- Single OAuth app for gitlab.com
-- Basic connection storage in database
-- Standard OAuth + webhook flow
-- Manual environment configuration
+**MVP Implementation Specification**:
 
-### V2: Multi-Tenant Database-Driven Model (Future)
+**Routes**: 
+- `GET /oauth/gitlab/start` - Initiate OAuth flow
+- `GET /oauth/gitlab/callback` - Handle OAuth callback
+
+**Libraries**: `openid-client`, `zod`, `jose`
+**API Client**: Prefer `fetch()` for MVP. GitBeaker optional for later enhancement.
+
+**Environment Variables**:
+```bash
+BASE_URL=https://cogni.app
+GITLAB_BASE_URL=https://gitlab.com
+GITLAB_OAUTH_CLIENT_ID=your_oauth_app_id  
+GITLAB_OAUTH_CLIENT_SECRET=your_oauth_app_secret
+ENCRYPTION_KEY=base64_encoded_32_byte_key
+```
+
+**Storage**: SQLite file `data/cogni.db`
+
+**OAuth Flow**:
+1. **Start**: Generate state+nonce+PKCE → redirect to GitLab authorize
+2. **Callback**: Verify state → exchange code → store encrypted tokens → link provider_user_id → redirect `/connected`
+3. **Usage**: Attach Bearer token; if expiring (<60s), refresh once then retry
+
+**Security Features**:
+- Cookies: `Secure+HttpOnly+SameSite=Lax`
+- Tokens at rest: AES-256-GCM with `ENCRYPTION_KEY`
+- Webhook tokens: Store HMAC digest only
+- Logging: Mask secrets, include request correlation ID
+
+**Acceptance Criteria**:
+- ✅ OAuth flow completes and persists tokens
+- ✅ Token refresh works and recovers from single 401
+- ✅ One MR API call succeeds using stored OAuth token
+
+**MVP Deferrals**:
+- Project selector UI (use all accessible projects)
+- Webhook auto-provisioning (manual setup)
+- Multi-provider support (GitLab only)
+- Admin UI and key rotation workflows
+
+## V2: Production Multi-Provider System
 
 **Core Design Principles**:
 - **Single Deployment**: One server handles all tenants
@@ -390,26 +458,31 @@ interface Install {
 
 #### 2. Provider Abstraction Layer
 
-Unified interface abstracting GitHub/GitLab differences:
-
+**OAuth Provider Interface**:
 ```typescript
-// Host Interface - Provider Agnostic
-interface Host {
-  commentOnMR(projectId: string, mrIid: number, body: string): Promise<void>
-  setCommitStatus(projectId: string, sha: string, state: string, targetUrl?: string, description?: string): Promise<void>
-  listProjects(oauthCtx: any): Promise<Project[]>
-  createWebhook(projectId: string, url: string, secret: string): Promise<string>
-}
-
-// Provider Implementations
-class GitHubProvider implements Host {
-  // Uses JWT → Installation Token flow
-}
-
-class GitLabProvider implements Host {
-  // Uses OAuth token directly
+interface OAuthProvider {
+  authorizeUrl(ctx: OAuthContext): string
+  exchangeCode(ctx: OAuthContext): Promise<TokenSet>  
+  refresh(tokenSet: TokenSet): Promise<TokenSet>
+  userinfo(tokenSet: TokenSet): Promise<UserInfo>
 }
 ```
+
+**VCS Provider Interface**:
+```typescript  
+interface VCSProvider {
+  getRepo(connection: Connection, id: string): Promise<Repository>
+  getMR(connection: Connection, id: string): Promise<MergeRequest>
+  listFiles(connection: Connection, mrId: string): Promise<FileChange[]>
+  getFile(connection: Connection, path: string, ref?: string): Promise<FileContent>
+  setStatus(connection: Connection, sha: string, status: CommitStatus): Promise<void>
+  comment(connection: Connection, mrId: string, body: string): Promise<void>
+}
+```
+
+**Universal Routes**:
+- `GET /oauth/:provider/start` → `provider-registry.get(provider).authorizeUrl()`
+- `GET /oauth/:provider/callback` → `provider-registry.get(provider).exchangeCode()`
 
 #### 3. Multi-Instance Support
 

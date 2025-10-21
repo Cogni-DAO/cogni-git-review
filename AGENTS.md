@@ -108,6 +108,11 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md)
 ├── bin/e2e-runner.js          # CLI for E2E testing (executable)
 ├── lib/e2e-runner.js          # E2E testing implementation 
+├── e2e/                       # Playwright E2E testing (GitLab PoC)
+│   ├── tests/                 # Playwright test specifications 
+│   ├── helpers/               # Test configuration and utilities
+│   └── artifacts/             # Test reports and results (gitignored)
+├── playwright.config.js       # Playwright test configuration
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
 │   ├── fixtures/              # Reusable test data (→ AGENTS.md)
 │   ├── contract/              # End-to-end tests, using test harness without HTTP (→ AGENTS.md)
@@ -204,7 +209,8 @@ Direct `process.env` access allowed only in:
 npm test                    # Run all tests (unit, contract, E2E unit tests)
 npm run lint               # ESLint for JavaScript code  
 npm run lint:workflows     # actionlint for GitHub Actions workflows
-npm run e2e                # End-to-end testing against live deployment
+npm run e2e                # End-to-end testing against live deployment (GitHub, legacy)
+npm run e2e:gitlab         # GitLab E2E testing via Playwright (PoC)
 
 # Setup and running:
 npm install                # Install dependencies
