@@ -28,3 +28,4 @@ jobs:
          LANGFUSE_BASE_URL: ${{ vars.LANGFUSE_BASE_URL }}
          WEBHOOK_SECRET_GITHUB: ${{ secrets.WEBHOOK_SECRET_GITHUB }}
          WEBHOOK_SECRET_GITLAB: ${{ secrets.WEBHOOK_SECRET_GITLAB }}
+         GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
