@@ -26,8 +26,8 @@ function sleep(ms) {
 // GitHub E2E Configuration
 const githubTestConfig = {
   // GitHub E2E Configuration (from environment)
-  GITHUB_TOKEN: process.env.TEST_REPO_GITHUB_PAT,
-  TEST_REPO: process.env.TEST_REPO || 'Cogni-DAO/test-repo',
+  GITHUB_TOKEN: process.env.E2E_GITHUB_PAT,
+  TEST_REPO: process.env.E2E_GITHUB_REPO || 'Cogni-DAO/test-repo',
   
   // Expected check name from constants
   EXPECTED_CHECK_NAME: PR_REVIEW_NAME,
@@ -39,7 +39,7 @@ const githubTestConfig = {
   // Validate environment on use
   validate() {
     if (!this.GITHUB_TOKEN) {
-      throw new Error('Missing required GitHub E2E environment variable: TEST_REPO_GITHUB_PAT');
+      throw new Error('Missing required GitHub E2E environment variable: E2E_GITHUB_PAT');
     }
   }
 };

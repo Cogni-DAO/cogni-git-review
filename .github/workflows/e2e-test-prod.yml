@@ -20,13 +20,13 @@ jobs:
       NODE_ENV: test # E2E test runner environment (separate from production deployment being validated)
       
       # GitHub E2E Configuration
-      TEST_REPO_GITHUB_PAT: ${{ secrets.TEST_REPO_GITHUB_PAT }}
-      TEST_REPO: ${{ vars.TEST_REPO }}
+      E2E_GITHUB_PAT: ${{ secrets.E2E_GITHUB_PAT }}
+      E2E_GITHUB_REPO: ${{ vars.E2E_GITHUB_REPO }}
       
       # GitLab E2E Configuration
-      GITLAB_E2E_TEST_REPO_PAT: ${{ secrets.GITLAB_E2E_TEST_REPO_PAT }}
-      GITLAB_E2E_TEST_REPO: ${{ vars.GITLAB_E2E_TEST_REPO }}
-      GITLAB_E2E_APP_DEPLOYMENT_URL: ${{ vars.GITLAB_E2E_APP_DEPLOYMENT_URL }}
+      E2E_GITLAB_PAT: ${{ secrets.E2E_GITLAB_PAT }}
+      E2E_GITLAB_REPO: ${{ vars.E2E_GITLAB_REPO }}
+      E2E_GITLAB_DEPLOYMENT_URL: ${{ vars.E2E_GITLAB_DEPLOYMENT_URL }}
       
       APP_ENV: prod # required for computing PR_REVIEW_NAME via src/constants.js
     steps:
