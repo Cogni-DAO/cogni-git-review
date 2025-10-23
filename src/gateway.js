@@ -48,7 +48,7 @@ function startSmeeClients(port) {
     const githubSmee = new SmeeClient({
       source: environment.WEBHOOK_PROXY_URL_GITHUB,
       target: `http://localhost:${port}/api/v1/webhooks/github`,
-      logger: console
+      logger: appLogger.child({ module: 'smee-github' })
     });
     githubSmee.start();
     smeeClients.push({ provider: 'github', client: githubSmee });
@@ -58,7 +58,7 @@ function startSmeeClients(port) {
     const gitlabSmee = new SmeeClient({
       source: environment.WEBHOOK_PROXY_URL_GITLAB,
       target: `http://localhost:${port}/api/v1/webhooks/gitlab`,
-      logger: console
+      logger: appLogger.child({ module: 'smee-gitlab' })
     });
     gitlabSmee.start();
     smeeClients.push({ provider: 'gitlab', client: gitlabSmee });
@@ -91,7 +91,8 @@ async function startGateway() {
   const probot = new Probot({
     appId: environment.APP_ID,
     privateKey: Buffer.from(environment.PRIVATE_KEY, 'base64').toString('utf8'),
-    secret: environment.WEBHOOK_SECRET_GITHUB
+    secret: environment.WEBHOOK_SECRET_GITHUB,
+    log: appLogger
   });
   
   // Mount GitHub middleware at /api/v1/webhooks/github  

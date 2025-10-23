@@ -4,7 +4,6 @@
  */
 
 import runCogniApp from '../../index.js';
-import { makeLogger } from '../logging/logger.js';
 
 /**
  * Create VCS interface that maps to Octokit
@@ -59,8 +58,8 @@ function wrapProbotContext(context) {
   
   // Preserve framework logger if needed
   context._frameworkLog = context.log;
-  // Replace with our app logger child so core uses unified logger
-  context.log = makeLogger({ service: "cogni-git-review" }).child({
+  // Add structured bindings to existing logger
+  context.log = context.log.child({
     id: context.id,
     repo: context.payload?.repository?.full_name,
     route: context.name, // e.g., "pull_request"
