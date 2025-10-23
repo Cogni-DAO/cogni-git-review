@@ -9,7 +9,7 @@ export const type = 'governance-policy';
  * @param {import('../../adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @returns {Promise<GateResult>}
  */
-export async function run(context, gate) {
+export async function run(context, _gate) {
   const startTime = Date.now();
   const log = context.log.child({ module: 'gates/governance-policy' });
   

@@ -41,8 +41,10 @@ export async function evaluateGoalDeclaration(context, pr, spec) {
     };
     
   } catch (error) {
-    // Note: Using console.error temporarily - context.log not available in evaluateGoalDeclaration
-    console.error('Failed to evaluate goal declaration stub:', error.message);
+    context.log.error('Failed to evaluate goal declaration stub', {
+      error: error.message,
+      stack: error.stack
+    });
     return {
       violations: [],
       stats: { repo_goals_count: 0, repo_goals: [] },

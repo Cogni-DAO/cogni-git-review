@@ -45,9 +45,9 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
             listFiles: async () => ({ data: changedFiles })
           }
         },
-        abort: new AbortController().signal
-      },
-      logger: noopLogger
+        abort: new AbortController().signal,
+        log: noopLogger
+      }
     };
   }
 

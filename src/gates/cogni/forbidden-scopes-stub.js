@@ -41,8 +41,10 @@ export async function evaluateForbiddenScopes(context, pr, spec) {
     };
     
   } catch (error) {
-    // Note: Using console.error temporarily - context.log not available in evaluateForbiddenScopes
-    console.error('Failed to evaluate forbidden scopes stub:', error.message);
+    context.log.error('Failed to evaluate forbidden scopes stub', {
+      error: error.message,
+      stack: error.stack
+    });
     return {
       violations: [],
       stats: { repo_non_goals_count: 0, repo_non_goals: [] },

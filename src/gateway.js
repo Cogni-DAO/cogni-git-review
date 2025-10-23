@@ -12,6 +12,7 @@ import { createGitLabRouter } from './adapters/gitlab/gitlab-router.js';
 import { environment } from './env.js';
 import runCogniApp from '../index.js';
 import SmeeClient from 'smee-client';
+import { appLogger } from './logging/index.js';
 
 // Shared event handlers (registered once at boot)
 let sharedHandlers = null;
@@ -26,7 +27,7 @@ function shouldProxy() {
   ];
   const hasProxyUrl = proxyUrls.some(url => url && url.trim());
   
-  console.log('shouldProxy() debug:', {
+  appLogger.debug('shouldProxy() debug', {
     WEBHOOK_PROXY_URL_GITHUB: environment.WEBHOOK_PROXY_URL_GITHUB,
     WEBHOOK_PROXY_URL_GITLAB: environment.WEBHOOK_PROXY_URL_GITLAB,
     hasProxyUrl,
@@ -74,7 +75,7 @@ const handlerCapture = {
     if (!sharedHandlers) sharedHandlers = new Map();
     const eventList = Array.isArray(events) ? events : [events];
     eventList.forEach(event => sharedHandlers.set(event, handler));
-    console.log('Gateway: captured handlers for', eventList);
+    appLogger.debug('Gateway: captured handlers for events', { events: eventList });
   }
 };
 
@@ -82,9 +83,9 @@ async function startGateway() {
   const app = express();
   
   // Register handlers once at boot
-  console.log('Registering shared handlers...');
+  appLogger.info('Registering shared handlers');
   runCogniApp(handlerCapture);
-  console.log(`Registered ${sharedHandlers.size} event handlers`);
+  appLogger.info('Registered event handlers', { count: sharedHandlers.size });
   
   // GitHub: Create Probot instance and mount middleware  
   const probot = new Probot({
@@ -109,7 +110,7 @@ async function startGateway() {
       return res.status(404).json({ error: 'Unknown provider' });
     }
     
-    console.log(`OAuth callback: ${provider}`, req.query);
+    appLogger.info('OAuth callback received', { provider, query: req.query });
     res.send('OAuth - not implemented yet');
   });
   
@@ -131,18 +132,25 @@ async function startGateway() {
   // Start server
   const port = environment.PORT || 3000;
   app.listen(port, () => {
-    console.log(`Multi-provider gateway on port ${port}`);
-    console.log(`GitHub webhooks: /api/v1/webhooks/github`);
-    console.log(`GitLab webhooks: /api/v1/webhooks/gitlab`);
-    console.log(`OAuth callbacks: /oauth/:provider/callback`);
-    console.log(`Health check: /api/v1/health`);
+    appLogger.info('Multi-provider gateway started', {
+      port,
+      endpoints: {
+        github_webhooks: '/api/v1/webhooks/github',
+        gitlab_webhooks: '/api/v1/webhooks/gitlab',
+        oauth_callbacks: '/oauth/:provider/callback',
+        health_check: '/api/v1/health'
+      }
+    });
     
     // Start smee proxy clients if needed
     if (shouldProxy()) {
-      console.log('Starting smee proxy clients...');
+      appLogger.info('Starting smee proxy clients');
       startSmeeClients(port);
     }
   });
 }
 
-startGateway().catch(console.error);
+startGateway().catch(error => {
+  appLogger.error('Failed to start gateway', { error: error.message, stack: error.stack });
+  process.exit(1);
+});
