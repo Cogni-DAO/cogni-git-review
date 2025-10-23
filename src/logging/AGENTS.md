@@ -13,7 +13,8 @@
 
 ```javascript
 // Adapters set context.log with request-scoped bindings
-context.log = makeLogger().child({ id, repo, route });
+context.log = appLogger.child({ id, repo, route });
+// OR for GitHub adapter: context.log = context.log.child({ id, repo, route });
 ```
 
 **Adapter Responsibility**: Each adapter (GitHub, GitLab, local-cli) creates and attaches a structured logger to the context before passing it to core handlers.
@@ -113,7 +114,7 @@ All three variables must be set together or all must be empty. The logger access
 
 ### Why we use context.log pattern:
 
-- **Centralized Logging**: All adapters use `makeLogger()` factory ensuring consistent configuration across providers (GitHub, GitLab, CLI).
+- **Centralized Logging**: All adapters use `appLogger` singleton ensuring consistent configuration across providers (GitHub, GitLab, CLI).
 
 - **No Parameter Threading**: Functions access logger via context instead of parameter passing, reducing function signatures.
 
@@ -131,7 +132,7 @@ All three variables must be set together or all must be empty. The logger access
 
 **What you see in logs:**
 - `(server)` and `(http)` lines = Probot internals (already Pino)
-- `(event)` lines = Your app events from `getRequestLogger(context, ...).child(...)`
+- `(event)` lines = Your app events from `context.log.child({ module: '...' })`
 
 **Our structured event logs have:** `{id, repo, module, route, event, pr}`
 

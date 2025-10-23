@@ -70,7 +70,7 @@ SPEC_FIXTURES.behaviorTest30_100 // 30 files, 100KB limits
 SPEC_FIXTURES.invalidYaml       // Malformed YAML
 SPEC_FIXTURES.invalidStructure  // Missing sections
 
-// Test harness helpers (NEW - with logger support)
+// Test harness helpers (with standardized logger support)
 testEventHandler({ event, payload, spec, expectCheck })     // Complete webhook testing
 createGateTestContext({ spec, pr, vcs })                    // Gate testing with noopLogger
 ```
