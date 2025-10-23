@@ -29,6 +29,7 @@ src/
   - Health check at `/api/v1/health` with handler inventory
   - Auto-launches smee proxy clients in dev mode when `WEBHOOK_PROXY_URL_GITHUB` or `WEBHOOK_PROXY_URL_GITLAB` are set
   - Handles private key base64 decoding for Probot integration
+  - Uses centralized `appLogger` from logging system for all gateway operations
 
 ### Environment Management
 - **env.js**: Centralized environment configuration

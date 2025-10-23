@@ -10,6 +10,7 @@ import yaml from 'js-yaml';
 import { clearSpecCache } from '../../src/spec-loader.js';
 import { SPEC_FIXTURES } from '../fixtures/repo-specs.js';
 import { PR_REVIEW_NAME } from '../../src/constants.js';
+import { noopLogger } from '../../src/logging/logger.js';
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -72,6 +73,7 @@ describe('Cogni Evaluated Gates Behavior Contract Tests', () => {
       name: 'pull_request',
       payload: createBehaviorPayload(),
       repo: (params = {}) => ({ owner: 'test-org', repo: 'test-repo', ...params }),
+      log: noopLogger,
       vcs: {
         config: {
           get: async () => ({ config: null })  // Mock missing spec

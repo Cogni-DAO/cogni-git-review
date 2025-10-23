@@ -6,19 +6,31 @@ import { createWelcomePR } from './createWelcomePR.js';
  */
 export async function handleInstallationAdded(context) {
   const repos = context.payload.repositories_added || [];
+  const log = context.log.child({ module: 'installation-handler' });
   
-  console.log(`📦 Installation setup initiated for ${repos.length} repositories`);
+  log.info('Installation setup initiated', {
+    repository_count: repos.length,
+    repositories: repos.map(r => r.full_name)
+  });
   
   for (const repo of repos) {
     try {
       const [owner, name] = (repo.full_name || `${repo.owner?.login}/${repo.name}`).split('/');
       const repoInfo = { owner, repo: name };
-      console.log(`📦 Setting up repository: ${repo.full_name}`);
+      log.info('Setting up repository', {
+        repository: repo.full_name,
+        owner,
+        repo: name
+      });
       
       await createWelcomePR(context, repoInfo);
       
     } catch (error) {
-      console.error(`📦 Setup failed for ${repo.full_name}:`, error);
+      log.error('Setup failed for repository', {
+        repository: repo.full_name,
+        error: error.message,
+        stack: error.stack
+      });
     }
   }
 }

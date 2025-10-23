@@ -96,7 +96,7 @@ export async function evaluateWithWorkflow({ workflowId, workflowInput }, { time
     };
     
   } catch (error) {
-    console.error('AI Provider error:', error.message);
+    logger.error({ err: error }, 'AI Provider error');
     return createErrorResponse('ai_provider_error', `AI evaluation failed: ${error.message}`, startTime);
   }
 }

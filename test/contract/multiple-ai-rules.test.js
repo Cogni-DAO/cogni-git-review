@@ -75,7 +75,8 @@ describe('Multiple AI Rules Integration', () => {
             })
           }
         },
-        abort: new AbortController().signal
+        abort: new AbortController().signal,
+        log: customLogger
       },
       logger: customLogger
     };

@@ -15,7 +15,7 @@ export const type = 'ai-rule';
 /**
  * Evaluate PR against the first enabled AI rule
  */
-export async function run(ctx, gateConfig, logger) {
+export async function run(ctx, gateConfig) {
   const startTime = Date.now();
   const config = gateConfig.with || gateConfig; // Handle both formats
 
@@ -25,7 +25,7 @@ export async function run(ctx, gateConfig, logger) {
       rulesDir: config.rules_dir || '.cogni/rules',
       ruleFile: config.rule_file,
       blockingDefault: config.blocking_default !== false
-    }, logger);
+    }, ctx.log);
 
     // Step 2: Validate rule loading
     if (!ruleResult.ok) {
@@ -50,15 +50,15 @@ export async function run(ctx, gateConfig, logger) {
       workflowInput: providerInput
     }, {
       timeoutMs: config.timeout_ms || 110000  // Leave 10s buffer for gate processing. TODO - make dynamic/configurable
-    }, logger);
+    }, ctx.log);
 
     // Runtime validation: Ensure provider result follows standard format
     try {
       assertProviderResult(providerResult);
     } catch (error) {
-      console.error('🚨 Provider result validation failed:', error.message);
+      ctx.log.error({ err: error }, 'Provider result validation failed');
       if (error.details) {
-        console.error('📋 Validation details:', JSON.stringify(error.details, null, 2));
+        ctx.log.error({ details: error.details }, 'Validation details');
       }
       return createNeutralResult('invalid_provider_result', `Provider result validation failed: ${error.message}`, startTime);
     }
@@ -67,7 +67,7 @@ export async function run(ctx, gateConfig, logger) {
     return makeGateDecision(providerResult, rule, startTime);
 
   } catch (error) {
-    console.error('Rules gate error:', error);
+    ctx.log.error({ err: error }, 'Rules gate error');
 
     const shouldBeNeutral = config.neutral_on_error !== false;
     if (shouldBeNeutral) {

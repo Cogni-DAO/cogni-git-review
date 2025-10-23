@@ -13,10 +13,10 @@ Shared utilities that eliminate duplication in test setup and execution.
 ## Current Helpers
 
 ### `handler-harness.js`
-Shared integration test harness for direct handler testing with improved logger support:
+Shared integration test harness for direct handler testing with standardized logger support:
 - `testEventHandler()` - Generic event handler testing with complete octokit mocking
 - `createGateTestContext()` - DRY context creation for gate testing with noopLogger
-- **Logger Support**: All helpers now use `noopLogger` with proper `.child()` method support
+- **Logger Support**: All helpers use `noopLogger` from `src/logging/logger.js` with proper `.child()` method support
 - **Complete Mocking**: Includes `pulls.get`, `issues.createComment`, `config.get`, and `checks.create`
 - Eliminates duplication across contract tests and provides consistent test setup
 

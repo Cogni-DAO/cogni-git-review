@@ -16,6 +16,7 @@ The adapters directory implements the host abstraction architecture that enables
 ### ✅ Gateway Architecture: Multi-Provider Support
 - **../gateway.js**: Express server with shared handler registration via `runCogniApp(handlerCapture)`
 - **github.js**: Dual-mode adapter - factory pattern for gateway, default export for standalone
+  - Wraps Probot context to add structured logging via `context.log.child()` with id, repo, route bindings
 - **gitlab/**: GitLab webhook router with payload transformation to BaseContext
 
 ### ✅ Step 2 Complete: Probot Abstraction
@@ -28,7 +29,7 @@ The adapters directory implements the host abstraction architecture that enables
 - **local-cli.js**: CLI entry point implementing CogniBaseApp interface
   - Accepts git references (baseRef, headRef) and repository path
   - Registers handlers with core app, then simulates PR event
-  - Creates LocalContext with request-scoped logger
+  - Initializes `context.log` with structured bindings (id, repo, route)
 - **local-cli/local-context.js**: LocalContext class implementing BaseContext interface
   - Direct implementation (no inheritance) with minimal payload
   - VCS operations backed by git CLI and filesystem
@@ -45,6 +46,7 @@ The adapters directory implements the host abstraction architecture that enables
 2. **Interface Compatibility**: LocalContext implements exact same BaseContext interface as Probot context
 3. **Host Agnostic**: Gate evaluation, AI workflows, and all business logic work identically on any host
 4. **Adapter Pattern**: Entry points (github.js, cli.js) adapt host-specific APIs to common interfaces
+5. **Structured Logging**: Adapters initialize `context.log` with framework-specific bindings (id, repo, route)
 
 ## File Structure
 ```

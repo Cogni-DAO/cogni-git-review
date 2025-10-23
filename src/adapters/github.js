@@ -48,13 +48,23 @@ function createVCSInterface(octokit) {
 }
 
 /**
- * Wrap Probot context to add VCS interface
+ * Wrap Probot context to add VCS interface and structured logging
  * @param {any} context - Probot context
- * @returns {any} Enhanced context with VCS interface
+ * @returns {any} Enhanced context with VCS interface and context.log
  */
 function wrapProbotContext(context) {
-  // Don't create new object - just add vcs property to preserve method bindings
+  // Keep existing VCS mapping
   context.vcs = createVCSInterface(context.octokit);
+  
+  // Preserve framework logger if needed
+  context._frameworkLog = context.log;
+  // Add structured bindings to existing logger
+  context.log = context.log.child({
+    id: context.id,
+    repo: context.payload?.repository?.full_name,
+    route: context.name, // e.g., "pull_request"
+  });
+  
   return context;
 }
 

@@ -7,6 +7,7 @@ Installation workflow automation for new repository onboarding with complete gov
 - `createWelcomePR.js` - Creates welcome PR with complete governance template bundle
   - Uses VCS interface (`context.vcs.*`) for all GitHub API operations
   - Host-agnostic implementation compatible with BaseContext interface
+  - Uses `context.log.child()` for module-specific structured logging
 
 ## Flow
 ```

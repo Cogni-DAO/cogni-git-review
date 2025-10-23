@@ -77,6 +77,7 @@ src/adapters/local-cli/
 - Implements BaseContext interface directly (no inheritance)
 - Creates minimal payload with only required fields
 - VCS interface backed by git CLI commands and filesystem
+- Includes `log` property set by the adapter with structured bindings
 - Basic error handling and console output formatting
 
 **local-app.js**:
