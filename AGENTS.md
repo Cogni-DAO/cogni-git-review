@@ -42,7 +42,9 @@ All webhook handlers receive a `context` object containing:
 - **context.payload**: GitHub webhook payload (varies by event type)  
 - **context.vcs**: Host-agnostic VCS interface (abstracts GitHub/GitLab/local git)
 - **context.repo()**: Method returning `{ owner, repo }` from payload
-- **context.log**: Structured logger
+- **context.log**: Structured logger with child bindings
+
+**Logging Architecture**: Adapters initialize `context.log` with structured bindings (id, repo, route) at the framework boundary. Components use `context.log.child()` to add module-specific bindings, maintaining structured context throughout the execution chain.
 
 **VCS Interface**: The `context.vcs.*` interface provides host-agnostic access to version control operations. The GitHub adapter internally maps these calls to `context.octokit.*`, while future adapters will implement the same interface for other hosts.
 
@@ -94,7 +96,7 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 
 ## Repository Structure
 ```
-├── index.js                    # Host-agnostic app core (accepts CogniBaseApp interface)
+├── index.js                    # Host-agnostic app core (uses context.log for structured logging)
 ├── github.js                   # GitHub/Probot standalone entry point (legacy)
 ├── src/
 │   ├── gateway.js             # Multi-provider gateway server
