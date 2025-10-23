@@ -51,6 +51,7 @@ export async function evaluateReviewLimits(context, pr, limits) {
     
   } catch (error) {
     // If GitHub API fails, return oversize so caller can mark neutral
+    // Note: Using console.error temporarily - context.log not available in evaluateReviewLimits
     console.error('Failed to fetch PR data:', error.message);
     return {
       violations: [],

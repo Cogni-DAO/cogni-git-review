@@ -83,21 +83,20 @@ export async function postPRComment(context, runResult, checkUrl, headSha, prNum
  * @param {string} checkUrl - URL to check details (GitHub check run or GitLab MR page)
  * @param {string} headShaStart - Original PR head SHA
  * @param {number} prNumber - PR number
- * @param {Object} logger - Logger instance from caller
  */
-export async function postPRCommentWithGuards(context, runResult, checkUrl, headShaStart, prNumber, logger) {
-  const log = logger.child({ module: "pr-comment", pr: prNumber });
+export async function postPRCommentWithGuards(context, runResult, checkUrl, headShaStart, prNumber) {
+  context.log = context.log.child({ module: "pr-comment" });
   
   try {
     // Staleness guard - check if head SHA changed during run
     const { data: latest } = await context.vcs.pulls.get(context.repo({ pull_number: prNumber }));
     if (latest.head.sha === headShaStart) {
       await postPRComment(context, runResult, checkUrl, headShaStart, prNumber);
-      log.info({ sha: headShaStart?.slice(0, 7) }, "posted PR comment");
+      context.log.info({ sha: headShaStart?.slice(0, 7) }, "posted PR comment");
     } else {
-      log.info({ old_sha: headShaStart?.slice(0, 7), new_sha: latest.head.sha?.slice(0, 7) }, "skipping PR comment: head SHA changed");
+      context.log.info({ old_sha: headShaStart?.slice(0, 7), new_sha: latest.head.sha?.slice(0, 7) }, "skipping PR comment: head SHA changed");
     }
   } catch (error) {
-    log.error({ err: error }, "failed to post PR comment");
+    context.log.error({ err: error }, "failed to post PR comment");
   }
 }

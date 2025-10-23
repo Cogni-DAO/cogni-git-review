@@ -8,7 +8,7 @@
 import runCogniApp from '../../index.js';
 import { LocalCogniApp } from './local-cli/local-app.js';
 import { LocalContext } from './local-cli/local-context.js';
-import { getRequestLogger } from '../logging/index.js';
+import { makeLogger } from '../logging/logger.js';
 
 /**
  * Run Cogni gates locally using git CLI
@@ -24,7 +24,10 @@ export default async function runLocalCLI(baseRef = 'HEAD~1', headRef = 'HEAD', 
   
   // Create LocalContext from CLI args
   const context = new LocalContext(baseRef, headRef, repoPath);
-  context.log = getRequestLogger(context, { module: 'local-cli', code: 'cli-run' });
+  context.log = makeLogger({ service: "cogni-git-review" }).child({
+    id: 'local-cli',
+    repo: repoPath
+  });
   
   // Simulate PR event and run gates (handlers are already registered)
   console.log(`🔍 Running Cogni gates on ${baseRef}...${headRef}`);
