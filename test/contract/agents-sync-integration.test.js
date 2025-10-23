@@ -177,7 +177,8 @@ describe('AGENTS.md Sync Gate Integration Tests', () => {
             }
           }
         },
-        abort: new AbortController().signal
+        abort: new AbortController().signal,
+        log: noopLogger
       },
       logger: noopLogger
     };
