@@ -1,58 +1,50 @@
 # Structured Logging Architecture
 
-**Principle**: One logger per webhook handler, passed as parameters. No deep fetching.
+**Principle**: Context-based logging via `context.log`. Adapters set structured logger, modules use `.child()` for scoping.
 
 ## Setup
 
 - `src/logging/logger.js` - Pino factory with redaction, environment handling, and Loki transport configuration. Imports `environment` from `../env.js` for centralized configuration access.
-- `src/logging/index.js` - Exports `appLogger` and `getRequestLogger(context, bindings)` which always uses appLogger
+- `src/logging/index.js` - Exports `makeLogger()` factory and `appLogger` singleton
 
 ## Core Pattern
 
-### 1. Webhook Handlers - Create Once, Pass Down
+### 1. Adapters - Set Context Logger with Structured Bindings
 
 ```javascript
-// index.js
-export async function handlePullRequest(context) {
-  const log = getRequestLogger(context, { 
-    module: 'webhook', route: 'pull_request', event: context.payload.action, pr: pr.number 
-  });
-  
-  // Pass to all downstream functions
-  const runResult = await runAllGates(context, pr, spec, log);
-  await postPRCommentWithGuards(context, runResult, checkUrl, headSha, prNumber, log);
-}
+// Adapters set context.log with request-scoped bindings
+context.log = makeLogger().child({ id, repo, route });
 ```
 
-**BaseContext Support**: `getRequestLogger()` accepts BaseContext interface from any adapter (GitHub, local-cli), extracting id and repository information from the normalized interface.
+**Adapter Responsibility**: Each adapter (GitHub, GitLab, local-cli) creates and attaches a structured logger to the context before passing it to core handlers.
 
-### 2. Gate System - Accept Logger, Create Module Children
+### 2. Core Modules - Use Context Logger with Child Scoping
 
 ```javascript
 // src/gates/index.js
-export async function runAllGates(context, pr, spec, logger) {
-  const log = logger.child({ module: 'gates' });
-  return await runConfiguredGates({ context, pr, spec, logger: log });
+export async function runAllGates(context, pr, spec) {
+  const log = context.log.child({ module: 'gates' });
+  return await runConfiguredGates({ context, pr, spec });
 }
 
-// Individual gates
-export async function reviewLimitsGate({ context, config, logger }) {
-  const log = logger.child({ module: 'gates/review-limits' });
+// Individual gates use context.log
+export async function reviewLimitsGate({ context, config }) {
+  const log = context.log.child({ module: 'gates/review-limits' });
   log.info({ max_files: config.max_files }, 'gate started');
 }
 ```
 
-### 3. Helper Functions - Accept Logger Parameter
+### 3. Helper Functions - Use Context Logger
 
 ```javascript
 // src/pr-comment.js  
-export async function postPRCommentWithGuards(context, runResult, checkUrl, headSha, prNumber, logger) {
-  const log = logger.child({ module: 'pr-comment', pr: prNumber });
-  // Use log.info/error - don't call getRequestLogger
+export async function postPRCommentWithGuards(context, runResult, checkUrl, headSha, prNumber) {
+  const log = context.log.child({ module: 'pr-comment', pr: prNumber });
+  // Use log.info/error from context
 }
 ```
 
-### 4. Tests - Inject Mock Logger
+### 4. Tests - Mock Context Logger
 
 ```javascript
 const mockLogger = { 
@@ -60,7 +52,8 @@ const mockLogger = {
   child() { return this; } 
 };
 
-await runAllGates(context, pr, spec, mockLogger);
+context.log = mockLogger;
+await runAllGates(context, pr, spec);
 ```
 
 ## Logging Call Signature
@@ -105,32 +98,32 @@ All three variables must be set together or all must be empty. The logger access
 ## Architecture Rules
 
 ✅ **Do:**
-- Create logger in webhook handlers with `getRequestLogger()`
-- Pass logger as function parameters 
-- Use `.child({ module: '...' })` for module-specific logging
+- Adapters set `context.log` with structured bindings before calling handlers
+- Modules use `context.log.child({ module: '...' })` for scoped logging
 - Log structured data with consistent keys
+- Tests mock `context.log` instead of passing parameters
 
 ❌ **Don't:**
-- Call `getRequestLogger()` in gates or helper functions
+- Pass logger as function parameter (use context.log instead)
 - Use `console.*` anywhere
-- Set `context.logger` (deprecated pattern)
+- Create loggers in gates or helpers (use context.log)
 - Log sensitive data (tokens, full payloads)
 
 ## Justification
 
-### Why we pass our own logger even though `context.log` exists from Probot:
+### Why we use context.log pattern:
 
-- **Centralized Logging**: `getRequestLogger()` always returns appLogger (with Loki transport) instead of Probot's context.log, ensuring all logs flow through our configured transports.
+- **Centralized Logging**: All adapters use `makeLogger()` factory ensuring consistent configuration across providers (GitHub, GitLab, CLI).
 
-- **Decoupling**: Modules shouldn't know Probot. They depend on a small logging interface, not a large framework object.
+- **No Parameter Threading**: Functions access logger via context instead of parameter passing, reducing function signatures.
 
-- **Testability**: Unit tests inject a mock logger. No fake Probot context required.
+- **Adapter Control**: Each adapter sets appropriate structured bindings (id, repo, route) at the entry point.
 
-- **Portability**: Same modules run in CLIs, queues, or workers that have no Probot.
+- **Testability**: Tests simply mock `context.log` without complex parameter injection.
 
-- **Policy in one place**: Redaction, transport selection (pino-pretty/Loki/JSON), fields, and levels live in our factory, not scattered.
+- **Policy in one place**: Redaction, transport selection (pino-pretty/Loki/JSON), fields, and levels live in our factory.
 
-- **Single source in code**: Downstream code uses only logger, never context.log. All application logs go through the same pipeline.
+- **Unified Pipeline**: All application logs flow through the same configuration regardless of adapter.
 
 ## Probot vs App Logging
 

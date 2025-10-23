@@ -28,7 +28,7 @@ The adapters directory implements the host abstraction architecture that enables
 - **local-cli.js**: CLI entry point implementing CogniBaseApp interface
   - Accepts git references (baseRef, headRef) and repository path
   - Registers handlers with core app, then simulates PR event
-  - Creates LocalContext with request-scoped logger
+  - Sets `context.log` with structured bindings
 - **local-cli/local-context.js**: LocalContext class implementing BaseContext interface
   - Direct implementation (no inheritance) with minimal payload
   - VCS operations backed by git CLI and filesystem

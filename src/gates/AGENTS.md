@@ -23,7 +23,7 @@ src/gates/
 ## Root Contract
 `runAllGates()` accepts BaseContext interface parameter:
 ```javascript
-runAllGates(context: BaseContext, pr, spec, logger)
+runAllGates(context: BaseContext, pr, spec)
 ```
 
 Returns:
@@ -87,6 +87,7 @@ for (const gate of spec.gates) {
   - Accepts BaseContext interface (host-agnostic context from adapters)
   - Enriches context with PR metadata and review-limits configuration
   - Passes `reviewLimitsConfig` to context for AI workflow budget calculations
+  - Uses `context.log` for structured logging
   - Handles both regular PR events and check_suite.rerequested events (where pr parameter might be the same as context.payload.pull_request)
 - **Launcher** (`run-configured.js`): Sequential gate execution with robust error handling
 - **Overall status logic**: Prioritizes failures over neutral conditions: `hasFail ? 'fail' : (hasNeutral ? 'neutral' : 'pass')`
@@ -112,8 +113,8 @@ Execution summary provides diagnostic context:
 1. Create `src/gates/cogni/new-gate.js` with gate implementation:
    ```javascript
    export const type = 'new-gate-type';
-   export async function run(ctx, gateConfig, logger) {
-     const log = logger.child({ module: 'gates/new-gate-type' });
+   export async function run(ctx, gateConfig) {
+     const log = ctx.log.child({ module: 'gates/new-gate-type' });
      // Implementation returns GateResult using structured logging
    }
    ```
