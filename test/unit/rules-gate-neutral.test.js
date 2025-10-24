@@ -15,6 +15,7 @@ import {
 
 // Import the rules gate directly for unit testing
 import { run } from '../../src/gates/cogni/rules.js';
+import { noopLogger } from '../../src/logging/logger.js';
 
 function createTestPayload(overrides = {}) {
   return {
@@ -48,7 +49,7 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
           get: async () => ({ config: RULE_MISSING_THRESHOLD })
         }
       },
-      log: { info: () => {}, debug: () => {}, warn: () => {}, error: () => {} }
+      log: noopLogger
     };
 
     const mockConfig = {
@@ -77,7 +78,7 @@ describe('Rules Gate Neutral Cases Unit Tests', () => {
           get: async () => ({ config: VALID_RULE_WITH_THRESHOLD })
         }
       },
-      log: { info: () => {}, debug: () => {}, warn: () => {}, error: () => {} }
+      log: noopLogger
     };
 
     const mockConfig = {

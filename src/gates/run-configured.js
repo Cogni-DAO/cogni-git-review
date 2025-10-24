@@ -45,13 +45,12 @@ function validateUniqueIds(gates) {
  * Run all configured gates from spec in order with dynamic resolution
  * @param {object} params - Parameters object
  * @param {import('../adapters/base-context.d.ts').BaseContext} params.context - Base context interface with execution metadata
- * @param {object} params.logger - Logger instance
  * @returns {Promise<{results: GateResult[]}>} Gate execution results
  */
-export async function runConfiguredGates({ context, logger }) {
+export async function runConfiguredGates({ context }) {
   // Build registry with logger on first call
   if (!registryPromise) {
-    registryPromise = buildRegistry(logger);
+    registryPromise = buildRegistry(context.log);
   }
   const registry = await registryPromise;
   const allGates = Array.isArray(context.spec?.gates) ? context.spec.gates : [];
@@ -60,7 +59,7 @@ export async function runConfiguredGates({ context, logger }) {
   try {
     validateUniqueIds(allGates);
   } catch (error) {
-    logger.error({ err: error }, 'Gate ID validation failed');
+    context.log.error({ err: error }, 'Gate ID validation failed');
     throw error;
   }
   
@@ -73,7 +72,7 @@ export async function runConfiguredGates({ context, logger }) {
     const handler = resolveHandler(registry, gate);
     
     try {
-      const result = await safeRunGate(handler, context, gate, gateId, logger);
+      const result = await safeRunGate(handler, context, gate, gateId);
       
       // Force ID normalization - always use derived gate ID
       const finalResult = {
@@ -84,7 +83,7 @@ export async function runConfiguredGates({ context, logger }) {
       
     } catch (error) {
       // Handle unexpected errors from safeRunGate itself (not gate execution errors)
-      logger.error({ 
+      context.log.error({ 
         err: error,
         gate_id: gateId,
         type: gate.type 
@@ -115,9 +114,9 @@ export async function runConfiguredGates({ context, logger }) {
  * @param {object} logger - Logger instance
  * @returns {Promise<object>} Normalized gate result
  */
-async function safeRunGate(handler, ctx, gate, gateId, logger) {
+async function safeRunGate(handler, ctx, gate, gateId) {
   const startTime = Date.now();
-  const log = logger.child({ module: `gates/${gateId}` });
+  const log = ctx.log.child({ module: `gates/${gateId}` });
 
   // Log gate start for ALL gate types
   log.info({ type: gate.type }, 'Gate starting');
@@ -137,7 +136,7 @@ async function safeRunGate(handler, ctx, gate, gateId, logger) {
 
 
     // Execute gate handler
-    const result = await handler(ctx, gate, logger);
+    const result = await handler(ctx, gate);
 
     // Log gate completion
     const duration = Date.now() - startTime;

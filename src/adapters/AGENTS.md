@@ -8,7 +8,6 @@ The adapters directory implements the host abstraction architecture that enables
 **See complete design documentation:**
 - **[LOCAL_GIT_ADAPTER_DESIGN.md](./LOCAL_GIT_ADAPTER_DESIGN.md)** - Complete architecture overview, implementation order, and success criteria
 - **[CONTEXT_INTERFACE_SPEC.md](./CONTEXT_INTERFACE_SPEC.md)** - BaseContext interface definition with captured webhook fixtures  
-- **[OCTOKIT_INTERFACE_ANALYSIS.md](./OCTOKIT_INTERFACE_ANALYSIS.md)** - Analysis of how the GitHub adapter maps VCS interface to octokit internally
 - **[MINIMAL_PAYLOAD_SPEC.md](./MINIMAL_PAYLOAD_SPEC.md)** - Minimal subset of webhook payload fields required by gates
 
 ## Current Implementation Status
@@ -16,11 +15,12 @@ The adapters directory implements the host abstraction architecture that enables
 ### ✅ Gateway Architecture: Multi-Provider Support
 - **../gateway.js**: Express server with shared handler registration via `runCogniApp(handlerCapture)`
 - **github.js**: Dual-mode adapter - factory pattern for gateway, default export for standalone
+  - Wraps Probot context to add structured logging via `context.log.child()` with id, repo, route bindings
 - **gitlab/**: GitLab webhook router with payload transformation to BaseContext
 
 ### ✅ Step 2 Complete: Probot Abstraction
 - **base-app.d.ts**: CogniBaseApp interface (app.on() abstraction)
-- **base-context.d.ts**: BaseContext interface (context abstraction) 
+- **base-context.d.ts**: BaseContext interface with strict VCS abstraction (no host-specific escape hatches)
 - **../index.js**: Host-agnostic app core accepting CogniBaseApp interface
 - **../../github.js**: Legacy standalone Probot entry point
 
@@ -28,7 +28,7 @@ The adapters directory implements the host abstraction architecture that enables
 - **local-cli.js**: CLI entry point implementing CogniBaseApp interface
   - Accepts git references (baseRef, headRef) and repository path
   - Registers handlers with core app, then simulates PR event
-  - Creates LocalContext with request-scoped logger
+  - Initializes `context.log` with structured bindings (id, repo, route)
 - **local-cli/local-context.js**: LocalContext class implementing BaseContext interface
   - Direct implementation (no inheritance) with minimal payload
   - VCS operations backed by git CLI and filesystem
@@ -45,6 +45,7 @@ The adapters directory implements the host abstraction architecture that enables
 2. **Interface Compatibility**: LocalContext implements exact same BaseContext interface as Probot context
 3. **Host Agnostic**: Gate evaluation, AI workflows, and all business logic work identically on any host
 4. **Adapter Pattern**: Entry points (github.js, cli.js) adapt host-specific APIs to common interfaces
+5. **Structured Logging**: Adapters initialize `context.log` with framework-specific bindings (id, repo, route)
 
 ## File Structure
 ```
@@ -65,9 +66,8 @@ src/adapters/
 │   ├── local-app.js            # LocalCogniApp class (CogniBaseApp impl)
 │   └── git-utils.js            # Git CLI utility functions
 ├── MINIMAL_PAYLOAD_SPEC.md      # Essential payload fields and usage analysis
-├── LOCAL_GIT_ADAPTER_DESIGN.md # Complete design specification
-├── CONTEXT_INTERFACE_SPEC.md   # Interface definition + webhook fixtures  
-└── OCTOKIT_INTERFACE_ANALYSIS.md # Octokit method analysis + implementation strategy
+├── LOCAL_GIT_ADAPTER_DESIGN.md # Complete design specification  
+└── CONTEXT_INTERFACE_SPEC.md   # Interface definition + webhook fixtures
 ```
 
 ## Integration Points

@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { clearSpecCache } from "../../src/spec-loader.js";
 import { SPEC_FIXTURES } from "../fixtures/repo-specs.js";
+import { noopLogger } from "../../src/logging/logger.js";
 
 import { describe, beforeEach, afterEach, test } from "node:test";
 import assert from "node:assert";
@@ -38,6 +39,7 @@ describe("Simple Integration Tests", () => {
       name: 'pull_request',
       payload: prOpenedComplete,
       repo: (params = {}) => ({ owner: 'derekg1729', repo: 'cogni-git-review', ...params }),
+      log: noopLogger,
       vcs: {
         config: {
           get: async () => ({ config: minimalSpec })
@@ -85,6 +87,7 @@ describe("Simple Integration Tests", () => {
       name: 'pull_request',
       payload: prOpenedComplete,
       repo: (params = {}) => ({ owner: 'derekg1729', repo: 'cogni-git-review', ...params }),
+      log: noopLogger,
       vcs: {
         config: {
           get: async () => ({ config: null }) // Mock missing spec

@@ -1,6 +1,7 @@
 import { describe, test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import fs from 'fs';
+import { noopLogger } from '../../src/logging/logger.js';
 
 import installationReposAddedPayload from '../fixtures/installation_repositories.added.complete.json' with { type: 'json' };
 
@@ -60,6 +61,7 @@ threshold: 0.8`;
     const mockContext = {
       name: 'installation_repositories',
       payload: installationReposAddedPayload,
+      log: noopLogger,
       vcs: {
         repos: {
           getContent: async (params) => {

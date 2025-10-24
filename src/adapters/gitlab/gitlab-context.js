@@ -5,6 +5,7 @@
 import { Gitlab } from '@gitbeaker/rest';
 import { environment } from '../../env.js';
 import YAML from 'yaml';
+import { appLogger } from '../../logging/index.js';
 
 /**
  * Create GitLab client instance
@@ -261,6 +262,10 @@ export function createGitLabContext(transformedPayload) {
       }
     },
 
-    log: console // Basic logging
+    log: appLogger.child({
+      id: transformedPayload.pull_request?.id || 'unknown',
+      repo: transformedPayload.repository?.full_name,
+      route: 'gitlab_webhook'
+    })
   };
 }

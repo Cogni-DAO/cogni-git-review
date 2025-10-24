@@ -145,7 +145,7 @@ Contract tests run the entire suite in ~5 seconds vs 30+ with HTTP mocking.
 Functions now require logger parameters with `.child()` method support. Use the `noopLogger` for tests:
 
 ```javascript
-import { noopLogger } from '../../src/logging/index.js';
+import { noopLogger } from '../../src/logging/logger.js';
 
 // Function calls that need logger
 await loadSingleRule(context, options, noopLogger);

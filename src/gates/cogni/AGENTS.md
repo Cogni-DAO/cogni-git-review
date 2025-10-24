@@ -19,7 +19,8 @@ Gates are implemented by cogni-git-review. The .cogni/repo-spec.yml in a reposit
 ```javascript
 export const type = 'gate-type-name';
 
-export async function run(context, gateConfig, logger) {
+export async function run(context, gateConfig) {
+  // context.log available for structured logging
   return {
     status: 'pass'|'fail'|'neutral',
     neutral_reason?: 'error_code',
@@ -57,6 +58,7 @@ The `agents-md-sync` gate enforces documentation synchronization:
 - Uses `micromatch` library for robust glob pattern matching
 - Excludes documentation files (.md, README, CHANGELOG) from triggering violations
 - Returns neutral status on VCS API errors to avoid blocking PRs
+- Uses `context.log` for error handling and progress tracking
 
 Configuration example:
 ```yaml
@@ -82,7 +84,7 @@ The `ai-rule` gate supports dynamic AI evaluation with schema v0.3:
 - Passes complete `{context, rule}` directly to provider without extraction
 - Uses `goal-evaluations` workflow for dynamic metric evaluation
 - Workflow handles evidence gathering based on rule capabilities
-- Calls `src/ai/provider.evaluateWithWorkflow()` which returns provider-result format
+- Calls `src/ai/provider.evaluateWithWorkflow()` passing `context.log` for structured logging
 - Pass/fail based on `success_criteria` evaluation against returned metrics
 - **Code-aware capabilities**: `x_capabilities: ['diff_summary', 'file_patches']` enables file changes access
 

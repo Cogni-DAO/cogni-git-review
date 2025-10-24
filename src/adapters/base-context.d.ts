@@ -82,10 +82,6 @@ export interface BaseContext {
     [key: string]: any;
   };
 
-  // Host-specific interfaces (adapter-internal only)
-  octokit?: any; // GitHub adapter uses this internally
-  [hostSpecific: string]: any;
-
   // Runtime properties added by gate orchestrator
   pr?: {
     number: number;
@@ -124,9 +120,6 @@ export interface BaseContext {
     debug(msg: string | object, ...args: any[]): void;
     child(bindings: Record<string, any>): any;
   };
-
-  // Allow additional properties for extensibility
-  [key: string]: any;
 }
 
 /**
@@ -145,9 +138,6 @@ export abstract class HostAdapter implements BaseContext {
   idempotency_key?: string;
   reviewLimitsConfig?: Record<string, any>;
   log?: BaseContext['log'];
-
-  // Allow additional properties
-  [key: string]: any;
 }
 
 // Type helper for JSDoc annotations

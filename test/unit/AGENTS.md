@@ -21,7 +21,7 @@ Tests can access `process.env` directly (ESLint exempted) and may mock environme
 
 ## Current Test Files
 - `agents-sync.test.js` - AGENTS.md synchronization gate tests
-- `ai-provider.test.js` - AI provider contract validation with observation handling and logger parameters
+- `ai-provider.test.js` - AI provider contract validation with observation handling and noopLogger parameters
 - `ai-rule-input-validation.test.js` - AI rule input assembly and validation tests
 - `budget-calculation.test.js` - Budget calculation logic tests for review-limits integration with AI workflows
 - `check-contract.min.test.js` - Enforce github Check name follows environment-aware pattern (prod locked, others get suffix). Tests for `fail_on_error` flag behavior in `mapStatusToConclusion` function

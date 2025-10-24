@@ -7,6 +7,7 @@ import yaml from 'js-yaml';
 import { noopLogger } from '../../src/logging/logger.js';
 import { createCapturingLogger, createNoopLogger } from './mock-logger.js';
 
+
 /**
  * Create a mock context for direct handler testing (same pattern as unit tests)
  * @param {Object} options
@@ -119,12 +120,7 @@ export async function testEventHandler(options) {
       repo: payload?.repository?.name || 'test-repo',
       ...params 
     }),
-    log: {
-      info: () => {},
-      debug: () => {},
-      warn: () => {},
-      error: () => {}
-    },
+    log: noopLogger,
     vcs: {
       config: {
         get: async () => ({ config: configResponse })
@@ -204,7 +200,8 @@ export function createGateTestContext(options) {
         },
         ...vcs
       },
-      abort: new AbortController().signal
+      abort: new AbortController().signal,
+      log: logger
     },
     logger
   };
