@@ -8,7 +8,6 @@ The adapters directory implements the host abstraction architecture that enables
 **See complete design documentation:**
 - **[LOCAL_GIT_ADAPTER_DESIGN.md](./LOCAL_GIT_ADAPTER_DESIGN.md)** - Complete architecture overview, implementation order, and success criteria
 - **[CONTEXT_INTERFACE_SPEC.md](./CONTEXT_INTERFACE_SPEC.md)** - BaseContext interface definition with captured webhook fixtures  
-- **[OCTOKIT_INTERFACE_ANALYSIS.md](./OCTOKIT_INTERFACE_ANALYSIS.md)** - Analysis of how the GitHub adapter maps VCS interface to octokit internally
 - **[MINIMAL_PAYLOAD_SPEC.md](./MINIMAL_PAYLOAD_SPEC.md)** - Minimal subset of webhook payload fields required by gates
 
 ## Current Implementation Status
@@ -21,7 +20,7 @@ The adapters directory implements the host abstraction architecture that enables
 
 ### ✅ Step 2 Complete: Probot Abstraction
 - **base-app.d.ts**: CogniBaseApp interface (app.on() abstraction)
-- **base-context.d.ts**: BaseContext interface (context abstraction) 
+- **base-context.d.ts**: BaseContext interface with strict VCS abstraction (no host-specific escape hatches)
 - **../index.js**: Host-agnostic app core accepting CogniBaseApp interface
 - **../../github.js**: Legacy standalone Probot entry point
 
@@ -67,9 +66,8 @@ src/adapters/
 │   ├── local-app.js            # LocalCogniApp class (CogniBaseApp impl)
 │   └── git-utils.js            # Git CLI utility functions
 ├── MINIMAL_PAYLOAD_SPEC.md      # Essential payload fields and usage analysis
-├── LOCAL_GIT_ADAPTER_DESIGN.md # Complete design specification
-├── CONTEXT_INTERFACE_SPEC.md   # Interface definition + webhook fixtures  
-└── OCTOKIT_INTERFACE_ANALYSIS.md # Octokit method analysis + implementation strategy
+├── LOCAL_GIT_ADAPTER_DESIGN.md # Complete design specification  
+└── CONTEXT_INTERFACE_SPEC.md   # Interface definition + webhook fixtures
 ```
 
 ## Integration Points
