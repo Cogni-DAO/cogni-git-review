@@ -5,7 +5,7 @@
  * Generate CogniDAO merge-change URL for failed reviews
  * @param {Object} context - Base context with PR and spec data
  * @param {Object} runResult - Gate execution results
- * @returns {string|null} Merge-change URL or null if not a failure
+ * @returns {string|null} Merge-change URL or null if not configured or not a failure
  */
 function generateMergeChangeURL(context, runResult) {
   // Only show for failed reviews
@@ -14,19 +14,26 @@ function generateMergeChangeURL(context, runResult) {
   const pr = context.payload.pull_request;
   if (!pr) return null;
   
-  // Hardcoded for proof of concept - future: read from context.spec
+  // Read CogniDAO configuration from repo-spec
+  const cogniDAO = context.spec?.cogni_dao;
+  if (!cogniDAO?.dao_contract || !cogniDAO?.plugin_contract || !cogniDAO?.signal_contract || !cogniDAO?.chain_id) {
+    // DAO configuration incomplete - this should be reported as neutral in the calling gate
+    return null;
+  }
+  
   const params = new URLSearchParams({
-    dao: "0xF480b40bF6d6C8765AA51b7C913cecF23c79E5C6",
-    plugin: "0xDD5bB976336145E8372C10CEbf2955c878a32308",
-    signal: "0x804CB616EAddD7B6956E67B1D8b2987207160dF7",
-    chainId: "11155111",
+    dao: cogniDAO.dao_contract,
+    plugin: cogniDAO.plugin_contract,
+    signal: cogniDAO.signal_contract,
+    chainId: cogniDAO.chain_id,
     repoUrl: encodeURIComponent(pr.head.repo.html_url),
     pr: pr.number.toString(),
     action: "merge",
     target: "change"
   });
   
-  return `http://localhost:3001/merge-change?${params.toString()}`;
+  const baseUrl = cogniDAO.base_url || "http://localhost:3001";
+  return `${baseUrl}/merge-change?${params.toString()}`;
 }
 
 /**
@@ -94,7 +101,7 @@ function formatGateResults(runResult, context = null) {
   // Add merge-change URL at top for failed reviews
   const mergeChangeURL = context ? generateMergeChangeURL(context, runResult) : null;
   if (mergeChangeURL) {
-    text += `🗳️ **[Propose Vote to Merge](${mergeChangeURL})**\n\n`;
+    text += `🗳️ **<a href="${mergeChangeURL}" target="_blank">Propose Vote to Merge</a>**\n\n`;
   }
   
   // Header with verdict, counts, duration
