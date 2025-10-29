@@ -4,6 +4,7 @@ Shared utilities for Playwright E2E tests supporting both GitHub and GitLab prov
 
 ## Key Files
 - `test-config.js` - Environment validation and configuration exports for GitLab tests
+- `github-e2e-helper.js` - Shared utilities for GitHub E2E tests with centralized config validation and PR management
 
 ## Configuration
 
