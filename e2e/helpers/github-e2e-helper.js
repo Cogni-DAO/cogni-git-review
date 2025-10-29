@@ -21,7 +21,7 @@ function sleep(ms) {
 export const githubTestConfig = {
   // GitHub E2E Configuration (from environment)
   GITHUB_TOKEN: process.env.E2E_GITHUB_PAT,
-  E2E_GITHUB_REPO: process.env.E2E_GITHUB_REPO || 'derekg1729/test-repo',
+  E2E_GITHUB_REPO: process.env.E2E_GITHUB_REPO || 'Cogni-DAO/test-repo',
   
   // Expected check name from constants
   EXPECTED_CHECK_NAME: PR_REVIEW_NAME,
@@ -36,7 +36,14 @@ export const githubTestConfig = {
       throw new Error('Missing required GitHub E2E environment variable: E2E_GITHUB_PAT');
     }
     
-    console.log('✅ gh CLI available');
+    // Check gh CLI is available (explicit check like original)
+    try {
+      execSync('gh --version', { stdio: 'ignore' });
+      console.log('✅ gh CLI available');
+    } catch (error) {
+      throw new Error('gh CLI not available - install GitHub CLI: https://cli.github.com/');
+    }
+    
     console.log('✅ GitHub E2E Setup Complete');
     console.log(`- Test Repo: ${this.E2E_GITHUB_REPO}`);
     console.log(`- Expected Check: ${this.EXPECTED_CHECK_NAME}`);

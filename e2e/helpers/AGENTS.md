@@ -16,6 +16,11 @@ GitHub tests use environment variables directly in test files:
 - `TIMEOUT_SEC` - Webhook processing timeout (default: 480 seconds)
 - `SLEEP_MS` - Poll interval for check status (default: 5000ms)
 
+**Prerequisites for GitHub E2E Tests:**
+- GitHub CLI (`gh`) installed and available in PATH
+- Valid GitHub PAT with repo access
+- Target repository accessible for PR creation/deletion
+
 ### GitLab E2E Environment Variables
 GitLab tests validate configuration through `test-config.js`:
 - `E2E_GITLAB_PAT` - GitLab PAT for API access
