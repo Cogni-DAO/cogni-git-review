@@ -19,6 +19,13 @@ required_status_contexts:
 # true: errors/timeouts result in 'failure' conclusion (blocks merge)
 fail_on_error: false
 
+cogni_dao:
+  dao_contract: "DAO_ADDRESS_PLACEHOLDER"
+  plugin_contract: "PLUGIN_CONTRACT_PLACEHOLDER" 
+  signal_contract: "SIGNAL_CONTRACT_PLACEHOLDER"
+  chain_id: "CHAIN_ID_PLACEHOLDER"
+  base_url: "http://localhost:3001"
+
 # Gates run in the order they appear below.
 gates:
   # Built-in gates (run directly in bot process)

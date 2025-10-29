@@ -60,7 +60,7 @@ export default (app) => {
 
   async function createCompletedCheck(context, runResult, headSha, startTime) {
     const conclusion = mapStatusToConclusion(runResult.overall_status, context.spec.fail_on_error);
-    const { summary, text } = renderCheckSummary(runResult);
+    const { summary, text } = renderCheckSummary(runResult, context);
 
     const checkResult = await context.vcs.checks.create(context.repo({
       name: PR_REVIEW_NAME,

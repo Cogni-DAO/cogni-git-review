@@ -4,6 +4,7 @@ Shared utilities for Playwright E2E tests supporting both GitHub and GitLab prov
 
 ## Key Files
 - `test-config.js` - Environment validation and configuration exports for GitLab tests
+- `github-e2e-helper.js` - Shared utilities for GitHub E2E tests with centralized config validation and PR management
 
 ## Configuration
 
@@ -14,6 +15,11 @@ GitHub tests use environment variables directly in test files:
 - `APP_ENV` - Environment name for check name computation
 - `TIMEOUT_SEC` - Webhook processing timeout (default: 480 seconds)
 - `SLEEP_MS` - Poll interval for check status (default: 5000ms)
+
+**Prerequisites for GitHub E2E Tests:**
+- GitHub CLI (`gh`) installed and available in PATH
+- Valid GitHub PAT with repo access
+- Target repository accessible for PR creation/deletion
 
 ### GitLab E2E Environment Variables
 GitLab tests validate configuration through `test-config.js`:
