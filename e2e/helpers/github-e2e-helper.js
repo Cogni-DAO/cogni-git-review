@@ -40,7 +40,7 @@ export const githubTestConfig = {
     try {
       execSync('gh --version', { stdio: 'ignore' });
       console.log('✅ gh CLI available');
-    } catch (error) {
+    } catch {
       throw new Error('gh CLI not available - install GitHub CLI: https://cli.github.com/');
     }
     
