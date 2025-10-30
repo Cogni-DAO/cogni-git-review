@@ -62,10 +62,11 @@ src/
 - **summary-adapter.js**: Check run summary formatting with DAO integration
   - `renderCheckSummary()` - Main check summary renderer using `overall_status` for consistency
   - `formatGateResults()` - Detailed per-gate markdown sections with model info for AI rules
-  - `generateMergeChangeURL()` - CogniDAO vote proposal URL generation for failed reviews
+  - `generateMergeChangeURL()` - CogniDAO vote proposal URL generation for failed reviews with automatic https:// protocol prepending
   - `formatRunSummaryJSON()` - Debug JSON output
   - **DAO Configuration**: Requires complete DAO spec (`dao_contract`, `plugin_contract`, `signal_contract`, `chain_id`) from repo-spec
   - **Vote Proposal Links**: Generates merge-change URLs with target="_blank" for failed reviews when DAO is configured
+  - **Protocol Handling**: Auto-prepends https:// to base_url values missing protocol scheme
   - **AI rule formatting**: Displays "metric: value operator threshold" with mathematical symbols (>=, <=, >, <, =) from structured data
   - **Success criteria support**: Handles both `require` and `any_of` criteria types for complete rule metric display
   - **Status consistency**: Both summary title and verdict use `runResult.overall_status` from gate orchestrator
