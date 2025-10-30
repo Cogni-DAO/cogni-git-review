@@ -86,8 +86,8 @@ Timestamp: ${timestamp}`,
       expect(repoUrl).toContain('github.com');
       expect(repoUrl).toContain('test-repo');
       
-      // 5. Validate base URL
-      expect(urlObject.origin).toBe('http://localhost:3001');
+      // 5. Validate base URL (now uses https://proposal.cognidao.org)
+      expect(urlObject.origin).toBe('https://proposal.cognidao.org');
       
       console.log('✅ All vote proposal URL parameters validated successfully');
       console.log(`🎉 SUCCESS: Failing E2E with vote link validation completed`);

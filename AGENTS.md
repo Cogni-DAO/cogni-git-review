@@ -233,7 +233,7 @@ To enable "Propose Vote to Merge" links for failed PR reviews:
      plugin_contract: "0x5678..."   # Plugin contract address  
      signal_contract: "0x9abc..."   # Signal contract address
      chain_id: "11155111"           # Chain ID (e.g., Sepolia testnet)
-     base_url: "http://localhost:3001"  # App URL for cogni-proposal-launcher
+     base_url: "https://proposal.cognidao.org"  # Auto-prepends https:// if missing
    ```
 
 2. **Requirements**: All DAO configuration fields must be present - missing any field disables vote links
@@ -247,7 +247,7 @@ To enable "Propose Vote to Merge" links for failed PR reviews:
 
 **Example Vote Proposal URL:**
 ```
-http://localhost:3001/merge-change?dao=0xF480b40bF6d6C8765AA51b7C913cecF23c79E5C6&plugin=0xDD5bB976336145E8372C10CEbf2955c878a32308&signal=0x804CB616EAddD7B6956E67B1D8b2987207160dF7&chainId=11155111&repoUrl=https%3A//github.com/Cogni-DAO/preview-test-repo&pr=56&action=merge&target=change
+https://proposal.cognidao.org/merge-change?dao=0xF480b40bF6d6C8765AA51b7C913cecF23c79E5C6&plugin=0xDD5bB976336145E8372C10CEbf2955c878a32308&signal=0x804CB616EAddD7B6956E67B1D8b2987207160dF7&chainId=11155111&repoUrl=https%3A//github.com/Cogni-DAO/preview-test-repo&pr=56&action=merge&target=change
 ```
 
 ### Governance Flow

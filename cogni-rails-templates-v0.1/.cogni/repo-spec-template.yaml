@@ -24,7 +24,7 @@ cogni_dao:
   plugin_contract: "PLUGIN_CONTRACT_PLACEHOLDER" 
   signal_contract: "SIGNAL_CONTRACT_PLACEHOLDER"
   chain_id: "CHAIN_ID_PLACEHOLDER"
-  base_url: "http://localhost:3001"
+  base_url: "https://proposal.cognidao.org"  # Auto-prepends https:// if missing
 
 # Gates run in the order they appear below.
 gates:
