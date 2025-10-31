@@ -32,7 +32,13 @@ function generateMergeChangeURL(context, runResult) {
     target: "change"
   });
   
-  const baseUrl = cogniDAO.base_url || "http://localhost:3001";
+  let baseUrl = cogniDAO.base_url || "http://localhost:3001";
+  
+  // Ensure baseUrl has protocol scheme to prevent relative URL issues
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  
   return `${baseUrl}/merge-change?${params.toString()}`;
 }
 

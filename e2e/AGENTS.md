@@ -5,11 +5,14 @@
 ## Purpose
 - GitHub PR and GitLab MR webhook integration testing
 - PR/MR creation → Cogni processing → check/status validation
+- DAO vote proposal link validation for failed reviews
 - Unified test runner replacing legacy CLI-based implementation
 
 ## Key Files
 - `tests/` - GitHub and GitLab E2E test specifications
-- `helpers/` - Shared test configuration and utilities  
+  - `github-pr-failing-vote-link.spec.js` - DAO vote proposal URL validation for failing PRs
+- `helpers/` - Shared test configuration and utilities
+  - `github-e2e-helper.js` - GitHub test utilities: createTestPR, waitForCogniCheck, cleanupTestResources
 - `artifacts/` - Test reports, videos, and traces (gitignored)
 
 ## Test Configuration
