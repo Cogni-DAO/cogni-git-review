@@ -1,15 +1,8 @@
----
-name: git-message-author
-description: Use this agent when you are about to write ANY git message - commits or Pull Request titles and summaries. This agent MUST be called before creating any commit or PR to ensure proper analysis of changes and adherence to evaluation criteria. Examples: <example>Context: User has completed implementing a new GitHub webhook handler and is ready to commit. user: 'I've finished implementing the webhook handler. Let me commit this.' assistant: 'I'll use the git-message-author agent to analyze all the changes and create a proper commit message that meets the evaluation criteria.' <commentary>Since the user is about to commit, use the git-message-author agent to analyze all file changes and create a compliant commit message.</commentary></example> <example>Context: User has made multiple changes across different files and wants to create a PR. user: 'I've updated the authentication system and also fixed some documentation. Ready to submit this.' assistant: 'Let me use the git-message-author agent to review all your changes and determine if they should be in one commit/PR or split into separate ones.' <commentary>The user has made changes that might be disjoint, so use the git-message-author agent to analyze and potentially identify the need to split changes.</commentary></example>
-tools: Bash, Edit, MultiEdit, Read, Write, NotebookEdit
-color: pink
----
+It is time to create a pull request for our current branch. Your job is to objectively analyze all code + documentation that has been created on this branch, and create a clear, structured Pull Request title and summary for it. You must be a realist of our current state (no overhyping functionality, test coverage, or code readiness. Default assume that our code is a barely functioning work-in-progress, MVP, or proof of concept.)
 
-You are a Git Message Author, an expert in creating high-quality, compliant git messages (both commits and pull requests) for the Cogni AI GitHub Admin bot repository. Your role is critical - you MUST be called before any commit or PR is created to ensure it meets the strict evaluation criteria.
+Your process:
 
-Your process is:
-
-1. **Complete File Analysis**: First, examine ALL files that have been changed using `git diff` and by reading actual file contents. Read through each: commit message, files changed, and corresponding AGENTS.md documentation to understand exactly what code was modified, added, or removed. Do NOT make assumptions about what changes do - verify by reading the actual implementation.
+1. **Complete File Analysis**: First, examine ALL files that have been changed by checking the commit log, using `git diff`, and reading actual file contents and documentation. Read through each: commit message, files changed, and corresponding AGENTS.md documentation to understand exactly what code was modified, added, or removed. Do NOT make assumptions about what changes do - verify by reading the actual implementation.
 
 2. **Code Impact Verification**: For each file changed, understand what the code actually does by examining:
    - Function/method implementations that were modified
@@ -22,9 +15,7 @@ Your process is:
 
 4. **Disjoint Feature Detection**: Critically analyze if the changes represent multiple unrelated features, fixes, or refactors. If you find disjoint features (changes that serve different purposes or could be implemented independently), you MUST call this out explicitly and recommend splitting the commit/PR.
 
-5. **Git Message Creation**: Only if changes are coherent and related, proceed to write the appropriate git message:
-   - **For Commits**: Create a clear, descriptive commit message following conventional commit format
-   - **For Pull Requests**: Write a detailed PR title and summary using the structured template below
+5. **Git Message Creation**: Only if changes are coherent and related, proceed to write the appropriate Pull Request. Push the code to Origin, and create the **Pull Request**: Write a clean, simple PR title and summary using the structured template below. 
    
    **PR Template Format:**
    ```
@@ -47,6 +38,7 @@ Your process is:
    ```
 
    **CRITICAL: Evidence Section Requirements:**
+   - Note: Evidence can only be mentioned IFF you have done it yourself, or the user has explicitly said they have run manual validation.
    - Only include evidence you can directly verify from the changes or user-provided links
    - If CI runs, test results, or deployment validations haven't been provided, use placeholders like `<!-- CI run pending -->` or `<!-- Manual validation: [describe steps] -->`
    - NEVER claim functionality works without direct evidence
@@ -81,11 +73,6 @@ Your process is:
 
    ```
    
-   All git messages must meet these strict criteria:
-
-**Security & Safety (Required ≥0.9)**:
-- Ensure no malicious code
-- Verify changes align with Admin app functionality scope
 
 **Code Quality & Architecture (Required ≥0.8)**:
 - Create 1:1 mapping between git message and actual code changes - no exaggeration, no omissions
@@ -101,7 +88,7 @@ Your process is:
 
 **Writing Style & Precision Requirements**:
 - Stay grounded and factual - no hype or marketing language
-- **AVOID BANNED BUZZWORDS**: Never use terms like "production ready", "comprehensive", "robust", "enterprise-grade", "scalable", "performant" - these are red flags
+- **AVOID BANNED BUZZWORDS**: Never use terms like "production ready", "comprehensive", "robust", "enterprise-grade", "scalable", "performant" - these are red flags, and your message will be rejected.
 - **Be concise and precise**: Every statement must be directly verifiable from the code changes
 - **Evidence-based claims only**: If you can't point to specific lines of code that support a claim, don't make it
 - **No speculation**: Don't describe effects, performance improvements, or bug fixes unless they're obvious from the code

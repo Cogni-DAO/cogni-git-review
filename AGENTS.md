@@ -42,7 +42,9 @@ All webhook handlers receive a `context` object containing:
 - **context.payload**: GitHub webhook payload (varies by event type)  
 - **context.vcs**: Host-agnostic VCS interface (abstracts GitHub/GitLab/local git)
 - **context.repo()**: Method returning `{ owner, repo }` from payload
-- **context.log**: Structured logger
+- **context.log**: Structured logger with child bindings
+
+**Logging Architecture**: Adapters initialize `context.log` with structured bindings (id, repo, route) at the framework boundary. Components use `context.log.child()` to add module-specific bindings, maintaining structured context throughout the execution chain.
 
 **VCS Interface**: The `context.vcs.*` interface provides host-agnostic access to version control operations. The GitHub adapter internally maps these calls to `context.octokit.*`, while future adapters will implement the same interface for other hosts.
 
@@ -94,7 +96,7 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 
 ## Repository Structure
 ```
-├── index.js                    # Host-agnostic app core (accepts CogniBaseApp interface)
+├── index.js                    # Host-agnostic app core with DAO integration support (passes context object with data relevant to each run)
 ├── github.js                   # GitHub/Probot standalone entry point (legacy)
 ├── src/
 │   ├── gateway.js             # Multi-provider gateway server
@@ -108,8 +110,9 @@ The `reviewLimitsConfig` property provides review-limits gate configuration to A
 │       ├── cogni/             # Built-in quality gates (→ AGENTS.md)
 ├── bin/                       # CLI executables directory 
 ├── e2e/                       # Unified Playwright E2E testing framework
-│   ├── tests/                 # GitHub and GitLab E2E test specifications 
-│   ├── helpers/               # Shared test configuration and utilities
+│   ├── tests/                 # GitHub and GitLab E2E test specifications (→ AGENTS.md)
+│   ├── helpers/               # Shared test configuration and utilities (→ AGENTS.md)
+│   │   └── github-e2e-helper.js # GitHub test utilities: createTestPR, waitForCogniCheck, cleanupTestResources
 │   └── artifacts/             # Test reports, videos, and traces (gitignored)
 ├── playwright.config.js       # Unified Playwright E2E test configuration with E2E_GITLAB_DEPLOYMENT_URL baseURL
 ├── test/                      # Test suites and fixtures (→ AGENTS.md)
@@ -217,6 +220,42 @@ Direct `process.env` access allowed only in:
 - `/src/env.js` - Environment definition file
 - `/lib/e2e-runner.js` and `/bin/e2e-runner.js` - E2E test infrastructure
 - `/test/**/*.js` - Test files may need direct environment access
+
+## CogniDAO Integration
+
+### Enabling Vote Proposal Links
+To enable "Propose Vote to Merge" links for failed PR reviews:
+
+1. **Configure Repository Spec**: Add `cogni_dao` section to `.cogni/repo-spec.yaml`:
+   ```yaml
+   cogni_dao:
+     dao_contract: "0x1234..."      # DAO contract address
+     plugin_contract: "0x5678..."   # Plugin contract address  
+     signal_contract: "0x9abc..."   # Signal contract address
+     chain_id: "11155111"           # Chain ID (e.g., Sepolia testnet)
+     base_url: "https://proposal.cognidao.org"  # Auto-prepends https:// if missing
+   ```
+
+2. **Requirements**: All DAO configuration fields must be present - missing any field disables vote links
+
+3. **Behavior**: Vote proposal links appear only for failed reviews (`overall_status: 'fail'`) and open in new tabs
+
+**Prerequisites for Vote Proposal Service:**
+- Vote proposal service running at configured `base_url` (see [cogni-proposal-launcher](https://github.com/Cogni-DAO/cogni-proposal-launcher) for self-hosted deployment)
+- Service must handle `/merge-change` endpoint with blockchain parameters
+- Repository must have complete DAO configuration in repo-spec
+
+**Example Vote Proposal URL:**
+```
+https://proposal.cognidao.org/merge-change?dao=0xF480b40bF6d6C8765AA51b7C913cecF23c79E5C6&plugin=0xDD5bB976336145E8372C10CEbf2955c878a32308&signal=0x804CB616EAddD7B6956E67B1D8b2987207160dF7&chainId=11155111&repoUrl=https%3A//github.com/Cogni-DAO/preview-test-repo&pr=56&action=merge&target=change
+```
+
+### Governance Flow
+1. **PR fails gates** → `overall_status: 'fail'` 
+2. **Summary adapter checks DAO config** → `generateMergeChangeURL()` validates complete DAO configuration
+3. **Vote link generated** → URL includes blockchain parameters and PR context
+4. **Link appears in check output** → "🗳️ Propose Vote to Merge" with `target="_blank"`
+5. **User clicks link** → Opens vote proposal service with pre-filled governance proposal
 
 ## Development
 

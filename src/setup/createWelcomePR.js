@@ -71,6 +71,7 @@ function customizeCodeowners(templateContent, repoOwner) {
  */
 export async function createWelcomePR(context, repoInfo) {
   const { owner, repo } = repoInfo;
+  const log = context.log.child({ module: 'setup/createWelcomePR' });
   
   try {
     // Check if repo-spec already exists
@@ -80,7 +81,11 @@ export async function createWelcomePR(context, repoInfo) {
         repo,
         path: '.cogni/repo-spec.yaml'
       });
-      console.log(`📦 Repo-spec already exists in ${owner}/${repo}, skipping welcome PR`);
+      log.info('Repo-spec already exists, skipping welcome PR', {
+        owner,
+        repo,
+        path: '.cogni/repo-spec.yaml'
+      });
       return;
     } catch (error) {
       if (error.status !== 404) throw error;
@@ -100,7 +105,12 @@ export async function createWelcomePR(context, repoInfo) {
     );
     
     if (welcomePR) {
-      console.log(`📦 Welcome PR already exists in ${owner}/${repo}: #${welcomePR.number}`);
+      log.info('Welcome PR already exists', {
+        owner,
+        repo,
+        pr_number: welcomePR.number,
+        pr_title: welcomePR.title
+      });
       return;
     }
 
@@ -260,10 +270,21 @@ export async function createWelcomePR(context, repoInfo) {
       labels: [WELCOME_LABEL]
     });
 
-    console.log(`📦 Welcome PR created for ${owner}/${repo}: #${pr.number}`);
+    log.info('Welcome PR created successfully', {
+      owner,
+      repo,
+      pr_number: pr.number,
+      pr_title: pr.title,
+      branch: branchName
+    });
     
   } catch (error) {
-    console.error(`📦 Failed to create welcome PR for ${owner}/${repo}:`, error);
+    log.error('Failed to create welcome PR', {
+      owner,
+      repo,
+      error: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 }

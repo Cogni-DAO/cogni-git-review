@@ -17,9 +17,9 @@ GitLab adapter implements BaseContext interface for GitLab webhooks, enabling th
 1. Gateway captures shared handlers at boot via `runCogniApp(handlerCapture)`
 2. GitLab router validates webhook token
 3. Transforms GitLab payload to GitHub-compatible structure
-4. Creates GitLab context implementing BaseContext
-5. Executes appropriate shared handler
-6. Returns proper HTTP status codes (200 success, 202 unsupported, 401 unauthorized, 500 error)
+4. Creates GitLab context implementing BaseContext with structured logger
+6. Executes appropriate shared handler
+7. Returns proper HTTP status codes (200 success, 202 unsupported, 401 unauthorized, 500 error)
 
 ### Event Mapping
 - GitLab `merge_request` events → `pull_request.*` handlers
@@ -42,7 +42,7 @@ The `payload-transform.js` module maps GitLab webhook fields to GitHub-compatibl
 ## VCS Interface Status
 
 ### ✅ Fully Implemented and Working
-- ✅ Basic context structure with `payload`, `repo()`, and `log`
+- ✅ Basic context structure with `payload`, `repo()`, and `log` (set by router)
 - ✅ GitLab API authentication via GITLAB_PAT + @gitbeaker/rest client
 - ✅ **Complete VCS interface methods implemented and tested**:
   - `vcs.config.get` - Reads and parses YAML from GitLab API using HEAD ref

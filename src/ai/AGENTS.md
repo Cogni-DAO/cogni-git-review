@@ -19,12 +19,12 @@ Generic workflow routing interface with automatic Langfuse tracing:
 const result = await provider.evaluateWithWorkflow({
   workflowId: 'goal-evaluations',
   workflowInput: {
-    context: probotContext,  // Full Probot context object
+    context: probotContext,  // Full Probot context object with context.log
     rule: ruleObject         // Complete rule configuration
   }
 }, {
   timeoutMs: 110000
-}, logger);  // Logger parameter for structured logging
+}, context.log);  // Logger from context for structured logging
 
 // Returns: { metrics: { "metric-id": {value: 0.9, observations: [...]} }, summary: "...", provenance: {} }
 ```
@@ -32,8 +32,9 @@ const result = await provider.evaluateWithWorkflow({
 **Key Design Principles**:
 - **No data extraction**: Provider passes input directly to workflows
 - **Workflow-agnostic**: No knowledge of PR, rule, or domain concepts
-- **Full context preservation**: Complete Probot context available to workflows
+- **Full context preservation**: Complete Probot context with context.log available to workflows
 - **External endpoint ready**: Simple JSON serializable interface
+- **Context-based logging**: Workflows access logger via `context.log` from the passed context object
 
 **Observability**: All AI calls automatically traced to Langfuse when configured through the centralized environment system. The `environment.langfuse` object provides enabled status and configuration. Traces tagged with environment based on `environment.APP_ENV`.
 

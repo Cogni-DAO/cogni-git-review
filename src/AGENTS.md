@@ -29,6 +29,7 @@ src/
   - Health check at `/api/v1/health` with handler inventory
   - Auto-launches smee proxy clients in dev mode when `WEBHOOK_PROXY_URL_GITHUB` or `WEBHOOK_PROXY_URL_GITLAB` are set
   - Handles private key base64 decoding for Probot integration
+  - Uses centralized `appLogger` from logging system for all gateway operations
 
 ### Environment Management
 - **env.js**: Centralized environment configuration
@@ -58,10 +59,14 @@ src/
   - **AI rule display**: Uses structured format (`gate.providerResult.metrics` + `gate.rule.success_criteria`) with fallback to legacy `stats`
   - **Success criteria support**: Handles both `require` and `any_of` criteria types for comprehensive rule metric display
   - **Verdict logic**: Uses `runResult.overall_status` directly instead of recalculating from gate counts
-- **summary-adapter.js**: Check run summary formatting
+- **summary-adapter.js**: Check run summary formatting with DAO integration
   - `renderCheckSummary()` - Main check summary renderer using `overall_status` for consistency
   - `formatGateResults()` - Detailed per-gate markdown sections with model info for AI rules
+  - `generateMergeChangeURL()` - CogniDAO vote proposal URL generation for failed reviews with automatic https:// protocol prepending
   - `formatRunSummaryJSON()` - Debug JSON output
+  - **DAO Configuration**: Requires complete DAO spec (`dao_contract`, `plugin_contract`, `signal_contract`, `chain_id`) from repo-spec
+  - **Vote Proposal Links**: Generates merge-change URLs with target="_blank" for failed reviews when DAO is configured
+  - **Protocol Handling**: Auto-prepends https:// to base_url values missing protocol scheme
   - **AI rule formatting**: Displays "metric: value operator threshold" with mathematical symbols (>=, <=, >, <, =) from structured data
   - **Success criteria support**: Handles both `require` and `any_of` criteria types for complete rule metric display
   - **Status consistency**: Both summary title and verdict use `runResult.overall_status` from gate orchestrator

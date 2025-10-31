@@ -10,12 +10,11 @@ import { runConfiguredGates } from './run-configured.js';
  * @param {import('../adapters/base-context.d.ts').BaseContext} context - Base context interface
  * @param {object} pr - Pull request object from webhook  
  * @param {object} spec - Full repository specification
- * @param {object} logger - Logger instance from caller
  * @returns {Promise<{overall_status: string, gates: Array, duration_ms: number}>}
  */
 
 // No global timeout - gates handle their own timeouts individually
-export async function runAllGates(context, pr, spec, logger) {
+export async function runAllGates(context, pr, spec) {
   const started = Date.now();
   
   // Add execution metadata to context
@@ -49,15 +48,15 @@ export async function runAllGates(context, pr, spec, logger) {
 
   try {
     // Create module-specific logger
-    const log = logger.child({ module: 'gate-orchestrator' });
+    context.log = context.log.child({ module: 'gates' });
     
     // Log execution plan
     const expectedGateCount = spec.gates?.length || 0;
     const gateCount = expectedGateCount;
-    log.info({ gate_count: gateCount }, 'Starting gate execution');
+    context.log.info({ gate_count: gateCount }, 'Starting gate execution');
 
     // 1) Run all configured gates in spec order
-    const launcherResult = await runConfiguredGates({ context, pr, spec, logger: log });
+    const launcherResult = await runConfiguredGates({ context, pr, spec });
     const allGates = launcherResult?.results || [];
     
     // Detect partial execution 
@@ -102,7 +101,7 @@ export async function runAllGates(context, pr, spec, logger) {
     }
     
     // Log execution results
-    log.info({
+    context.log.info({
       ...summary,
       overall_status,
       conclusion_reason
@@ -117,8 +116,7 @@ export async function runAllGates(context, pr, spec, logger) {
     };
 
   } catch (error) {
-    const log = logger.child({ module: 'gate-orchestrator' });
-    log.error({ err: error }, 'Gate orchestration failed');
+    context.log.error({ err: error }, 'Gate orchestration failed');
     
     // Return neutral with internal error
     return {

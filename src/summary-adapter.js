@@ -2,6 +2,47 @@
 // Summary formatting functions extracted from index.js
 
 /**
+ * Generate CogniDAO merge-change URL for failed reviews
+ * @param {Object} context - Base context with PR and spec data
+ * @param {Object} runResult - Gate execution results
+ * @returns {string|null} Merge-change URL or null if not configured or not a failure
+ */
+function generateMergeChangeURL(context, runResult) {
+  // Only show for failed reviews
+  if (runResult.overall_status !== 'fail') return null;
+  
+  const pr = context.payload.pull_request;
+  if (!pr) return null;
+  
+  // Read CogniDAO configuration from repo-spec
+  const cogniDAO = context.spec?.cogni_dao;
+  if (!cogniDAO?.dao_contract || !cogniDAO?.plugin_contract || !cogniDAO?.signal_contract || !cogniDAO?.chain_id) {
+    // DAO configuration incomplete - this should be reported as neutral in the calling gate
+    return null;
+  }
+  
+  const params = new URLSearchParams({
+    dao: cogniDAO.dao_contract,
+    plugin: cogniDAO.plugin_contract,
+    signal: cogniDAO.signal_contract,
+    chainId: cogniDAO.chain_id,
+    repoUrl: encodeURIComponent(pr.head.repo.html_url),
+    pr: pr.number.toString(),
+    action: "merge",
+    target: "change"
+  });
+  
+  let baseUrl = cogniDAO.base_url || "http://localhost:3001";
+  
+  // Ensure baseUrl has protocol scheme to prevent relative URL issues
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  
+  return `${baseUrl}/merge-change?${params.toString()}`;
+}
+
+/**
  * Debug function: Format run result as JSON
  * Future: add git gist url link with JSON output for Agents
  */
@@ -26,8 +67,10 @@ function formatRunSummaryJSON(runResult) {
 
 /**
  * Format gate results into detailed per-gate markdown report
+ * @param {Object} runResult - Gate execution results
+ * @param {Object} context - Base context with PR and spec data (optional)
  */
-function formatGateResults(runResult) {
+function formatGateResults(runResult, context = null) {
   const gates = Array.isArray(runResult?.gates) ? runResult.gates : [];
   
   // Group gates by status and sort alphabetically within groups
@@ -60,6 +103,12 @@ function formatGateResults(runResult) {
   
   // Generate detailed text
   let text = '';
+  
+  // Add merge-change URL at top for failed reviews
+  const mergeChangeURL = context ? generateMergeChangeURL(context, runResult) : null;
+  if (mergeChangeURL) {
+    text += `🗳️ **<a href="${mergeChangeURL}" target="_blank">Propose Vote to Merge</a>**\n\n`;
+  }
   
   // Header with verdict, counts, duration
   const verdict = runResult.overall_status === 'fail' ? '❌ FAIL' : 
