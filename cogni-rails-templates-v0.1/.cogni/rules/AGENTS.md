@@ -6,7 +6,6 @@ See [AI Rule Gate schema documentation](../../../src/gates/cogni/AGENTS.md#ai-ru
 
 ## Rule Files
 - `ai-rule-template.yaml` - Basic template for creating new rules
-- `avoid-duplication.yaml` - Anti-duplication enforcement 
 - `pr-syntropy-coherence.yaml` - PR coherence validation
 - `patterns-and-docs.yaml` - Pattern adherence checking
 - `YOUR-repo-goal-alignment.yaml` - Repo-specific goal alignment template (customize for your repo) 
