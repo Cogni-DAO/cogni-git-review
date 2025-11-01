@@ -199,11 +199,6 @@ export async function createWelcomePR(context, repoInfo) {
         message: 'feat(cogni): add AI rule template'
       },
       {
-        source: '.cogni/rules/avoid-duplication.yaml',
-        dest: '.cogni/rules/avoid-duplication.yaml',
-        message: 'feat(cogni): add avoid duplication rule'
-      },
-      {
         source: '.cogni/rules/pr-syntropy-coherence.yaml',
         dest: '.cogni/rules/pr-syntropy-coherence.yaml',
         message: 'feat(cogni): add PR syntropy coherence rule'
