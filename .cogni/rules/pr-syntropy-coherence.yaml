@@ -10,11 +10,6 @@ evaluations:
       toward one goal rather than mixing unrelated fixes, features, or refactors.
   - non-malicious: This PR contains no malicious code. 
 
-# Code-aware capabilities (vendor-prefixed for non-breaking compatibility)
-x_capabilities:
-  - diff_summary      # Enable enhanced diff summary with file stats
-  - file_patches      # Include actual patch content for analysis
-
 success_criteria:
   neutral_on_missing_metrics: true
   require:

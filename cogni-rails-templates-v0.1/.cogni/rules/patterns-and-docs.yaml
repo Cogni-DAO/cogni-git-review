@@ -12,14 +12,6 @@ evaluations:
   - documents-new-patterns: >
       If this PR introduces a new pattern or approach not seen before in the codebase,
       it documents the pattern clearly so other contributors can follow it.
-  
-  # Openness - Exchange Health
-  - accessible-docs: Documentation changes make the system more accessible to new contributors
-  - healthy-deps: Any external dependencies added are clearly documented
-
-x_capabilities:
-  - diff_summary
-  - file_patches
 
 success_criteria:
   neutral_on_missing_metrics: true

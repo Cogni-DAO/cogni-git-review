@@ -199,11 +199,6 @@ export async function createWelcomePR(context, repoInfo) {
         message: 'feat(cogni): add AI rule template'
       },
       {
-        source: '.cogni/rules/avoid-duplication.yaml',
-        dest: '.cogni/rules/avoid-duplication.yaml',
-        message: 'feat(cogni): add avoid duplication rule'
-      },
-      {
         source: '.cogni/rules/pr-syntropy-coherence.yaml',
         dest: '.cogni/rules/pr-syntropy-coherence.yaml',
         message: 'feat(cogni): add PR syntropy coherence rule'
@@ -242,6 +237,66 @@ export async function createWelcomePR(context, repoInfo) {
         source: 'repolinter.json',
         dest: 'repolinter.json',
         message: 'feat(repolinter): add repository policy enforcement'
+      },
+      {
+        source: 'CLAUDE.md',
+        dest: 'CLAUDE.md',
+        message: 'feat(claude): add Claude AI agent instructions'
+      },
+      {
+        source: 'AGENTS.md',
+        dest: 'AGENTS.md',
+        message: 'feat(cogni): add agent team documentation'
+      },
+      {
+        source: '.claude/commands/document.md',
+        dest: '.claude/commands/document.md',
+        message: 'feat(claude): add documentation command'
+      },
+      {
+        source: '.claude/commands/eval.md',
+        dest: '.claude/commands/eval.md',
+        message: 'feat(claude): add evaluation command'
+      },
+      {
+        source: '.claude/commands/pull-request.md',
+        dest: '.claude/commands/pull-request.md',
+        message: 'feat(claude): add pull-request command'
+      },
+      {
+        source: '.claude/commands/commit.md',
+        dest: '.claude/commands/commit.md',
+        message: 'feat(claude): add commit command'
+      },
+      {
+        source: '.claude/commands/test.md',
+        dest: '.claude/commands/test.md',
+        message: 'feat(claude): add test command'
+      },
+      {
+        source: '.cursor/commands/document.md',
+        dest: '.cursor/commands/document.md',
+        message: 'feat(cursor): add documentation command'
+      },
+      {
+        source: '.cursor/commands/eval.md',
+        dest: '.cursor/commands/eval.md',
+        message: 'feat(cursor): add evaluation command'
+      },
+      {
+        source: '.cursor/commands/pull-request.md',
+        dest: '.cursor/commands/pull-request.md',
+        message: 'feat(cursor): add pull-request command'
+      },
+      {
+        source: '.cursor/commands/commit.md',
+        dest: '.cursor/commands/commit.md',
+        message: 'feat(cursor): add commit command'
+      },
+      {
+        source: '.cursor/commands/test.md',
+        dest: '.cursor/commands/test.md',
+        message: 'feat(cursor): add test command'
       }
     ];
 
@@ -329,6 +384,9 @@ JSON`;
   - \`.github/workflows/\` CI pipeline templates (ci.yaml, security.yaml)
   - \`repolinter.json\` configuration for repository policy enforcement
   - \`.github/CODEOWNERS\` with repository owner ${owner} as default reviewer
+  - \`CLAUDE.md\` and \`AGENTS.md\` for AI agent guidance and team documentation
+  - \`.claude/commands/\` directory with Claude AI agent command templates
+  - \`.cursor/commands/\` directory with Cursor AI editor command templates
 
 Note: Cogni Git Review will only load these files from the default branch.
 
