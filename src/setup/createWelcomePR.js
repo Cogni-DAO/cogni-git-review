@@ -242,6 +242,41 @@ export async function createWelcomePR(context, repoInfo) {
         source: 'repolinter.json',
         dest: 'repolinter.json',
         message: 'feat(repolinter): add repository policy enforcement'
+      },
+      {
+        source: 'CLAUDE.md',
+        dest: 'CLAUDE.md',
+        message: 'feat(claude): add Claude AI agent instructions'
+      },
+      {
+        source: 'AGENTS.md',
+        dest: 'AGENTS.md',
+        message: 'feat(cogni): add agent team documentation'
+      },
+      {
+        source: '.claude/commands/document.md',
+        dest: '.claude/commands/document.md',
+        message: 'feat(claude): add documentation command'
+      },
+      {
+        source: '.claude/commands/eval.md',
+        dest: '.claude/commands/eval.md',
+        message: 'feat(claude): add evaluation command'
+      },
+      {
+        source: '.claude/commands/pull-request.md',
+        dest: '.claude/commands/pull-request.md',
+        message: 'feat(claude): add pull-request command'
+      },
+      {
+        source: '.claude/commands/commit.md',
+        dest: '.claude/commands/commit.md',
+        message: 'feat(claude): add commit command'
+      },
+      {
+        source: '.claude/commands/test.md',
+        dest: '.claude/commands/test.md',
+        message: 'feat(claude): add test command'
       }
     ];
 
@@ -329,6 +364,8 @@ JSON`;
   - \`.github/workflows/\` CI pipeline templates (ci.yaml, security.yaml)
   - \`repolinter.json\` configuration for repository policy enforcement
   - \`.github/CODEOWNERS\` with repository owner ${owner} as default reviewer
+  - \`CLAUDE.md\` and \`AGENTS.md\` for AI agent guidance and team documentation
+  - \`.claude/commands/\` directory with AI agent command templates
 
 Note: Cogni Git Review will only load these files from the default branch.
 
