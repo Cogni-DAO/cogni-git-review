@@ -54,9 +54,9 @@ gates:
 ```
 
 ## Current Rule Files
-- `dont-rebuild-oss.yaml` - Prevents reimplementation of mature OSS tools
-- `single-check-pr-verdict.yaml` - Ensures deterministic PR verdicts
-- `code-aware-lite.yaml` - **New**: Code-aware PR evaluation with actual file changes
+- `cogni-repo-goal-alignment.yaml` - Repository goal alignment evaluation for the cogni-git-review project
+- `pr-syntropy-coherence.yaml` - PR coherence validation ensuring singular purpose and strict mapping 
+- `patterns-and-docs.yaml` - Pattern adherence and documentation requirements checking
 
 ## Code-Aware Enhancement
 Rules with `x_capabilities: ['diff_summary', 'file_patches']` receive enhanced diff_summary containing actual file changes and patch content, subject to budget limits.

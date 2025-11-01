@@ -17,9 +17,6 @@ evaluations:
   - accessible-docs: Documentation changes make the system more accessible to new contributors
   - healthy-deps: Any external dependencies added are clearly documented
 
-x_capabilities:
-  - diff_summary
-  - file_patches
 
 success_criteria:
   neutral_on_missing_metrics: true

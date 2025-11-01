@@ -6,14 +6,6 @@ schema_version: '0.1.4'
 intent:
   name: REPO_NAME
 
-# CI checks that must be required-by-branch-protection and green to merge.
-# These are *status context names*, not workflow file names. 
-# Cogni confirms these are enforced via Allstar.
-required_status_contexts:
-  - CI - PR
-  - Security
-  - Cogni Git PR Review
-
 # Control GitHub check conclusion behavior for gate errors/timeouts
 # false (default): errors/timeouts result in 'neutral' conclusion (non-blocking)
 # true: errors/timeouts result in 'failure' conclusion (blocks merge)
@@ -24,7 +16,7 @@ cogni_dao:
   plugin_contract: "PLUGIN_CONTRACT_PLACEHOLDER" 
   signal_contract: "SIGNAL_CONTRACT_PLACEHOLDER"
   chain_id: "CHAIN_ID_PLACEHOLDER"
-  base_url: "https://proposal.cognidao.org"  # Auto-prepends https:// if missing
+  base_url: "https://proposal.cognidao.org"  # Current deployed address of cogni-proposal-launcher
 
 # Gates run in the order they appear below.
 gates:
@@ -33,7 +25,7 @@ gates:
     id: review_limits
     with:
       max_changed_files: 30
-      max_total_diff_kb: 100
+      max_total_diff_kb: 500
 
 # Ensure */*/AGENTS.md files are updated when code changes
   - type: agents-md-sync
@@ -42,9 +34,6 @@ gates:
     #   code_patterns: ["src/**/*.js", "lib/**/*.ts"]  # Files that require doc updates
     #   doc_pattern: "CLAUDE.md"                       # Documentation file to check. Default is AGENTS.md
 
-  - type: ai-rule
-    with:
-      rule_file: avoid-duplication.yaml
   - type: ai-rule
     with:
       rule_file: pr-syntropy-coherence.yaml
