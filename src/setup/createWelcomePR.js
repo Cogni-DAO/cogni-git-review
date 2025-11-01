@@ -277,6 +277,31 @@ export async function createWelcomePR(context, repoInfo) {
         source: '.claude/commands/test.md',
         dest: '.claude/commands/test.md',
         message: 'feat(claude): add test command'
+      },
+      {
+        source: '.cursor/commands/document.md',
+        dest: '.cursor/commands/document.md',
+        message: 'feat(cursor): add documentation command'
+      },
+      {
+        source: '.cursor/commands/eval.md',
+        dest: '.cursor/commands/eval.md',
+        message: 'feat(cursor): add evaluation command'
+      },
+      {
+        source: '.cursor/commands/pull-request.md',
+        dest: '.cursor/commands/pull-request.md',
+        message: 'feat(cursor): add pull-request command'
+      },
+      {
+        source: '.cursor/commands/commit.md',
+        dest: '.cursor/commands/commit.md',
+        message: 'feat(cursor): add commit command'
+      },
+      {
+        source: '.cursor/commands/test.md',
+        dest: '.cursor/commands/test.md',
+        message: 'feat(cursor): add test command'
       }
     ];
 
@@ -365,7 +390,8 @@ JSON`;
   - \`repolinter.json\` configuration for repository policy enforcement
   - \`.github/CODEOWNERS\` with repository owner ${owner} as default reviewer
   - \`CLAUDE.md\` and \`AGENTS.md\` for AI agent guidance and team documentation
-  - \`.claude/commands/\` directory with AI agent command templates
+  - \`.claude/commands/\` directory with Claude AI agent command templates
+  - \`.cursor/commands/\` directory with Cursor AI editor command templates
 
 Note: Cogni Git Review will only load these files from the default branch.
 
