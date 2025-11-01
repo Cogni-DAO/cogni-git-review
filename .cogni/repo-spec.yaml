@@ -31,9 +31,6 @@ gates:
     id: agents_md_sync
   - type: ai-rule
     with:
-      rule_file: avoid-duplication.yaml
-  - type: ai-rule
-    with:
       rule_file: pr-syntropy-coherence.yaml
   - type: ai-rule
     with:
