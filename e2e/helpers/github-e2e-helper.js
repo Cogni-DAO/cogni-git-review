@@ -172,6 +172,82 @@ export async function waitForCogniCheck(commitSha) {
 }
 
 /**
+ * Fetch DAO configuration from test repository's repo-spec
+ * @returns {Promise<Object>} DAO configuration object with contract addresses
+ */
+export async function fetchTestRepoSpec() {
+  console.log('📥 Fetching test repository spec...');
+  
+  const envWithToken = { 
+    ...process.env,  // Allowed in E2E per AGENTS.md line 222
+    GH_TOKEN: githubTestConfig.GITHUB_TOKEN 
+  };
+
+  try {
+    // Use gh CLI (already validated in githubTestConfig.validate())
+    const repoSpecContent = execSync(
+      `gh api repos/${githubTestConfig.E2E_GITHUB_REPO}/contents/.cogni/repo-spec.yaml --jq '.content | @base64d'`, 
+      { 
+        encoding: 'utf8', 
+        stdio: ['ignore', 'pipe', 'ignore'],
+        env: envWithToken 
+      }
+    ).trim();
+    
+    // Parse YAML manually (avoiding new dependency)
+    // Focus on extracting cogni_dao section only
+    const lines = repoSpecContent.split('\n');
+    const daoConfig = extractCogniDaoConfig(lines);
+    
+    if (!daoConfig) {
+      throw new Error('No cogni_dao configuration found in test-repo spec');
+    }
+    
+    console.log('✅ Test repo DAO config loaded');
+    return daoConfig;
+    
+  } catch (error) {
+    throw new Error(`Failed to fetch test-repo spec: ${error.message}`);
+  }
+}
+
+/**
+ * Simple YAML parser for cogni_dao section only
+ * @param {string[]} lines - YAML file lines
+ * @returns {Object|null} Parsed DAO configuration or null if not found
+ */
+function extractCogniDaoConfig(lines) {
+  let inCogniDao = false;
+  const config = {};
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    if (trimmed === 'cogni_dao:') {
+      inCogniDao = true;
+      continue;
+    }
+    
+    if (inCogniDao) {
+      if (trimmed.startsWith('dao_contract:')) {
+        config.dao_contract = trimmed.split(': ')[1].replace(/['"]/g, '');
+      } else if (trimmed.startsWith('plugin_contract:')) {
+        config.plugin_contract = trimmed.split(': ')[1].replace(/['"]/g, '');
+      } else if (trimmed.startsWith('signal_contract:')) {
+        config.signal_contract = trimmed.split(': ')[1].replace(/['"]/g, '');
+      } else if (trimmed.startsWith('chain_id:')) {
+        config.chain_id = trimmed.split(': ')[1].replace(/['"]/g, '');
+      } else if (trimmed && !trimmed.startsWith(' ') && !trimmed.startsWith('#')) {
+        // New top-level section, exit cogni_dao
+        break;
+      }
+    }
+  }
+  
+  return Object.keys(config).length > 0 ? config : null;
+}
+
+/**
  * Cleanup test resources: close PR, delete branch, remove temp directory
  * @param {string} prNumber - PR number to close
  * @param {string} branch - Branch name to delete

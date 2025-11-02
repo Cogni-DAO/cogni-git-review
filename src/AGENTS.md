@@ -23,7 +23,7 @@ src/
 - **gateway.js**: Multi-provider webhook gateway
   - Captures shared handlers at boot via `runCogniApp(handlerCapture)`
   - Mounts provider-specific middleware:
-    - GitHub: `/api/v1/webhooks/github` via Probot `createNodeMiddleware`
+    - GitHub: `/api/v1/webhooks/github` via Probot `createNodeMiddleware` with consistent syntax
     - GitLab: `/api/v1/webhooks/gitlab` via custom Express router
   - OAuth endpoints at `/oauth/:provider/callback`
   - Health check at `/api/v1/health` with handler inventory

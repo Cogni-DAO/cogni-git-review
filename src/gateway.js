@@ -96,7 +96,7 @@ async function startGateway() {
   });
   
   // Mount GitHub middleware at /api/v1/webhooks/github  
-  app.use('/api/v1/webhooks/github', createNodeMiddleware(createGitHubApp(sharedHandlers), { probot, webhooksPath: '/' }))
+  app.use('/api/v1/webhooks/github', createNodeMiddleware(createGitHubApp(sharedHandlers), { probot, webhooksPath: '/' }));
   
   // GitLab: Mount custom router at /api/v1/webhooks/gitlab
   app.use('/api/v1/webhooks/gitlab', createGitLabRouter(sharedHandlers));
