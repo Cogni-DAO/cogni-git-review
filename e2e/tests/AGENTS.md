@@ -4,14 +4,14 @@ Test files for GitHub and GitLab E2E workflow validation.
 
 ## Current Tests
 - `github-pr-review.spec.js` - Complete GitHub PR → Cogni check workflow using unified E2E_GITHUB_* environment variables
-- `github-pr-failing-vote-link.spec.js` - GitHub PR failing workflow → DAO vote proposal URL generation and parameter validation
+- `github-pr-failing-vote-link.spec.js` - GitHub failing PR → DAO vote proposal URL validation with dynamic config fetching
 - `gitlab-mr-review.spec.js` - Complete GitLab MR → Cogni status workflow using unified E2E_GITLAB_* environment variables
 
 ## Test Pattern
-1. Create test PR/MR in repository
+1. Create test PR/MR in repository (realistic content for failing tests)
 2. Wait for Cogni webhook processing
 3. Poll API for check/status updates
-4. Validate expected conclusion
+4. Validate expected conclusion and vote proposal URLs (dynamic DAO config validation)
 5. Cleanup: close PR/MR, delete branch
 
 ## Commands
