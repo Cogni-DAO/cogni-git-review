@@ -8,12 +8,12 @@
 import { environment } from "../env.js";
 
 /**
- * Built-in model mapping by environment
+ * Built-in model mapping by environment - OpenRouter slugs
  */
 const DEFAULT_MODELS = {
-  dev: 'gpt-4o-mini',      // Fast, cost-effective for development
-  preview: 'gpt-5-2025-08-07',       // Preview matches production
-  prod: 'gpt-5-2025-08-07'          // High quality for production
+  dev: 'openai/gpt-4o-mini',      // Fast, cost-effective for development
+  preview: 'openai/gpt-5-2025-08-07',       // Preview matches production
+  prod: 'openai/gpt-5-2025-08-07'          // High quality for production
 };
 
 
@@ -38,7 +38,7 @@ export function selectModel() {
     return {
       environment: environment.APP_ENV,
       model,
-      provider: 'openai',
+      provider: 'openrouter',
       audit: {
         source: 'built-in-defaults',
         detectionMs: Date.now() - startTime
@@ -50,7 +50,7 @@ export function selectModel() {
     return {
       environment: environment.APP_ENV,
       model: DEFAULT_MODELS[environment.APP_ENV],
-      provider: 'openai',
+      provider: 'openrouter',
       audit: {
         source: 'fallback-on-error',
         error: error.message,

@@ -8,10 +8,10 @@ import { makeLLMClient } from '../../src/ai/provider.js';
 
 describe('makeLLMClient', () => {
   it('builds client with temperature=0 for whitelisted model', () => {
-    const { client, meta } = makeLLMClient({ model: 'gpt-4o-mini' });
+    const { client, meta } = makeLLMClient({ model: 'openai/gpt-4o-mini' });
     
     // Verify meta contains expected values
-    assert.strictEqual(meta.model, 'gpt-4o-mini');
+    assert.strictEqual(meta.model, 'openai/gpt-4o-mini');
     assert.strictEqual(meta.tempPolicy, '0');
     
     // Verify client is created (ChatOpenAI instance)
@@ -20,18 +20,18 @@ describe('makeLLMClient', () => {
   });
 
   it('builds client with temperature=0 for 4o-mini variant', () => {
-    const { client, meta } = makeLLMClient({ model: '4o-mini' });
+    const { client, meta } = makeLLMClient({ model: 'openai/gpt-4.1-mini' });
     
-    assert.strictEqual(meta.model, '4o-mini');
+    assert.strictEqual(meta.model, 'openai/gpt-4.1-mini');
     assert.strictEqual(meta.tempPolicy, '0');
     assert(client);
   });
 
   it('omits temperature for non-whitelisted model', () => {
-    const { client, meta } = makeLLMClient({ model: 'gpt-5-2025-08-07' });
+    const { client, meta } = makeLLMClient({ model: 'openai/gpt-5-2025-08-07' });
     
     // Verify meta contains expected values
-    assert.strictEqual(meta.model, 'gpt-5-2025-08-07');
+    assert.strictEqual(meta.model, 'openai/gpt-5-2025-08-07');
     assert.strictEqual(meta.tempPolicy, 'default(omitted)');
     
     // Verify client is created
@@ -74,7 +74,7 @@ describe('makeLLMClient', () => {
   });
 
   it('returns client and meta structure correctly', () => {
-    const result = makeLLMClient({ model: 'gpt-4o-mini' });
+    const result = makeLLMClient({ model: 'openai/gpt-4o-mini' });
     
     // Verify structure
     assert(typeof result === 'object');

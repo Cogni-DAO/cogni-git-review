@@ -36,6 +36,8 @@ const result = await provider.evaluateWithWorkflow({
 - **External endpoint ready**: Simple JSON serializable interface
 - **Context-based logging**: Workflows access logger via `context.log` from the passed context object
 
+**OpenRouter Integration**: Uses OpenRouter API as OpenAI-compatible proxy, enabling access to multiple model providers through OpenAI SDK. LLM client configured with OpenRouter baseURL and optional attribution headers for leaderboard tracking.
+
 **Observability**: All AI calls automatically traced to Langfuse when configured through the centralized environment system. The `environment.langfuse` object provides enabled status and configuration. Traces tagged with environment based on `environment.APP_ENV`.
 
 Available workflows configured in `workflows/registry.js`:
@@ -46,12 +48,12 @@ Available workflows configured in `workflows/registry.js`:
 
 ## Model Selection & Temperature Policy
 Models selected automatically by environment via `model-selector.js` using the centralized `env` export:
-- **dev**: `gpt-4o-mini` (local development, APP_ENV=dev) + `temperature=0`
-- **preview**: `gpt-5-2025-08-07` (APP_ENV=preview) + default temperature
-- **prod**: `gpt-5-2025-08-07` (APP_ENV=prod) + default temperature
+- **dev**: `openai/gpt-4o-mini` (local development, APP_ENV=dev) + `temperature=0`
+- **preview**: `openai/gpt-5-2025-08-07` (APP_ENV=preview) + default temperature
+- **prod**: `openai/gpt-5-2025-08-07` (APP_ENV=prod) + default temperature
 
 **Temperature Policy**: 
-- **Whitelisted models** (`gpt-4o-mini`, `4o-mini`): `temperature=0` for deterministic, repeatable results
+- **Whitelisted models** (`openai/gpt-4o-mini`, `openai/gpt-4.1-mini`): `temperature=0` for deterministic, repeatable results
 - **All other models**: Use model default (omit parameter) - safer for reasoning models and new releases
 
 LLM client creation centralized in `provider.js makeLLMClient({ model })` with explicit whitelist approach.
@@ -61,7 +63,9 @@ Future: Per-rule model overrides from `.cogni/rules/*.yaml` configuration.
 ## Environment Configuration
 All AI environment variables are validated and accessed through the centralized `/src/env.js` module:
 - `APP_ENV` - Environment detection (dev|preview|prod, default: dev)
-- `OPENAI_API_KEY` - Required provider credentials (validated as non-empty string)
+- `OPENROUTER_API_KEY` - Required OpenRouter API credentials (validated as non-empty string)
+- `OPENROUTER_SITE_URL` - Optional site URL for OpenRouter attribution headers
+- `OPENROUTER_APP_TITLE` - Optional app name for OpenRouter attribution headers
 - `LANGFUSE_PUBLIC_KEY` - Langfuse observability (optional, requires all Langfuse vars)
 - `LANGFUSE_SECRET_KEY` - Langfuse observability (optional, requires all Langfuse vars)
 - `LANGFUSE_BASE_URL` - Langfuse host (optional, validated as URL)

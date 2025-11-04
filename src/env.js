@@ -33,7 +33,9 @@ const loki = z.object({
 const isDevelopmentMode = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test");
 
 const ai = z.object({
-  OPENAI_API_KEY: isDevelopmentMode ? z.string().optional() : z.string().min(1),
+  OPENROUTER_API_KEY: isDevelopmentMode ? z.string().optional() : z.string().min(1),
+  OPENROUTER_SITE_URL: urlOrUndef(),
+  OPENROUTER_APP_TITLE: z.string().optional(),
   LANGFUSE_PUBLIC_KEY: z.string().optional(),
   LANGFUSE_SECRET_KEY: z.string().optional(),
   LANGFUSE_BASE_URL: urlOrUndef(),
