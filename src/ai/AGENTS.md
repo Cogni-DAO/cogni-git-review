@@ -36,7 +36,7 @@ const result = await provider.evaluateWithWorkflow({
 - **External endpoint ready**: Simple JSON serializable interface
 - **Context-based logging**: Workflows access logger via `context.log` from the passed context object
 
-**OpenRouter Integration**: Uses OpenRouter API as OpenAI-compatible proxy, enabling access to multiple model providers through OpenAI SDK. LLM client configured with OpenRouter baseURL and optional attribution headers for leaderboard tracking.
+**OpenRouter Integration**: Uses OpenRouter API as OpenAI-compatible proxy, enabling access to multiple model providers through OpenAI SDK. LLM client configured with OpenRouter baseURL and optional attribution headers for leaderboard tracking. Existing error handling, timeout, and retry patterns remain functional due to OpenAI API compatibility.
 
 **Observability**: All AI calls automatically traced to Langfuse when configured through the centralized environment system. The `environment.langfuse` object provides enabled status and configuration. Traces tagged with environment based on `environment.APP_ENV`.
 
