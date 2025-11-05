@@ -210,6 +210,7 @@ All environment variables are managed through `/src/env.js` with Zod schema vali
 1. Add the variable to the appropriate schema section in `/src/env.js`
 2. Export through the `environment` object
 3. Import and use via `import { environment } from './src/env.js'`
+4. **Update deployment configurations**: When environment variables change, update both GitHub Actions workflows (`.github/workflows/deploy-*.yml`) and Digital Ocean app specs (`.do/app.*.yaml`) to pass the new variables to the runtime environment
 
 **Available Exports:**
 - `environment` - Main frozen object with all validated configuration
@@ -271,7 +272,7 @@ npm run e2e:gitlab         # Run GitLab E2E tests only
 
 # Setup and running:
 npm install                # Install dependencies
-npm start                  # Start Local dev server. WARNING: this is a blocking command. Have the user run this themselves, not you. 
+npm start                  # Start Local dev server 
 ```
 
 ### Setup
