@@ -27,10 +27,16 @@ services:
   - key: APP_ID
     scope: RUN_TIME
     value: ${APP_ID}
-  - key: OPENAI_API_KEY
+  - key: OPENROUTER_API_KEY
     scope: RUN_TIME
     type: SECRET
-    value: ${OPENAI_API_KEY}
+    value: ${OPENROUTER_API_KEY}
+  - key: OPENROUTER_SITE_URL
+    scope: RUN_TIME
+    value: ${OPENROUTER_SITE_URL}
+  - key: OPENROUTER_APP_TITLE
+    scope: RUN_TIME
+    value: ${OPENROUTER_APP_TITLE}
   - key: PRIVATE_KEY
     scope: RUN_TIME
     type: SECRET
