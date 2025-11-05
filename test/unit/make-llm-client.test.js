@@ -6,77 +6,74 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { makeLLMClient } from '../../src/ai/provider.js';
 
+// Helper function to reduce duplication
+function assertValidClient(result, expectedModel, expectedTempPolicy) {
+  assert(typeof result === 'object');
+  assert('client' in result);
+  assert('meta' in result);
+  
+  // Verify meta
+  assert.strictEqual(result.meta.model, expectedModel);
+  assert.strictEqual(result.meta.tempPolicy, expectedTempPolicy);
+  
+  // Verify client is created
+  assert(result.client);
+  assert.strictEqual(typeof result.client.call, 'function');
+}
+
 describe('makeLLMClient', () => {
-  it('builds client with temperature=0 for whitelisted model', () => {
-    const { client, meta } = makeLLMClient({ model: 'gpt-4o-mini' });
-    
-    // Verify meta contains expected values
-    assert.strictEqual(meta.model, 'gpt-4o-mini');
-    assert.strictEqual(meta.tempPolicy, '0');
-    
-    // Verify client is created (ChatOpenAI instance)
-    assert(client);
-    assert.strictEqual(typeof client.call, 'function'); // ChatOpenAI has call method
+  
+  describe('Temperature Policy', () => {
+    it('applies temperature=0 for whitelisted models', () => {
+      const deterministicModels = [
+        'openai/gpt-4o-mini',
+        'openai/gpt-4.1-mini'
+      ];
+      
+      for (const model of deterministicModels) {
+        const result = makeLLMClient({ model });
+        assertValidClient(result, model, '0');
+      }
+    });
+
+    it('omits temperature for non-whitelisted models', () => {
+      const nonDeterministicModels = [
+        'openai/gpt-5-2025-08-07',
+        'o1-preview',
+        'o3-mini'
+      ];
+      
+      for (const model of nonDeterministicModels) {
+        const result = makeLLMClient({ model });
+        assertValidClient(result, model, 'default(omitted)');
+      }
+    });
   });
 
-  it('builds client with temperature=0 for 4o-mini variant', () => {
-    const { client, meta } = makeLLMClient({ model: '4o-mini' });
+  describe('Error Handling', () => {
+    it('throws error when model is missing', () => {
+      assert.throws(() => {
+        makeLLMClient({});
+      }, /makeLLMClient: 'model' is required/);
+    });
+
+    it('throws error when model is null', () => {
+      assert.throws(() => {
+        makeLLMClient({ model: null });
+      }, /makeLLMClient: 'model' is required/);
+    });
+
+    it('throws error when model is empty string', () => {
+      assert.throws(() => {
+        makeLLMClient({ model: '' });
+      }, /makeLLMClient: 'model' is required/);
+    });
+  });
+
+  it('returns correct structure', () => {
+    const result = makeLLMClient({ model: 'openai/gpt-4o-mini' });
     
-    assert.strictEqual(meta.model, '4o-mini');
-    assert.strictEqual(meta.tempPolicy, '0');
-    assert(client);
-  });
-
-  it('omits temperature for non-whitelisted model', () => {
-    const { client, meta } = makeLLMClient({ model: 'gpt-5-2025-08-07' });
-    
-    // Verify meta contains expected values
-    assert.strictEqual(meta.model, 'gpt-5-2025-08-07');
-    assert.strictEqual(meta.tempPolicy, 'default(omitted)');
-    
-    // Verify client is created
-    assert(client);
-    assert.strictEqual(typeof client.call, 'function');
-  });
-
-  it('omits temperature for o1 model', () => {
-    const { client, meta } = makeLLMClient({ model: 'o1-preview' });
-    
-    assert.strictEqual(meta.model, 'o1-preview');
-    assert.strictEqual(meta.tempPolicy, 'default(omitted)');
-    assert(client);
-  });
-
-  it('omits temperature for o3 model', () => {
-    const { client, meta } = makeLLMClient({ model: 'o3-mini' });
-    
-    assert.strictEqual(meta.model, 'o3-mini');
-    assert.strictEqual(meta.tempPolicy, 'default(omitted)');
-    assert(client);
-  });
-
-  it('throws error when model is missing', () => {
-    assert.throws(() => {
-      makeLLMClient({});
-    }, /makeLLMClient: 'model' is required/);
-  });
-
-  it('throws error when model is null', () => {
-    assert.throws(() => {
-      makeLLMClient({ model: null });
-    }, /makeLLMClient: 'model' is required/);
-  });
-
-  it('throws error when model is empty string', () => {
-    assert.throws(() => {
-      makeLLMClient({ model: '' });
-    }, /makeLLMClient: 'model' is required/);
-  });
-
-  it('returns client and meta structure correctly', () => {
-    const result = makeLLMClient({ model: 'gpt-4o-mini' });
-    
-    // Verify structure
+    // Verify top-level structure
     assert(typeof result === 'object');
     assert('client' in result);
     assert('meta' in result);
@@ -86,7 +83,7 @@ describe('makeLLMClient', () => {
     assert('model' in result.meta);
     assert('tempPolicy' in result.meta);
     
-    // Verify no side effects (no console logging in the factory)
+    // Verify client type
     assert.strictEqual(typeof result.client, 'object');
   });
 });

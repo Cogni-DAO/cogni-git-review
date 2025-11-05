@@ -271,7 +271,7 @@ npm run e2e:gitlab         # Run GitLab E2E tests only
 
 # Setup and running:
 npm install                # Install dependencies
-npm start                  # Start Local dev server. WARNING: this is a blocking command. Have the user run this themselves, not you. 
+npm start                  # Start Local dev server 
 ```
 
 ### Setup

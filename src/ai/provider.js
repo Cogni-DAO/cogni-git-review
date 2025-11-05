@@ -10,23 +10,36 @@ import { getWorkflow } from './workflows/registry.js';
 import { selectModel } from './model-selector.js';
 import { environment } from '../env.js';
 
-// Models we explicitly want temperature=0 for determinism
+// Use explicit OpenRouter slugs
 const DETERMINISTIC_MODELS = new Set([
-  "4o-mini",
-  "gpt-4o-mini"
+  "openai/gpt-4o-mini",
+  "openai/gpt-4.1-mini"
 ]);
 
 const PROVIDER_VERSION = '1.1.0';
 
+const OR_BASE_URL = "https://openrouter.ai/api/v1";
+const OR_HEADERS = {
+  ...(environment.OPENROUTER_SITE_URL ? { "HTTP-Referer": environment.OPENROUTER_SITE_URL } : {}),
+  ...(environment.OPENROUTER_APP_TITLE ? { "X-Title": environment.OPENROUTER_APP_TITLE } : {}),
+};
+
 export function makeLLMClient({ model }) {
   if (!model) throw new Error("makeLLMClient: 'model' is required");
 
-  const opts = { model };
+  const opts = { 
+    model,
+    apiKey: environment.OPENROUTER_API_KEY,
+    configuration: {
+      baseURL: OR_BASE_URL,
+      defaultHeaders: OR_HEADERS
+    }
+  };
   const tempPolicy = DETERMINISTIC_MODELS.has(model) ? "0" : "default(omitted)";
-  if (tempPolicy === "0") opts.temperature = 0; // otherwise omit temperature
+  if (tempPolicy === "0") opts.temperature = 0;
 
   const client = new ChatOpenAI(opts);
-  return { client, meta: { model, tempPolicy } }; // side-effect free
+  return { client, meta: { model, tempPolicy } };
 }
 
 /**

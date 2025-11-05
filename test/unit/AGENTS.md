@@ -33,8 +33,8 @@ Tests can access `process.env` directly (ESLint exempted) and may mock environme
 - `gitlab-vcs-interface.test.js` - GitLab VCS interface (6 tests)
 - `goal-declaration-stub.test.js` - Goal declaration gate stub tests
 - `governance-policy.test.js` - Governance policy gate workflow validation tests MVP with shared mock utilities
-- `make-llm-client.test.js` - LLM client factory whitelist behavior tests
-- `model-selector.test.js` - Environment-based model selection tests, mocking env.app
+- `make-llm-client.test.js` - LLM client factory whitelist behavior tests with OpenRouter model slug validation
+- `model-selector.test.js` - Environment-based model selection tests with OpenRouter provider validation
 - `pr-structure-validation.test.js` - Pull request structure validation tests
 - `probot-context-interface.test.js` - Validates Probot context implements BaseContext interface
 - `rules-gate-code-aware.test.js` - AI rule gate code-aware enhancement tests

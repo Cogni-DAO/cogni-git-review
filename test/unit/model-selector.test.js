@@ -26,7 +26,7 @@ describe('Model Selector', () => {
       assert(['dev', 'preview', 'prod'].includes(result.environment));
       
       // Verify provider
-      assert.strictEqual(result.provider, 'openai');
+      assert.strictEqual(result.provider, 'openrouter');
       
       // Verify audit structure
       assert(typeof result.audit.source === 'string');
@@ -38,9 +38,9 @@ describe('Model Selector', () => {
       const result = selectModel();
       
       if (result.environment === 'dev') {
-        assert.strictEqual(result.model, 'gpt-4o-mini');
+        assert.strictEqual(result.model, 'openai/gpt-4o-mini');
       } else if (result.environment === 'preview' || result.environment === 'prod') {
-        assert.strictEqual(result.model, 'gpt-5-2025-08-07');
+        assert.strictEqual(result.model, 'openai/gpt-5-2025-08-07');
       }
     });
     

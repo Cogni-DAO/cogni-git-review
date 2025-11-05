@@ -40,6 +40,7 @@ src/
   - Type coercion for numeric values (PORT, APP_ID)
   - URL validation with optional empty string handling
   - ESLint `n/no-process-env` rule enforces usage of this module
+  - **OpenRouter Integration**: Validates `OPENROUTER_API_KEY` (required), `OPENROUTER_SITE_URL`, and `OPENROUTER_APP_TITLE` (optional) for AI provider configuration
   - Multi-provider webhook secrets (both required for now): `WEBHOOK_SECRET_GITHUB`, `WEBHOOK_SECRET_GITLAB`
   - Multi-provider proxy URLs: `WEBHOOK_PROXY_URL_GITHUB`, `WEBHOOK_PROXY_URL_GITLAB`
   - GitLab configuration: `GITLAB_BASE_URL` (supports self-hosted, defaults to gitlab.com), `GITLAB_PAT` (Personal Access Token for PoC)
