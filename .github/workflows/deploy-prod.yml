@@ -26,7 +26,9 @@ jobs:
          WEBHOOK_SECRET_GITHUB: ${{ secrets.WEBHOOK_SECRET_GITHUB }}
          WEBHOOK_SECRET_GITLAB: ${{ secrets.WEBHOOK_SECRET_GITLAB }}
          GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
-         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+         OPENROUTER_SITE_URL: ${{ vars.OPENROUTER_SITE_URL }}
+         OPENROUTER_APP_TITLE: ${{ vars.OPENROUTER_APP_TITLE }}
          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
          LANGFUSE_PUBLIC_KEY: ${{ vars.LANGFUSE_PUBLIC_KEY }}
          LANGFUSE_BASE_URL: ${{ vars.LANGFUSE_BASE_URL }}
